@@ -81,6 +81,9 @@ struct TESStesselator {
 	TESSalloc alloc;
 	
 	jmp_buf env;			/* place to jump to when memAllocs fail */
+
+
+	TESShalfEdge *e;
 };
 
 #ifdef __cplusplus

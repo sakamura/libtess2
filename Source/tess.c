@@ -788,13 +788,8 @@ void OutputContours( TESStesselator *tess, TESSmesh *mesh, int vertexSize )
 	}
 }
 
-void tessAddContour( TESStesselator *tess, int size, const void* vertices,
-					int stride, int numVertices )
+void tessBeginContour( TESStesselator *tess )
 {
-	const unsigned char *src = (const unsigned char*)vertices;
-	TESShalfEdge *e;
-	int i;
-
 	if ( tess->mesh == NULL )
 	  	tess->mesh = tessMeshNewMesh( &tess->alloc );
  	if ( tess->mesh == NULL ) {
@@ -802,57 +797,67 @@ void tessAddContour( TESStesselator *tess, int size, const void* vertices,
 		return;
 	}
 
-	if ( size < 2 )
-		size = 2;
-	if ( size > 3 )
-		size = 3;
+	tess->e = NULL;
+}
 
-	e = NULL;
+void tessAddVertex( TESStesselator *tess, TESSreal x, TESSreal y, TESSreal z )
+{
+	if( tess->e == NULL ) {
+		/* Make a self-loop (one vertex, one edge). */
+		tess->e = tessMeshMakeEdge( tess->mesh );
+		if ( tess->e == NULL ) {
+			tess->outOfMemory = 1;
+			return;
+		}
+		if ( !tessMeshSplice( tess->mesh, tess->e, tess->e->Sym ) ) {
+			tess->outOfMemory = 1;
+			return;
+		}
+	} else {
+		/* Create a new vertex and edge which immediately follow tess->e
+		* in the ordering around the left face.
+		*/
+		if ( tessMeshSplitEdge( tess->mesh, tess->e ) == NULL ) {
+			tess->outOfMemory = 1;
+			return;
+		}
+		tess->e = tess->e->Lnext;
+	}
+
+	/* The new vertex is now tess->e->Org. */
+	tess->e->Org->coords[0] = x;
+	tess->e->Org->coords[1] = y;
+	tess->e->Org->coords[2] = z;
+
+	/* Store the insertion number so that the vertex can be later recognized. */
+	tess->e->Org->idx = tess->vertexIndexCounter++;
+
+	/* The winding of an edge says how the winding number changes as we
+	* cross from the edge''s right face to its left face.  We add the
+	* vertices in such an order that a CCW contour will add +1 to
+	* the winding number of the region inside the contour.
+	*/
+	tess->e->winding = 1;
+	tess->e->Sym->winding = -1;
+}
+
+void tessAddContour( TESStesselator *tess, int size, const void* vertices,
+					int stride, int numVertices )
+{
+	const unsigned char *src = (const unsigned char*)vertices;
+	int i;
+
+	tessBeginContour(tess);
 
 	for( i = 0; i < numVertices; ++i )
 	{
 		const TESSreal* coords = (const TESSreal*)src;
 		src += stride;
 
-		if( e == NULL ) {
-			/* Make a self-loop (one vertex, one edge). */
-			e = tessMeshMakeEdge( tess->mesh );
-			if ( e == NULL ) {
-				tess->outOfMemory = 1;
-				return;
-			}
-			if ( !tessMeshSplice( tess->mesh, e, e->Sym ) ) {
-				tess->outOfMemory = 1;
-				return;
-			}
-		} else {
-			/* Create a new vertex and edge which immediately follow e
-			* in the ordering around the left face.
-			*/
-			if ( tessMeshSplitEdge( tess->mesh, e ) == NULL ) {
-				tess->outOfMemory = 1;
-				return;
-			}
-			e = e->Lnext;
-		}
-
-		/* The new vertex is now e->Org. */
-		e->Org->coords[0] = coords[0];
-		e->Org->coords[1] = coords[1];
 		if ( size > 2 )
-			e->Org->coords[2] = coords[2];
+			tessAddVertex(tess, coords[0], coords[1], coords[2]);
 		else
-			e->Org->coords[2] = 0;
-		/* Store the insertion number so that the vertex can be later recognized. */
-		e->Org->idx = tess->vertexIndexCounter++;
-
-		/* The winding of an edge says how the winding number changes as we
-		* cross from the edge''s right face to its left face.  We add the
-		* vertices in such an order that a CCW contour will add +1 to
-		* the winding number of the region inside the contour.
-		*/
-		e->winding = 1;
-		e->Sym->winding = -1;
+			tessAddVertex(tess, coords[0], coords[1], 0);
 	}
 }
 
