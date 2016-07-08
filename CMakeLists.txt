@@ -88,7 +88,7 @@ configure_package_config_file(
   )
 
 install(
-  TARGETS convertutf
+  TARGETS tess2
   EXPORT "${targets_export_name}"
   LIBRARY DESTINATION "lib"
   ARCHIVE DESTINATION "lib"
