@@ -3,6 +3,13 @@
 #
 
 cmake_minimum_required(VERSION 3.5)
+if(POLICY CMP0025)
+  # detect Apple's Clang
+  cmake_policy(SET CMP0025 NEW)
+endif()
+if(POLICY CMP0054)
+  cmake_policy(SET CMP0054 NEW)
+endif()
 
 ## Hunter
 
@@ -21,6 +28,33 @@ cmake_minimum_required(VERSION 3.5)
   hunter_add_package(Sugar)
   include("${SUGAR_ROOT}/cmake/Sugar")
   include(sugar_include)
+
+## Compilation Flags
+
+    # compile in release with debug info mode by default
+    if(NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+    endif()
+
+## Options
+
+    # Build all binaries in a separate directory
+    SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+    #add extra search paths for libraries and includes
+    SET(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "The directory the headers are installed in")
+    SET(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE STRING "Directory where lib will install")
+    SET(DOC_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/share/doc/${PROJECT_NAME}" CACHE PATH "Path to the documentation")
+
+    # pkg-config
+    IF (UNIX OR CYGWIN)
+      CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.pc.in
+                      ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
+                      @ONLY)
+      INSTALL (FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
+          DESTINATION "${LIB_INSTALL_DIR}/pkgconfig"
+          COMPONENT pkgconfig)
+    ENDIF()
 
 ## Sources
 
@@ -62,7 +96,7 @@ install(
 )
 
 install(
-    DIRECTORY "include/rapidjson"
+    DIRECTORY "Include/tess2"
     DESTINATION "${include_install_dir}"
     COMPONENT dev
 )
