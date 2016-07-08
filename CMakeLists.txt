@@ -46,16 +46,6 @@ endif()
     SET(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE STRING "Directory where lib will install")
     SET(DOC_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/share/doc/${PROJECT_NAME}" CACHE PATH "Path to the documentation")
 
-    # pkg-config
-    IF (UNIX OR CYGWIN)
-      CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.pc.in
-                      ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
-                      @ONLY)
-      INSTALL (FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
-          DESTINATION "${LIB_INSTALL_DIR}/pkgconfig"
-          COMPONENT pkgconfig)
-    ENDIF()
-
 ## Sources
 
 	file(GLOB SRCS "Source/*.cpp" "Source/*.c" "Source/*.h" "Source/*.hpp")
@@ -65,51 +55,61 @@ endif()
 
 	add_library(tess2 STATIC ${SRCS} ${SRCS_INCL})
 
-### Install ###
-set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
+#### install 
 
 set(config_install_dir "lib/cmake/${PROJECT_NAME}")
 set(include_install_dir "include")
 
+file(GLOB SRC "Source/*.cpp" "Source/*.c")
+file(GLOB HDRS "Source/*.h" "Source/*.hpp")
+set(TARGET_PUBLIC_HDRS ${HDRS})
+
+set(config_install_dir "lib/cmake/${PROJECT_NAME}")
+set(include_install_dir "include")
+
+set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+# Configuration
 set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
 set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
 set(targets_export_name "${PROJECT_NAME}Targets")
 set(namespace "${PROJECT_NAME}::")
 
 include(CMakePackageConfigHelpers)
+
 write_basic_package_version_file(
-    "${version_config}" COMPATIBILITY SameMajorVersion
-)
+  "${version_config}" COMPATIBILITY SameMajorVersion
+  )
 
-# Note: use 'targets_export_name'
 configure_package_config_file(
-    "cmake/Config.cmake.in"
-    "${project_config}"
-    INSTALL_DESTINATION "${config_install_dir}"
-)
+  "cmake/Config.cmake.in"
+  "${project_config}"
+  INSTALL_DESTINATION "${config_install_dir}"
+  )
 
 install(
-    TARGETS tess2
-    EXPORT "${targets_export_name}"
-    COMPONENT dev
-    INCLUDES DESTINATION "${include_install_dir}"
-)
+  TARGETS convertutf
+  EXPORT "${targets_export_name}"
+  LIBRARY DESTINATION "lib"
+  ARCHIVE DESTINATION "lib"
+  RUNTIME DESTINATION "bin"
+  INCLUDES DESTINATION "${include_install_dir}"
+  )
+
+foreach(HEADER ${TARGET_PUBLIC_HDRS})
+  install(
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/${HEADER}"
+    DESTINATION "${include_install_dir}/${PROJECT_NAME}"
+    )
+endforeach()
 
 install(
-    DIRECTORY "Include/tess2"
-    DESTINATION "${include_install_dir}"
-    COMPONENT dev
-)
+  FILES "${project_config}" "${version_config}"
+  DESTINATION "${config_install_dir}"
+  )
 
 install(
-    FILES "${project_config}" "${version_config}"
-    DESTINATION "${config_install_dir}"
-    COMPONENT dev
-)
-
-install(
-    EXPORT "${targets_export_name}"
-    NAMESPACE "${namespace}"
-    DESTINATION "${config_install_dir}"
-    COMPONENT dev
-)
+  EXPORT "${targets_export_name}"
+  NAMESPACE "${namespace}"
+  DESTINATION "${config_install_dir}"
+  )
