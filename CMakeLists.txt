@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.5)
 
 ## Project / Version
 
-	project(tess2)
+	project(tess2 VERSION 1.0.1)
 
 ## Sugar
 
