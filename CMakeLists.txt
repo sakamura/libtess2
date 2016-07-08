@@ -102,7 +102,8 @@
     foreach(HEADER ${TARGET_PUBLIC_HDRS})
         MESSAGE(STATUS "  Header being processed: ${HEADER}")        
         install(
-            FILES "${CMAKE_CURRENT_SOURCE_DIR}/${HEADER}"
+            FILES "${HEADER}"
+            #FILES "${CMAKE_CURRENT_SOURCE_DIR}/${HEADER}"
             DESTINATION "${include_install_dir}/${PROJECT_NAME}"
         )
     endforeach()
