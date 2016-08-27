@@ -1,0 +1,321 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		96FF98C01D65E59200404BDA /* bucketalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98AF1D65E59200404BDA /* bucketalloc.c */; };
+		96FF98C11D65E59200404BDA /* dict.c in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B11D65E59200404BDA /* dict.c */; };
+		96FF98C21D65E59200404BDA /* geom.c in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B31D65E59200404BDA /* geom.c */; };
+		96FF98C31D65E59200404BDA /* mesh.c in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B51D65E59200404BDA /* mesh.c */; };
+		96FF98C41D65E59200404BDA /* priorityq.c in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B71D65E59200404BDA /* priorityq.c */; };
+		96FF98C51D65E59200404BDA /* sweep.c in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B91D65E59200404BDA /* sweep.c */; };
+		96FF98C61D65E59200404BDA /* tess.c in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98BB1D65E59200404BDA /* tess.c */; };
+		96FF98C71D65E5A600404BDA /* tesselator.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98AB1D65E59200404BDA /* tesselator.h */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		96FF98981D65E54800404BDA /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+				96FF98C71D65E5A600404BDA /* tesselator.h in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		96FF989A1D65E54800404BDA /* libTess2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libTess2.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		96FF98A71D65E59200404BDA /* alg_outline.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = alg_outline.md; sourceTree = "<group>"; };
+		96FF98AB1D65E59200404BDA /* tesselator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tesselator.h; sourceTree = "<group>"; };
+		96FF98AC1D65E59200404BDA /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		96FF98AD1D65E59200404BDA /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		96FF98AF1D65E59200404BDA /* bucketalloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bucketalloc.c; sourceTree = "<group>"; };
+		96FF98B01D65E59200404BDA /* bucketalloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bucketalloc.h; sourceTree = "<group>"; };
+		96FF98B11D65E59200404BDA /* dict.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dict.c; sourceTree = "<group>"; };
+		96FF98B21D65E59200404BDA /* dict.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dict.h; sourceTree = "<group>"; };
+		96FF98B31D65E59200404BDA /* geom.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = geom.c; sourceTree = "<group>"; };
+		96FF98B41D65E59200404BDA /* geom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom.h; sourceTree = "<group>"; };
+		96FF98B51D65E59200404BDA /* mesh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mesh.c; sourceTree = "<group>"; };
+		96FF98B61D65E59200404BDA /* mesh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mesh.h; sourceTree = "<group>"; };
+		96FF98B71D65E59200404BDA /* priorityq.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = priorityq.c; sourceTree = "<group>"; };
+		96FF98B81D65E59200404BDA /* priorityq.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = priorityq.h; sourceTree = "<group>"; };
+		96FF98B91D65E59200404BDA /* sweep.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sweep.c; sourceTree = "<group>"; };
+		96FF98BA1D65E59200404BDA /* sweep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sweep.h; sourceTree = "<group>"; };
+		96FF98BB1D65E59200404BDA /* tess.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tess.c; sourceTree = "<group>"; };
+		96FF98BC1D65E59200404BDA /* tess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tess.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		96FF98971D65E54800404BDA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		96E5959A1D7136820022B80A /* libtess2 */ = {
+			isa = PBXGroup;
+			children = (
+				96FF98A71D65E59200404BDA /* alg_outline.md */,
+				96FF98AA1D65E59200404BDA /* Include */,
+				96FF98AC1D65E59200404BDA /* LICENSE.txt */,
+				96FF98AD1D65E59200404BDA /* README.md */,
+				96FF98AE1D65E59200404BDA /* Source */,
+			);
+			name = libtess2;
+			sourceTree = "<group>";
+		};
+		96FF98911D65E54800404BDA = {
+			isa = PBXGroup;
+			children = (
+				96E5959A1D7136820022B80A /* libtess2 */,
+				96FF989B1D65E54800404BDA /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		96FF989B1D65E54800404BDA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				96FF989A1D65E54800404BDA /* libTess2.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		96FF98AA1D65E59200404BDA /* Include */ = {
+			isa = PBXGroup;
+			children = (
+				96FF98AB1D65E59200404BDA /* tesselator.h */,
+			);
+			path = Include;
+			sourceTree = "<group>";
+		};
+		96FF98AE1D65E59200404BDA /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				96FF98AF1D65E59200404BDA /* bucketalloc.c */,
+				96FF98B01D65E59200404BDA /* bucketalloc.h */,
+				96FF98B11D65E59200404BDA /* dict.c */,
+				96FF98B21D65E59200404BDA /* dict.h */,
+				96FF98B31D65E59200404BDA /* geom.c */,
+				96FF98B41D65E59200404BDA /* geom.h */,
+				96FF98B51D65E59200404BDA /* mesh.c */,
+				96FF98B61D65E59200404BDA /* mesh.h */,
+				96FF98B71D65E59200404BDA /* priorityq.c */,
+				96FF98B81D65E59200404BDA /* priorityq.h */,
+				96FF98B91D65E59200404BDA /* sweep.c */,
+				96FF98BA1D65E59200404BDA /* sweep.h */,
+				96FF98BB1D65E59200404BDA /* tess.c */,
+				96FF98BC1D65E59200404BDA /* tess.h */,
+			);
+			path = Source;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		96FF98991D65E54800404BDA /* Tess2 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 96FF98A31D65E54900404BDA /* Build configuration list for PBXNativeTarget "Tess2" */;
+			buildPhases = (
+				96FF98961D65E54800404BDA /* Sources */,
+				96FF98971D65E54800404BDA /* Frameworks */,
+				96FF98981D65E54800404BDA /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Tess2;
+			productName = Tess2;
+			productReference = 96FF989A1D65E54800404BDA /* libTess2.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		96FF98921D65E54800404BDA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0800;
+				ORGANIZATIONNAME = "Michel Donais";
+				TargetAttributes = {
+					96FF98991D65E54800404BDA = {
+						CreatedOnToolsVersion = 8.0;
+						DevelopmentTeam = 6UA46ZJEU9;
+						DevelopmentTeamName = "Michel Donais";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 96FF98951D65E54800404BDA /* Build configuration list for PBXProject "Tess2" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 96FF98911D65E54800404BDA;
+			productRefGroup = 96FF989B1D65E54800404BDA /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				96FF98991D65E54800404BDA /* Tess2 */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		96FF98961D65E54800404BDA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				96FF98C21D65E59200404BDA /* geom.c in Sources */,
+				96FF98C01D65E59200404BDA /* bucketalloc.c in Sources */,
+				96FF98C51D65E59200404BDA /* sweep.c in Sources */,
+				96FF98C31D65E59200404BDA /* mesh.c in Sources */,
+				96FF98C61D65E59200404BDA /* tess.c in Sources */,
+				96FF98C11D65E59200404BDA /* dict.c in Sources */,
+				96FF98C41D65E59200404BDA /* priorityq.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		96FF98A11D65E54900404BDA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		96FF98A21D65E54900404BDA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		96FF98A41D65E54900404BDA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		96FF98A51D65E54900404BDA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		96FF98951D65E54800404BDA /* Build configuration list for PBXProject "Tess2" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				96FF98A11D65E54900404BDA /* Debug */,
+				96FF98A21D65E54900404BDA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		96FF98A31D65E54900404BDA /* Build configuration list for PBXNativeTarget "Tess2" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				96FF98A41D65E54900404BDA /* Debug */,
+				96FF98A51D65E54900404BDA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 96FF98921D65E54800404BDA /* Project object */;
+}
