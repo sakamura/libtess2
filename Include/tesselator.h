@@ -141,8 +141,8 @@ typedef struct TESSalloc TESSalloc;
 // number of expected extra vertices.  
 struct TESSalloc
 {
-	void *(*memalloc)( void *userData, unsigned int size );
-	void *(*memrealloc)( void *userData, void* ptr, unsigned int size );
+	void *(*memalloc)( void *userData, size_t size );
+	void *(*memrealloc)( void *userData, void* ptr, size_t size );
 	void (*memfree)( void *userData, void *ptr );
 	void* userData;				// User data passed to the allocator functions.
 	int meshEdgeBucketSize;		// 512
@@ -175,7 +175,7 @@ TESStesselator* tessNewTess( TESSalloc* alloc );
 void tessDeleteTess( TESStesselator *tess );
 
 void tessBeginContour( TESStesselator *tess );
-
+    
 void tessAddVertex( TESStesselator *tess, TESSreal x, TESSreal y, TESSreal z );
 
 // tessAddContour() - Adds a contour to be tesselated.
