@@ -174,6 +174,10 @@ TESStesselator* tessNewTess( TESSalloc* alloc );
 //   tess - pointer to tesselator object to be deleted.
 void tessDeleteTess( TESStesselator *tess );
 
+void tessBeginContour( TESStesselator *tess );
+
+void tessAddVertex( TESStesselator *tess, TESSreal x, TESSreal y, TESSreal z );
+
 // tessAddContour() - Adds a contour to be tesselated.
 // The type of the vertex coordinates is assumed to be TESSreal.
 // Parameters:
