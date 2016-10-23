@@ -151,8 +151,11 @@ struct TESSalloc
 	int dictNodeBucketSize;		// 512
 	int regionBucketSize;		// 256
 	int extraVertices;			// Number of extra vertices allocated for the priority queue.
+    void* freeAllocs;           // Saved previous allocators
 };
-
+void disableAutomaticCleanup();
+void cleanupAlloc( struct TESSalloc* alloc );     // Once done with this allocator, free up blocks used by the TESSalloc
+void cleanupDefaultAlloc();
 
 //
 // Example use:

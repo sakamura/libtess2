@@ -477,7 +477,12 @@ static TESSalloc defaulAlloc =
 	0,
 	0,
 	0,
+    0
 };
+void cleanupDefaultAlloc()
+{
+    cleanupAlloc(&defaulAlloc);
+}
 
 TESStesselator* tessNewTess( TESSalloc* alloc )
 {
@@ -494,18 +499,18 @@ TESStesselator* tessNewTess( TESSalloc* alloc )
 	if ( tess == NULL ) {
 		return 0;          /* out of memory */
 	}
-	tess->alloc = *alloc;
+	tess->alloc = alloc;
 	/* Check and set defaults. */
-	if (tess->alloc.meshEdgeBucketSize == 0)
-		tess->alloc.meshEdgeBucketSize = 512;
-	if (tess->alloc.meshVertexBucketSize == 0)
-		tess->alloc.meshVertexBucketSize = 512;
-	if (tess->alloc.meshFaceBucketSize == 0)
-		tess->alloc.meshFaceBucketSize = 256;
-	if (tess->alloc.dictNodeBucketSize == 0)
-		tess->alloc.dictNodeBucketSize = 512;
-	if (tess->alloc.regionBucketSize == 0)
-		tess->alloc.regionBucketSize = 256;
+	if (tess->alloc->meshEdgeBucketSize == 0)
+		tess->alloc->meshEdgeBucketSize = 512;
+	if (tess->alloc->meshVertexBucketSize == 0)
+		tess->alloc->meshVertexBucketSize = 512;
+	if (tess->alloc->meshFaceBucketSize == 0)
+		tess->alloc->meshFaceBucketSize = 256;
+	if (tess->alloc->dictNodeBucketSize == 0)
+		tess->alloc->dictNodeBucketSize = 512;
+	if (tess->alloc->regionBucketSize == 0)
+		tess->alloc->regionBucketSize = 256;
 	
 	tess->normal[0] = 0;
 	tess->normal[1] = 0;
@@ -518,12 +523,12 @@ TESStesselator* tessNewTess( TESSalloc* alloc )
 
 	tess->windingRule = TESS_WINDING_ODD;
 
-	if (tess->alloc.regionBucketSize < 16)
-		tess->alloc.regionBucketSize = 16;
-	if (tess->alloc.regionBucketSize > 4096)
-		tess->alloc.regionBucketSize = 4096;
-	tess->regionPool = createBucketAlloc( &tess->alloc, "Regions",
-										 sizeof(ActiveRegion), tess->alloc.regionBucketSize );
+	if (tess->alloc->regionBucketSize < 16)
+		tess->alloc->regionBucketSize = 16;
+	if (tess->alloc->regionBucketSize > 4096)
+		tess->alloc->regionBucketSize = 4096;
+	tess->regionPool = createBucketAlloc( tess->alloc, "Regions",
+										 sizeof(ActiveRegion), tess->alloc->regionBucketSize );
 
 	// Initialize to begin polygon.
 	tess->mesh = NULL;
@@ -543,7 +548,7 @@ TESStesselator* tessNewTess( TESSalloc* alloc )
 void tessDeleteTess( TESStesselator *tess )
 {
 	
-	struct TESSalloc alloc = tess->alloc;
+	struct TESSalloc alloc = *tess->alloc;
 	
 	deleteBucketAlloc( tess->regionPool );
 
@@ -633,7 +638,7 @@ void OutputPolymesh( TESStesselator *tess, TESSmesh *mesh, int elementType, int 
 	tess->elementCount = maxFaceCount;
 	if (elementType == TESS_CONNECTED_POLYGONS)
 		maxFaceCount *= 2;
-	tess->elements = (TESSindex*)tess->alloc.memalloc( tess->alloc.userData,
+	tess->elements = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
 													  sizeof(TESSindex) * maxFaceCount * polySize );
 	if (!tess->elements)
 	{
@@ -642,7 +647,7 @@ void OutputPolymesh( TESStesselator *tess, TESSmesh *mesh, int elementType, int 
 	}
 	
 	tess->vertexCount = maxVertexCount;
-	tess->vertices = (TESSreal*)tess->alloc.memalloc( tess->alloc.userData,
+	tess->vertices = (TESSreal*)tess->alloc->memalloc( tess->alloc->userData,
 													 sizeof(TESSreal) * tess->vertexCount * vertexSize );
 	if (!tess->vertices)
 	{
@@ -650,7 +655,7 @@ void OutputPolymesh( TESStesselator *tess, TESSmesh *mesh, int elementType, int 
 		return;
 	}
 
-	tess->vertexIndices = (TESSindex*)tess->alloc.memalloc( tess->alloc.userData,
+	tess->vertexIndices = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
 														    sizeof(TESSindex) * tess->vertexCount );
 	if (!tess->vertexIndices)
 	{
@@ -741,7 +746,7 @@ void OutputContours( TESStesselator *tess, TESSmesh *mesh, int vertexSize )
 		++tess->elementCount;
 	}
 
-	tess->elements = (TESSindex*)tess->alloc.memalloc( tess->alloc.userData,
+	tess->elements = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
 													  sizeof(TESSindex) * tess->elementCount * 2 );
 	if (!tess->elements)
 	{
@@ -749,7 +754,7 @@ void OutputContours( TESStesselator *tess, TESSmesh *mesh, int vertexSize )
 		return;
 	}
 	
-	tess->vertices = (TESSreal*)tess->alloc.memalloc( tess->alloc.userData,
+	tess->vertices = (TESSreal*)tess->alloc->memalloc( tess->alloc->userData,
 													  sizeof(TESSreal) * tess->vertexCount * vertexSize );
 	if (!tess->vertices)
 	{
@@ -757,7 +762,7 @@ void OutputContours( TESStesselator *tess, TESSmesh *mesh, int vertexSize )
 		return;
 	}
 
-	tess->vertexIndices = (TESSindex*)tess->alloc.memalloc( tess->alloc.userData,
+	tess->vertexIndices = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
 														    sizeof(TESSindex) * tess->vertexCount );
 	if (!tess->vertexIndices)
 	{
@@ -800,7 +805,7 @@ void OutputContours( TESStesselator *tess, TESSmesh *mesh, int vertexSize )
 void tessBeginContour( TESStesselator *tess )
 {
     if ( tess->mesh == NULL )
-        tess->mesh = tessMeshNewMesh( &tess->alloc );
+        tess->mesh = tessMeshNewMesh( tess->alloc );
     if ( tess->mesh == NULL ) {
         tess->outOfMemory = 1;
         return;
@@ -877,15 +882,15 @@ int tessTesselate( TESStesselator *tess, int windingRule, int elementType,
 	int rc = 1;
 
 	if (tess->vertices != NULL) {
-		tess->alloc.memfree( tess->alloc.userData, tess->vertices );
+		tess->alloc->memfree( tess->alloc->userData, tess->vertices );
 		tess->vertices = 0;
 	}
 	if (tess->elements != NULL) {
-		tess->alloc.memfree( tess->alloc.userData, tess->elements );
+		tess->alloc->memfree( tess->alloc->userData, tess->elements );
 		tess->elements = 0;
 	}
 	if (tess->vertexIndices != NULL) {
-		tess->alloc.memfree( tess->alloc.userData, tess->vertexIndices );
+		tess->alloc->memfree( tess->alloc->userData, tess->vertexIndices );
 		tess->vertexIndices = 0;
 	}
 
@@ -953,7 +958,7 @@ int tessTesselate( TESStesselator *tess, int windingRule, int elementType,
 		OutputPolymesh( tess, mesh, elementType, polySize, vertexSize );     /* output polygons */
 	}
 
-	tessMeshDeleteMesh( &tess->alloc, mesh );
+	tessMeshDeleteMesh( tess->alloc, mesh );
 	tess->mesh = NULL;
 
 	if (tess->outOfMemory)

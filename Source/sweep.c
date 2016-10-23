@@ -696,9 +696,9 @@ static int CheckForIntersect( TESStesselator *tess, ActiveRegion *regUp )
 	if ( !tessMeshSplice( tess->mesh, eLo->Oprev, eUp ) ) longjmp(tess->env,1);
 	eUp->Org->s = isect.s;
 	eUp->Org->t = isect.t;
-	eUp->Org->pqHandle = pqInsert( &tess->alloc, tess->pq, eUp->Org );
+	eUp->Org->pqHandle = pqInsert( tess->alloc, tess->pq, eUp->Org );
 	if (eUp->Org->pqHandle == INV_HANDLE) {
-		pqDeletePriorityQ( &tess->alloc, tess->pq );
+		pqDeletePriorityQ( tess->alloc, tess->pq );
 		tess->pq = NULL;
 		longjmp(tess->env,1);
 	}
@@ -1115,7 +1115,7 @@ static void InitEdgeDict( TESStesselator *tess )
 	TESSreal w, h;
 	TESSreal smin, smax, tmin, tmax;
 
-	tess->dict = dictNewDict( &tess->alloc, tess, (int (*)(void *, DictKey, DictKey)) EdgeLeq );
+	tess->dict = dictNewDict( tess->alloc, tess, (int (*)(void *, DictKey, DictKey)) EdgeLeq );
 	if (tess->dict == NULL) longjmp(tess->env,1);
 
 	w = (tess->bmax[0] - tess->bmin[0]);
@@ -1153,7 +1153,7 @@ static void DoneEdgeDict( TESStesselator *tess )
 		DeleteRegion( tess, reg );
 		/*    tessMeshDelete( reg->eUp );*/
 	}
-	dictDeleteDict( &tess->alloc, tess->dict );
+	dictDeleteDict( tess->alloc, tess->dict );
 }
 
 
@@ -1206,19 +1206,19 @@ static int InitPriorityQ( TESStesselator *tess )
 		vertexCount++;
 	}
 	/* Make sure there is enough space for sentinels. */
-	vertexCount += MAX( 8, tess->alloc.extraVertices );
+	vertexCount += MAX( 8, tess->alloc->extraVertices );
 	
-	pq = tess->pq = pqNewPriorityQ( &tess->alloc, vertexCount, (int (*)(PQkey, PQkey)) tesvertLeq );
+	pq = tess->pq = pqNewPriorityQ( tess->alloc, vertexCount, (int (*)(PQkey, PQkey)) tesvertLeq );
 	if (pq == NULL) return 0;
 
 	vHead = &tess->mesh->vHead;
 	for( v = vHead->next; v != vHead; v = v->next ) {
-		v->pqHandle = pqInsert( &tess->alloc, pq, v );
+		v->pqHandle = pqInsert( tess->alloc, pq, v );
 		if (v->pqHandle == INV_HANDLE)
 			break;
 	}
-	if (v != vHead || !pqInit( &tess->alloc, pq ) ) {
-		pqDeletePriorityQ( &tess->alloc, tess->pq );
+	if (v != vHead || !pqInit( tess->alloc, pq ) ) {
+		pqDeletePriorityQ( tess->alloc, tess->pq );
 		tess->pq = NULL;
 		return 0;
 	}
@@ -1229,7 +1229,7 @@ static int InitPriorityQ( TESStesselator *tess )
 
 static void DonePriorityQ( TESStesselator *tess )
 {
-	pqDeletePriorityQ( &tess->alloc, tess->pq );
+	pqDeletePriorityQ( tess->alloc, tess->pq );
 }
 
 

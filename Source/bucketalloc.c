@@ -33,13 +33,12 @@
 #include <stdlib.h>
 #include "../Include/tesselator.h"
 
-//#define CHECK_BOUNDS
-
 typedef struct BucketAlloc BucketAlloc;
 typedef struct Bucket Bucket;
 
 struct Bucket
 {
+    Bucket *prev;
 	Bucket *next;
 };
 
@@ -47,46 +46,50 @@ struct BucketAlloc
 {
 	void *freelist;
 	Bucket *buckets;
+    void *initMark;
+    size_t bucketByteSize;
 	unsigned int itemSize;
 	unsigned int bucketSize;
-	const char *name;
 	TESSalloc* alloc;
+    
+    BucketAlloc *next;
 };
+
+static char bAutomaticCleanup = 1;
+void disableAutomaticCleanup()
+{
+    bAutomaticCleanup = 0;
+}
 
 static int CreateBucket( struct BucketAlloc* ba )
 {
-	size_t size;
-	Bucket* bucket;
-	void* freelist;
-	unsigned char* head;
-	unsigned char* it;
+    Bucket* bucket;
+    unsigned char* head;
+    if (ba->buckets && ba->buckets->prev)
+    {
+        bucket = ba->buckets->prev;
+    }
+    else if (ba->buckets && !ba->initMark)
+    {
+        bucket = ba->buckets;
+    }
+    else
+    {
+        // Allocate memory for the bucket
+        bucket = (Bucket*)ba->alloc->memalloc( ba->alloc->userData, ba->bucketByteSize );
+        if ( !bucket )
+            return 0;
 
-	// Allocate memory for the bucket
-	size = sizeof(Bucket) + ba->itemSize * ba->bucketSize;
-	bucket = (Bucket*)ba->alloc->memalloc( ba->alloc->userData, size );
-	if ( !bucket )
-		return 0;
-	bucket->next = 0;
-
-	// Add the bucket into the list of buckets.
-	bucket->next = ba->buckets;
+        // Add the bucket into the list of buckets.
+        if (ba->buckets) ba->buckets->prev = bucket;
+        bucket->prev = 0;
+        bucket->next = ba->buckets;
+    }
+    
 	ba->buckets = bucket;
-
-	// Add new items to the free list.
-	freelist = ba->freelist;
 	head = (unsigned char*)bucket + sizeof(Bucket);
-	it = head + ba->itemSize * ba->bucketSize;
-	do
-	{
-		it -= ba->itemSize;
-		// Store pointer to next free item.
-		*((void**)it) = freelist;
-		// Pointer to next location containing a free item.
-		freelist = (void*)it;
-	}
-	while ( it != head );
-	// Update pointer to next location containing a free item.
-	ba->freelist = (void*)it;
+    ba->freelist = head;
+    ba->initMark = head;
 
 	return 1;
 }
@@ -99,23 +102,52 @@ static void *NextFreeItem( struct BucketAlloc *ba )
 struct BucketAlloc* createBucketAlloc( TESSalloc* alloc, const char* name,
 									  unsigned int itemSize, unsigned int bucketSize )
 {
-	BucketAlloc* ba = (BucketAlloc*)alloc->memalloc( alloc->userData, sizeof(BucketAlloc) );
+    BucketAlloc *ba;
+    BucketAlloc *prevBa;
+    if ( itemSize < sizeof(void*) )
+    {
+        itemSize = sizeof(void*);
+    }
+    
+    for (ba = (BucketAlloc*)alloc->freeAllocs, prevBa = 0;
+         ba != 0;
+         ba = ba->next)
+    {
+        if (ba->itemSize == itemSize && ba->itemSize == itemSize && ba->bucketSize == bucketSize)
+            break;
+        prevBa = ba;
+    }
 
-	ba->alloc = alloc;
-	ba->name = name;
-	ba->itemSize = itemSize;
-	if ( ba->itemSize < sizeof(void*) )
-		ba->itemSize = sizeof(void*);
-	ba->bucketSize = bucketSize;
-	ba->freelist = 0;
-	ba->buckets = 0;
+    if (ba)
+    {
+        if (prevBa)
+        {
+            prevBa->next = ba->next;
+        }
+        else
+        {
+            alloc->freeAllocs = ba->next;
+        }
+        ba->next = 0;
+    }
+    else
+    {
+        ba = (BucketAlloc*)alloc->memalloc( alloc->userData, sizeof(BucketAlloc) );
+        if (!ba)
+        {
+            return 0;
+        }
 
-	if ( !CreateBucket( ba ) )
-	{
-		alloc->memfree( alloc->userData, ba );
-		return 0;
-	}
-
+        ba->alloc = alloc;
+        ba->itemSize = itemSize;
+        ba->bucketSize = bucketSize;
+        ba->bucketByteSize = sizeof(Bucket) + ba->itemSize * ba->bucketSize;
+        ba->freelist = 0;
+        ba->buckets = 0;
+        ba->initMark = 0;
+        ba->next = 0;
+    }
+    
 	return ba;
 }
 
@@ -124,7 +156,7 @@ void* bucketAlloc( struct BucketAlloc *ba )
 	void *it;
 
 	// If running out of memory, allocate new bucket and update the freelist.
-	if ( !ba->freelist || !NextFreeItem( ba ) )
+	if ( !ba->freelist )
 	{
 		if ( !CreateBucket( ba ) )
 			return 0;
@@ -132,60 +164,72 @@ void* bucketAlloc( struct BucketAlloc *ba )
 
 	// Pop item from in front of the free list.
 	it = ba->freelist;
-	ba->freelist = NextFreeItem( ba );
-
+    if (it == ba->initMark)
+    {
+        ba->initMark = (char*)ba->initMark + ba->itemSize;
+        if (ba->initMark == (char*)ba->buckets + ba->bucketByteSize )
+        {
+            ba->freelist = NULL;
+        }
+        else
+        {
+            ba->freelist = ba->initMark;
+        }
+    }
+    else
+    {
+        ba->freelist = NextFreeItem( ba );
+    }
 	return it;
 }
 
 void bucketFree( struct BucketAlloc *ba, void *ptr )
 {
-#ifdef CHECK_BOUNDS
-	int inBounds = 0;
-	Bucket *bucket;
-
-	// Check that the pointer is allocated with this allocator.
-	bucket = ba->buckets;
-	while ( bucket )
-	{
-		void *bucketMin = (void*)((unsigned char*)bucket + sizeof(Bucket));
-		void *bucketMax = (void*)((unsigned char*)bucket + sizeof(Bucket) + ba->itemSize * ba->bucketSize);
-		if ( ptr >= bucketMin && ptr < bucketMax )
-		{
-			inBounds = 1;
-			break;
-		}
-		bucket = bucket->next;			
-	}		
-
-	if ( inBounds )
-	{
-		// Add the node in front of the free list.
-		*(void**)ptr = ba->freelist;
-		ba->freelist = ptr;
-	}
-	else
-	{
-		printf("ERROR! pointer 0x%p does not belong to allocator '%s'\n", ba->name);
-	}
-#else
 	// Add the node in front of the free list.
 	*(void**)ptr = ba->freelist;
 	ba->freelist = ptr;
-#endif
 }
 
 void deleteBucketAlloc( struct BucketAlloc *ba )
 {
-	TESSalloc* alloc = ba->alloc;
-	Bucket *bucket = ba->buckets;
-	Bucket *next;
-	while ( bucket )
-	{
-		next = bucket->next;
-		alloc->memfree( alloc->userData, bucket );
-		bucket = next;
-	}		
+    if (ba->buckets)
+    {
+        while (ba->buckets->next)
+        {
+            ba->buckets = ba->buckets->next;
+        }
+    }
 	ba->freelist = 0;
-	ba->buckets = 0;
-	alloc->memfree( alloc->userData, ba );
+    ba->initMark = 0;
+    
+    ba->next = (BucketAlloc*)ba->alloc->freeAllocs;
+    ba->alloc->freeAllocs = ba;
+    
+    if (bAutomaticCleanup)
+    {
+        cleanupAlloc(ba->alloc);
+    }
+}
+
+void cleanupAlloc( struct TESSalloc* alloc )
+{
+    BucketAlloc *ba;
+    BucketAlloc *nextBa;
+    Bucket *bucket;
+    Bucket *next;
+    for (ba = (BucketAlloc*)alloc->freeAllocs;
+         ba != 0;
+         ba = nextBa)
+    {
+        bucket = ba->buckets;
+        while (bucket)
+        {
+            next = bucket->next;
+            alloc->memfree(alloc->userData, bucket);
+            bucket = next;
+        }
+        nextBa = ba->next;
+        alloc->memfree(alloc->userData, ba);
+    }
+    alloc->freeAllocs = 0;
 }
