@@ -1054,7 +1054,7 @@ int tessTesselate( TESStesselator *tess, int windingRule, int elementType,
 	} else {
 		rc = tessMeshTessellateInterior( mesh ); 
 		if (elementType == TESS_CONSTRAINED_DELAUNAY_TRIANGLES) {
-			rc = tessMeshRefineDelaunay( mesh, &tess->alloc );
+			rc = tessMeshRefineDelaunay( mesh, tess->alloc );
 			elementType = TESS_POLYGONS;
 			polySize = 3;
 		}
