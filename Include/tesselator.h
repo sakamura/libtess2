@@ -158,9 +158,9 @@ struct TESSalloc
 	int extraVertices;			// Number of extra vertices allocated for the priority queue.
     void* freeAllocs;           // Saved previous allocators
 };
-void disableAutomaticCleanup();
-void cleanupAlloc( struct TESSalloc* alloc );     // Once done with this allocator, free up blocks used by the TESSalloc
-void cleanupDefaultAlloc();
+void tessDisableAutomaticCleanup();
+void tessCleanupAlloc( struct TESSalloc* alloc );     // Once done with this allocator, free up blocks used by the TESSalloc
+void tessCleanupDefaultAlloc();
 
 //
 // Example use:

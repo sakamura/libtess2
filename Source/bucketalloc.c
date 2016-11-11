@@ -56,7 +56,7 @@ struct BucketAlloc
 };
 
 static char bAutomaticCleanup = 1;
-void disableAutomaticCleanup()
+void tessDisableAutomaticCleanup()
 {
     bAutomaticCleanup = 0;
 }
@@ -207,11 +207,11 @@ void deleteBucketAlloc( struct BucketAlloc *ba )
     
     if (bAutomaticCleanup)
     {
-        cleanupAlloc(ba->alloc);
+        tessCleanupAlloc(ba->alloc);
     }
 }
 
-void cleanupAlloc( struct TESSalloc* alloc )
+void tessCleanupAlloc( struct TESSalloc* alloc )
 {
     BucketAlloc *ba;
     BucketAlloc *nextBa;

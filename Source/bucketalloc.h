@@ -43,8 +43,8 @@ struct BucketAlloc *createBucketAlloc( TESSalloc* alloc, const char *name,
 void *bucketAlloc( struct BucketAlloc *ba);
 void bucketFree( struct BucketAlloc *ba, void *ptr );
 void deleteBucketAlloc( struct BucketAlloc *ba );
-void cleanupAlloc( struct TESSalloc* alloc );
-void disableAutomaticCleanup();
+void tessCleanupAlloc( struct TESSalloc* alloc );
+void tessDisableAutomaticCleanup();
 
 #ifdef __cplusplus
 };

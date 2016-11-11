@@ -587,9 +587,9 @@ static TESSalloc defaulAlloc =
 	0,
     0
 };
-void cleanupDefaultAlloc()
+void tessCleanupDefaultAlloc()
 {
-    cleanupAlloc(&defaulAlloc);
+    tessCleanupAlloc(&defaulAlloc);
 }
 
 TESStesselator* tessNewTess( TESSalloc* alloc )
