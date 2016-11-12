@@ -32,22 +32,16 @@
 #ifndef MEMALLOC_H
 #define MEMALLOC_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "tesselator.h"
-	
-struct BucketAlloc *createBucketAlloc( TESSalloc* alloc, const char *name,
-									  unsigned int itemSize, unsigned int bucketSize );
-void *bucketAlloc( struct BucketAlloc *ba);
-void bucketFree( struct BucketAlloc *ba, void *ptr );
-void deleteBucketAlloc( struct BucketAlloc *ba );
-void tessCleanupAlloc( struct TESSalloc* alloc );
-void tessDisableAutomaticCleanup();
 
-#ifdef __cplusplus
-};
-#endif
-
+namespace Tess
+{
+    struct BucketAlloc *createBucketAlloc( TESSalloc* alloc, const char *name,
+                                          unsigned int itemSize, unsigned int bucketSize );
+    void *bucketAlloc( struct BucketAlloc *ba);
+    void bucketFree( struct BucketAlloc *ba, void *ptr );
+    void deleteBucketAlloc( struct BucketAlloc *ba );
+    void tessCleanupAlloc( struct TESSalloc* alloc );
+    void tessDisableAutomaticCleanup();
+}
 #endif

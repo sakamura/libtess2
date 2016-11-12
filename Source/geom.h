@@ -34,45 +34,37 @@
 
 #include "mesh.h"
 
-#ifdef NO_BRANCH_CONDITIONS
-/* MIPS architecture has special instructions to evaluate boolean
-* conditions -- more efficient than branching, IF you can get the
-* compiler to generate the right instructions (SGI compiler doesn't)
-*/
-#define VertEq(u,v)	(((u)->s == (v)->s) & ((u)->t == (v)->t))
-#define VertLeq(u,v)	(((u)->s < (v)->s) | \
-	((u)->s == (v)->s & (u)->t <= (v)->t))
-#else
+namespace Tess
+{
 #define VertEq(u,v) ((u)->s == (v)->s && (u)->t == (v)->t)
 #define VertLeq(u,v) (((u)->s < (v)->s) || ((u)->s == (v)->s && (u)->t <= (v)->t))
-#endif
-
 #define EdgeEval(u,v,w)	tesedgeEval(u,v,w)
 #define EdgeSign(u,v,w)	tesedgeSign(u,v,w)
-
-/* Versions of VertLeq, EdgeSign, EdgeEval with s and t transposed. */
-
+    
+    /* Versions of VertLeq, EdgeSign, EdgeEval with s and t transposed. */
+    
 #define TransLeq(u,v) (((u)->t < (v)->t) || ((u)->t == (v)->t && (u)->s <= (v)->s))
 #define TransEval(u,v,w) testransEval(u,v,w)
 #define TransSign(u,v,w) testransSign(u,v,w)
-
-
+    
+    
 #define EdgeGoesLeft(e) VertLeq( (e)->Dst, (e)->Org )
 #define EdgeGoesRight(e) VertLeq( (e)->Org, (e)->Dst )
 #define EdgeIsInternal(e) e->Rface && e->Rface->inside
-
+    
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #define VertL1dist(u,v) (ABS(u->s - v->s) + ABS(u->t - v->t))
-
+    
 #define VertCCW(u,v,w) tesvertCCW(u,v,w)
-
-int tesvertLeq( TESSvertex *u, TESSvertex *v );
-TESSreal	tesedgeEval( TESSvertex *u, TESSvertex *v, TESSvertex *w );
-TESSreal	tesedgeSign( TESSvertex *u, TESSvertex *v, TESSvertex *w );
-TESSreal	testransEval( TESSvertex *u, TESSvertex *v, TESSvertex *w );
-TESSreal	testransSign( TESSvertex *u, TESSvertex *v, TESSvertex *w );
-int tesvertCCW( TESSvertex *u, TESSvertex *v, TESSvertex *w );
-void tesedgeIntersect( TESSvertex *o1, TESSvertex *d1, TESSvertex *o2, TESSvertex *d2, TESSvertex *v );
-int tesedgeIsLocallyDelaunay( TESShalfEdge *e );
+    
+    int tesvertLeq( TESSvertex *u, TESSvertex *v );
+    TESSreal	tesedgeEval( TESSvertex *u, TESSvertex *v, TESSvertex *w );
+    TESSreal	tesedgeSign( TESSvertex *u, TESSvertex *v, TESSvertex *w );
+    TESSreal	testransEval( TESSvertex *u, TESSvertex *v, TESSvertex *w );
+    TESSreal	testransSign( TESSvertex *u, TESSvertex *v, TESSvertex *w );
+    int tesvertCCW( TESSvertex *u, TESSvertex *v, TESSvertex *w );
+    void tesedgeIntersect( TESSvertex *o1, TESSvertex *d1, TESSvertex *o2, TESSvertex *d2, TESSvertex *v );
+    int tesedgeIsLocallyDelaunay( TESShalfEdge *e );
+}
 
 #endif

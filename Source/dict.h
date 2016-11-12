@@ -32,43 +32,46 @@
 #ifndef DICT_LIST_H
 #define DICT_LIST_H
 
-typedef void *DictKey;
-typedef struct Dict Dict;
-typedef struct DictNode DictNode;
-
-Dict *dictNewDict( TESSalloc* alloc, void *frame, int (*leq)(void *frame, DictKey key1, DictKey key2) );
-
-void dictDeleteDict( TESSalloc* alloc, Dict *dict );
-
-/* Search returns the node with the smallest key greater than or equal
-* to the given key.  If there is no such key, returns a node whose
-* key is NULL.  Similarly, Succ(Max(d)) has a NULL key, etc.
-*/
-DictNode *dictSearch( Dict *dict, DictKey key );
-DictNode *dictInsertBefore( Dict *dict, DictNode *node, DictKey key );
-void dictDelete( Dict *dict, DictNode *node );
-
+namespace Tess
+{
+    typedef void *DictKey;
+    typedef struct Dict Dict;
+    typedef struct DictNode DictNode;
+    
+    Dict *dictNewDict( TESSalloc* alloc, void *frame, int (*leq)(void *frame, DictKey key1, DictKey key2) );
+    
+    void dictDeleteDict( TESSalloc* alloc, Dict *dict );
+    
+    /* Search returns the node with the smallest key greater than or equal
+     * to the given key.  If there is no such key, returns a node whose
+     * key is NULL.  Similarly, Succ(Max(d)) has a NULL key, etc.
+     */
+    DictNode *dictSearch( Dict *dict, DictKey key );
+    DictNode *dictInsertBefore( Dict *dict, DictNode *node, DictKey key );
+    void dictDelete( Dict *dict, DictNode *node );
+    
 #define dictKey(n)	((n)->key)
 #define dictSucc(n)	((n)->next)
 #define dictPred(n)	((n)->prev)
 #define dictMin(d)	((d)->head.next)
 #define dictMax(d)	((d)->head.prev)
 #define dictInsert(d,k) (dictInsertBefore((d),&(d)->head,(k)))
-
-
-/*** Private data structures ***/
-
-struct DictNode {
-	DictKey	key;
-	DictNode *next;
-	DictNode *prev;
-};
-
-struct Dict {
-	DictNode head;
-	void *frame;
-	struct BucketAlloc *nodePool;
-	int (*leq)(void *frame, DictKey key1, DictKey key2);
-};
+    
+    
+    /*** Private data structures ***/
+    
+    struct DictNode {
+        DictKey	key;
+        DictNode *next;
+        DictNode *prev;
+    };
+    
+    struct Dict {
+        DictNode head;
+        void *frame;
+        struct BucketAlloc *nodePool;
+        int (*leq)(void *frame, DictKey key1, DictKey key2);
+    };
+}
 
 #endif

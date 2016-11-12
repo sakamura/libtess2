@@ -39,54 +39,49 @@
 #include "priorityq.h"
 #include "../Include/tesselator.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//typedef struct TESStesselator TESStesselator;
-
-struct TESStesselator {
-
-	/*** state needed for collecting the input data ***/
-	TESSmesh	*mesh;		/* stores the input contours, and eventually
-						the tessellation itself */
-	int outOfMemory;
-
-	/*** state needed for projecting onto the sweep plane ***/
-
-	TESSreal normal[3];	/* user-specified normal (if provided) */
-	TESSreal sUnit[3];	/* unit vector in s-direction (debugging) */
-	TESSreal tUnit[3];	/* unit vector in t-direction (debugging) */
-
-	TESSreal bmin[2];
-	TESSreal bmax[2];
-
-	/*** state needed for the line sweep ***/
-	int	windingRule;	/* rule for determining polygon interior */
-
-	Dict *dict;		/* edge dictionary for sweep line */
-	PriorityQ *pq;		/* priority queue of vertex events */
-	TESSvertex *event;		/* current sweep event being processed */
-
-	struct BucketAlloc* regionPool;
-
-	TESSindex vertexIndexCounter;
-	
-	TESSreal *vertices;
-	TESSindex *vertexIndices;
-	int vertexCount;
-	TESSindex *elements;
-	int elementCount;
-
-	TESSalloc* alloc;
-	
-	jmp_buf env;			/* place to jump to when memAllocs fail */
+namespace Tess
+{
+    //typedef struct TESStesselator TESStesselator;
     
-    TESShalfEdge *e;
-};
-
-#ifdef __cplusplus
-};
-#endif
+    struct TESStesselator {
+        
+        /*** state needed for collecting the input data ***/
+        TESSmesh	*mesh;		/* stores the input contours, and eventually
+                                 the tessellation itself */
+        int outOfMemory;
+        
+        /*** state needed for projecting onto the sweep plane ***/
+        
+        TESSreal normal[3];	/* user-specified normal (if provided) */
+        TESSreal sUnit[3];	/* unit vector in s-direction (debugging) */
+        TESSreal tUnit[3];	/* unit vector in t-direction (debugging) */
+        
+        TESSreal bmin[2];
+        TESSreal bmax[2];
+        
+        /*** state needed for the line sweep ***/
+        int	windingRule;	/* rule for determining polygon interior */
+        
+        Dict *dict;		/* edge dictionary for sweep line */
+        PriorityQ *pq;		/* priority queue of vertex events */
+        TESSvertex *event;		/* current sweep event being processed */
+        
+        struct BucketAlloc* regionPool;
+        
+        TESSindex vertexIndexCounter;
+        
+        TESSreal *vertices;
+        TESSindex *vertexIndices;
+        int vertexCount;
+        TESSindex *elements;
+        int elementCount;
+        
+        TESSalloc* alloc;
+        
+        jmp_buf env;			/* place to jump to when memAllocs fail */
+        
+        TESShalfEdge *e;
+    };
+}
 
 #endif

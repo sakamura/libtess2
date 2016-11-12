@@ -32,73 +32,76 @@
 #ifndef PRIORITYQ_H
 #define PRIORITYQ_H
 
-/* The basic operations are insertion of a new key (pqInsert),
-* and examination/extraction of a key whose value is minimum
-* (pqMinimum/pqExtractMin).  Deletion is also allowed (pqDelete);
-* for this purpose pqInsert returns a "handle" which is supplied
-* as the argument.
-*
-* An initial heap may be created efficiently by calling pqInsert
-* repeatedly, then calling pqInit.  In any case pqInit must be called
-* before any operations other than pqInsert are used.
-*
-* If the heap is empty, pqMinimum/pqExtractMin will return a NULL key.
-* This may also be tested with pqIsEmpty.
-*/
-
-/* Since we support deletion the data structure is a little more
-* complicated than an ordinary heap.  "nodes" is the heap itself;
-* active nodes are stored in the range 1..pq->size.  When the
-* heap exceeds its allocated size (pq->max), its size doubles.
-* The children of node i are nodes 2i and 2i+1.
-*
-* Each node stores an index into an array "handles".  Each handle
-* stores a key, plus a pointer back to the node which currently
-* represents that key (ie. nodes[handles[i].node].handle == i).
-*/
-
-typedef void *PQkey;
-typedef int PQhandle;
-typedef struct PriorityQHeap PriorityQHeap;
-
+namespace Tess
+{
+    /* The basic operations are insertion of a new key (pqInsert),
+     * and examination/extraction of a key whose value is minimum
+     * (pqMinimum/pqExtractMin).  Deletion is also allowed (pqDelete);
+     * for this purpose pqInsert returns a "handle" which is supplied
+     * as the argument.
+     *
+     * An initial heap may be created efficiently by calling pqInsert
+     * repeatedly, then calling pqInit.  In any case pqInit must be called
+     * before any operations other than pqInsert are used.
+     *
+     * If the heap is empty, pqMinimum/pqExtractMin will return a NULL key.
+     * This may also be tested with pqIsEmpty.
+     */
+    
+    /* Since we support deletion the data structure is a little more
+     * complicated than an ordinary heap.  "nodes" is the heap itself;
+     * active nodes are stored in the range 1..pq->size.  When the
+     * heap exceeds its allocated size (pq->max), its size doubles.
+     * The children of node i are nodes 2i and 2i+1.
+     *
+     * Each node stores an index into an array "handles".  Each handle
+     * stores a key, plus a pointer back to the node which currently
+     * represents that key (ie. nodes[handles[i].node].handle == i).
+     */
+    
+    typedef void *PQkey;
+    typedef int PQhandle;
+    typedef struct PriorityQHeap PriorityQHeap;
+    
 #define INV_HANDLE 0x0fffffff
-
-typedef struct { PQhandle handle; } PQnode;
-typedef struct { PQkey key; PQhandle node; } PQhandleElem;
-
-struct PriorityQHeap {
-
-	PQnode *nodes;
-	PQhandleElem *handles;
-	int size, max;
-	PQhandle freeList;
-	int initialized;
-
-	int (*leq)(PQkey key1, PQkey key2);
-};
-
-typedef struct PriorityQ PriorityQ;
-
-struct PriorityQ {
-	PriorityQHeap *heap;
-
-	PQkey *keys;
-	PQkey **order;
-	PQhandle size, max;
-	int initialized;
-
-	int (*leq)(PQkey key1, PQkey key2);
-};
-
-PriorityQ *pqNewPriorityQ( TESSalloc* alloc, int size, int (*leq)(PQkey key1, PQkey key2) );
-void pqDeletePriorityQ( TESSalloc* alloc, PriorityQ *pq );
-
-int pqInit( TESSalloc* alloc, PriorityQ *pq );
-PQhandle pqInsert( TESSalloc* alloc, PriorityQ *pq, PQkey key );
-PQkey pqExtractMin( PriorityQ *pq );
-void pqDelete( PriorityQ *pq, PQhandle handle );
-
-PQkey pqMinimum( PriorityQ *pq );
-int pqIsEmpty( PriorityQ *pq );
+    
+    typedef struct { PQhandle handle; } PQnode;
+    typedef struct { PQkey key; PQhandle node; } PQhandleElem;
+    
+    struct PriorityQHeap {
+        
+        PQnode *nodes;
+        PQhandleElem *handles;
+        int size, max;
+        PQhandle freeList;
+        int initialized;
+        
+        int (*leq)(PQkey key1, PQkey key2);
+    };
+    
+    typedef struct PriorityQ PriorityQ;
+    
+    struct PriorityQ {
+        PriorityQHeap *heap;
+        
+        PQkey *keys;
+        PQkey **order;
+        PQhandle size, max;
+        int initialized;
+        
+        int (*leq)(PQkey key1, PQkey key2);
+    };
+    
+    PriorityQ *pqNewPriorityQ( TESSalloc* alloc, int size, int (*leq)(PQkey key1, PQkey key2) );
+    void pqDeletePriorityQ( TESSalloc* alloc, PriorityQ *pq );
+    
+    int pqInit( TESSalloc* alloc, PriorityQ *pq );
+    PQhandle pqInsert( TESSalloc* alloc, PriorityQ *pq, PQkey key );
+    PQkey pqExtractMin( PriorityQ *pq );
+    void pqDelete( PriorityQ *pq, PQhandle handle );
+    
+    PQkey pqMinimum( PriorityQ *pq );
+    int pqIsEmpty( PriorityQ *pq );
+}
 
 #endif
