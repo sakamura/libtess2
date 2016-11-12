@@ -79,7 +79,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
      * to the fan is a simple orientation test.  By making the fan as large
      * as possible, we restore the invariant (check it yourself).
      */
-    int tessMeshTessellateMonoRegion( TESSmesh *mesh, TESSface *face )
+    void tessMeshTessellateMonoRegion( TESSmesh *mesh, TESSface *face )
     {
         TESShalfEdge *up, *lo;
         
@@ -106,7 +106,6 @@ eDst->Sym->winding += eSrc->Sym->winding)
                 while( lo->Lnext != up && (EdgeGoesLeft( lo->Lnext )
                                            || EdgeSign( lo->Org, lo->Dst, lo->Lnext->Dst ) <= 0 )) {
                     TESShalfEdge *tempHalfEdge= tessMeshConnect( mesh, lo->Lnext, lo );
-                    if (tempHalfEdge == NULL) return 0;
                     lo = tempHalfEdge->Sym;
                 }
                 lo = lo->Lprev;
@@ -115,7 +114,6 @@ eDst->Sym->winding += eSrc->Sym->winding)
                 while( lo->Lnext != up && (EdgeGoesRight( up->Lprev )
                                            || EdgeSign( up->Dst, up->Org, up->Lprev->Org ) >= 0 )) {
                     TESShalfEdge *tempHalfEdge= tessMeshConnect( mesh, up, up->Lprev );
-                    if (tempHalfEdge == NULL) return 0;
                     up = tempHalfEdge->Sym;
                 }
                 up = up->Lnext;
@@ -128,18 +126,15 @@ eDst->Sym->winding += eSrc->Sym->winding)
         assert( lo->Lnext != up );
         while( lo->Lnext->Lnext != up ) {
             TESShalfEdge *tempHalfEdge= tessMeshConnect( mesh, lo->Lnext, lo );
-            if (tempHalfEdge == NULL) return 0;
             lo = tempHalfEdge->Sym;
         }
-        
-        return 1;
     }
     
     /* tessMeshTessellateInterior( mesh ) tessellates each region of
      * the mesh which is marked "inside" the polygon.  Each such region
      * must be monotone.
      */
-    int tessMeshTessellateInterior( TESSmesh *mesh )
+    void tessMeshTessellateInterior( TESSmesh *mesh )
     {
         TESSface *f, *next;
         
@@ -148,10 +143,9 @@ eDst->Sym->winding += eSrc->Sym->winding)
             /* Make sure we don''t try to tessellate the new triangles. */
             next = f->next;
             if( f->inside ) {
-                if ( !tessMeshTessellateMonoRegion( mesh, f ) ) return 0;
+                tessMeshTessellateMonoRegion( mesh, f );
             }
         }
-        return 1;
     }
     
     
@@ -210,7 +204,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
      Starting with a valid triangulation, uses the Edge Flip algorithm to
      refine the triangulation into a Constrained Delaunay Triangulation.
      */
-    int tessMeshRefineDelaunay( TESSmesh *mesh, TESSalloc *alloc )
+    void tessMeshRefineDelaunay( TESSmesh *mesh, TESSalloc *alloc )
     {
         /* At this point, we have a valid, but not optimal, triangulation.
          We refine the triangulation using the Edge Flip algorithm */
@@ -260,8 +254,6 @@ eDst->Sym->winding += eSrc->Sym->winding)
         }
         
         stackDelete(&stack);
-        
-        return 1;
     }
     
     
@@ -292,7 +284,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
      * If keepOnlyBoundary is TRUE, it also deletes all edges which do not
      * separate an interior region from an exterior one.
      */
-    int tessMeshSetWindingNumber( TESSmesh *mesh, int value,
+    void tessMeshSetWindingNumber( TESSmesh *mesh, int value,
                                  int keepOnlyBoundary )
     {
         TESShalfEdge *e, *eNext;
@@ -309,11 +301,10 @@ eDst->Sym->winding += eSrc->Sym->winding)
                 if( ! keepOnlyBoundary ) {
                     e->winding = 0;
                 } else {
-                    if ( !tessMeshDelete( mesh, e ) ) return 0;
+                    tessMeshDelete( mesh, e );
                 }
             }
         }
-        return 1;
     }
     
     void* heapAlloc( void* userData, size_t size )
@@ -398,7 +389,6 @@ eDst->Sym->winding += eSrc->Sym->winding)
         // Initialize to begin polygon.
         tess->mesh = NULL;
         
-        tess->outOfMemory = 0;
         tess->vertexIndexCounter = 0;
         
         tess->vertices = 0;
@@ -462,11 +452,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
         // Try to merge as many polygons as possible
         if (polySize > 3)
         {
-            if (!tessMeshMergeConvexFaces( mesh, polySize ))
-            {
-                tess->outOfMemory = 1;
-                return;
-            }
+            tessMeshMergeConvexFaces( mesh, polySize );
         }
         
         // Mark unused
@@ -505,28 +491,11 @@ eDst->Sym->winding += eSrc->Sym->winding)
             maxFaceCount *= 2;
         tess->elements = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
                                                            sizeof(TESSindex) * maxFaceCount * polySize );
-        if (!tess->elements)
-        {
-            tess->outOfMemory = 1;
-            return;
-        }
-        
         tess->vertexCount = maxVertexCount;
         tess->vertices = (TESSreal*)tess->alloc->memalloc( tess->alloc->userData,
                                                           sizeof(TESSreal) * tess->vertexCount * 2 );
-        if (!tess->vertices)
-        {
-            tess->outOfMemory = 1;
-            return;
-        }
-        
         tess->vertexIndices = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
                                                                 sizeof(TESSindex) * tess->vertexCount );
-        if (!tess->vertexIndices)
-        {
-            tess->outOfMemory = 1;
-            return;
-        }
         
         // Output vertices.
         for ( v = mesh->vHead.next; v != &mesh->vHead; v = v->next )
@@ -611,27 +580,10 @@ eDst->Sym->winding += eSrc->Sym->winding)
         
         tess->elements = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
                                                            sizeof(TESSindex) * tess->elementCount * 2 );
-        if (!tess->elements)
-        {
-            tess->outOfMemory = 1;
-            return;
-        }
-        
         tess->vertices = (TESSreal*)tess->alloc->memalloc( tess->alloc->userData,
                                                           sizeof(TESSreal) * tess->vertexCount * 2 );
-        if (!tess->vertices)
-        {
-            tess->outOfMemory = 1;
-            return;
-        }
-        
         tess->vertexIndices = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
                                                                 sizeof(TESSindex) * tess->vertexCount );
-        if (!tess->vertexIndices)
-        {
-            tess->outOfMemory = 1;
-            return;
-        }
         
         verts = tess->vertices;
         elements = tess->elements;
@@ -667,10 +619,6 @@ eDst->Sym->winding += eSrc->Sym->winding)
     {
         if ( tess->mesh == NULL )
             tess->mesh = tessMeshNewMesh( tess->alloc );
-        if ( tess->mesh == NULL ) {
-            tess->outOfMemory = 1;
-            return;
-        }
         
         tess->e = NULL;
     }
@@ -680,22 +628,12 @@ eDst->Sym->winding += eSrc->Sym->winding)
         if( tess->e == NULL ) {
             /* Make a self-loop (one vertex, one edge). */
             tess->e = tessMeshMakeEdge( tess->mesh );
-            if ( tess->e == NULL ) {
-                tess->outOfMemory = 1;
-                return;
-            }
-            if ( !tessMeshSplice( tess->mesh, tess->e, tess->e->Sym ) ) {
-                tess->outOfMemory = 1;
-                return;
-            }
+            tessMeshSplice( tess->mesh, tess->e, tess->e->Sym );
         } else {
             /* Create a new vertex and edge which immediately follow tess->e
              * in the ordering around the left face.
              */
-            if ( tessMeshSplitEdge( tess->mesh, tess->e ) == NULL ) {
-                tess->outOfMemory = 1;
-                return;
-            }
+            tessMeshSplitEdge( tess->mesh, tess->e );
             tess->e = tess->e->Lnext;
         }
         
@@ -735,11 +673,10 @@ eDst->Sym->winding += eSrc->Sym->winding)
         }
     }
     
-    int tessTesselate( TESStesselator *tess, int windingRule, int elementType,
+    void tessTesselate( TESStesselator *tess, int windingRule, int elementType,
                       int polySize, const TESSreal* normal )
     {
         TESSmesh *mesh;
-        int rc = 1;
         
         if (tess->vertices != NULL) {
             tess->alloc->memfree( tess->alloc->userData, tess->vertices );
@@ -755,18 +692,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
         }
         
         tess->vertexIndexCounter = 0;
-        
         tess->windingRule = windingRule;
-        
-        if (setjmp(tess->env) != 0) {
-            /* come back here if out of memory */
-            return 0;
-        }
-        
-        if (!tess->mesh)
-        {
-            return 0;
-        }
         
         /* tessComputeInterior( tess ) computes the planar arrangement specified
          * by the given contours, and further subdivides this arrangement
@@ -774,9 +700,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
          * to the polygon, according to the rule given by tess->windingRule.
          * Each interior region is guaranteed be monotone.
          */
-        if ( !tessComputeInterior( tess ) ) {
-            longjmp(tess->env,1);  /* could've used a label */
-        }
+        tessComputeInterior( tess );
         
         mesh = tess->mesh;
         
@@ -785,16 +709,15 @@ eDst->Sym->winding += eSrc->Sym->winding)
          * Otherwise we tessellate all the regions marked "inside".
          */
         if (elementType == TESS_BOUNDARY_CONTOURS) {
-            rc = tessMeshSetWindingNumber( mesh, 1, TRUE );
+            tessMeshSetWindingNumber( mesh, 1, TRUE );
         } else {
-            rc = tessMeshTessellateInterior( mesh ); 
+            tessMeshTessellateInterior( mesh );
             if (elementType == TESS_CONSTRAINED_DELAUNAY_TRIANGLES) {
-                rc = tessMeshRefineDelaunay( mesh, tess->alloc );
+                tessMeshRefineDelaunay( mesh, tess->alloc );
                 elementType = TESS_POLYGONS;
                 polySize = 3;
             }
         }
-        if (rc == 0) longjmp(tess->env,1);  /* could've used a label */
         
         tessMeshCheckMesh( mesh );
         
@@ -808,10 +731,6 @@ eDst->Sym->winding += eSrc->Sym->winding)
         
         tessMeshDeleteMesh( tess->alloc, mesh );
         tess->mesh = NULL;
-        
-        if (tess->outOfMemory)
-            return 0;
-        return 1;
     }
     
     int tessGetVertexCount( TESStesselator *tess )

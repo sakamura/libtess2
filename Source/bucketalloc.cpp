@@ -29,9 +29,10 @@
 ** Author: Mikko Mononen, July 2009.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "../Include/tesselator.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include "tesselator.h"
 
 namespace Tess
 {
@@ -63,7 +64,7 @@ namespace Tess
         bAutomaticCleanup = 0;
     }
     
-    static int CreateBucket( struct BucketAlloc* ba )
+    static void CreateBucket( struct BucketAlloc* ba )
     {
         Bucket* bucket;
         unsigned char* head;
@@ -79,8 +80,7 @@ namespace Tess
         {
             // Allocate memory for the bucket
             bucket = (Bucket*)ba->alloc->memalloc( ba->alloc->userData, ba->bucketByteSize );
-            if ( !bucket )
-                return 0;
+            assert(bucket);
             
             // Add the bucket into the list of buckets.
             if (ba->buckets) ba->buckets->prev = bucket;
@@ -92,8 +92,6 @@ namespace Tess
         head = (unsigned char*)bucket + sizeof(Bucket);
         ba->freelist = head;
         ba->initMark = head;
-        
-        return 1;
     }
     
     static void *NextFreeItem( struct BucketAlloc *ba )
@@ -135,10 +133,7 @@ namespace Tess
         else
         {
             ba = (BucketAlloc*)alloc->memalloc( alloc->userData, sizeof(BucketAlloc) );
-            if (!ba)
-            {
-                return 0;
-            }
+            assert(ba);
             
             ba->alloc = alloc;
             ba->itemSize = itemSize;
@@ -160,8 +155,7 @@ namespace Tess
         // If running out of memory, allocate new bucket and update the freelist.
         if ( !ba->freelist )
         {
-            if ( !CreateBucket( ba ) )
-                return 0;
+            CreateBucket( ba );
         }
         
         // Pop item from in front of the free list.

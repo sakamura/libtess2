@@ -246,8 +246,8 @@ namespace Tess
      */
     
     TESShalfEdge *tessMeshMakeEdge( TESSmesh *mesh );
-    int tessMeshSplice( TESSmesh *mesh, TESShalfEdge *eOrg, TESShalfEdge *eDst );
-    int tessMeshDelete( TESSmesh *mesh, TESShalfEdge *eDel );
+    void tessMeshSplice( TESSmesh *mesh, TESShalfEdge *eOrg, TESShalfEdge *eDst );
+    void tessMeshDelete( TESSmesh *mesh, TESShalfEdge *eDel );
     
     TESShalfEdge *tessMeshAddEdgeVertex( TESSmesh *mesh, TESShalfEdge *eOrg );
     TESShalfEdge *tessMeshSplitEdge( TESSmesh *mesh, TESShalfEdge *eOrg );
@@ -255,7 +255,7 @@ namespace Tess
     
     TESSmesh *tessMeshNewMesh( TESSalloc* alloc );
     TESSmesh *tessMeshUnion( TESSalloc* alloc, TESSmesh *mesh1, TESSmesh *mesh2 );
-    int tessMeshMergeConvexFaces( TESSmesh *mesh, int maxVertsPerFace );
+    void tessMeshMergeConvexFaces( TESSmesh *mesh, int maxVertsPerFace );
     void tessMeshDeleteMesh( TESSalloc* alloc, TESSmesh *mesh );
     void tessMeshZapFace( TESSmesh *mesh, TESSface *fZap );
     

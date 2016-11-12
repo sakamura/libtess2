@@ -42,8 +42,6 @@ namespace Tess
         Dict *dict = (Dict *)alloc->memalloc( alloc->userData, sizeof( Dict ));
         DictNode *head;
         
-        if (dict == NULL) return NULL;
-        
         head = &dict->head;
         
         head->key = NULL;
@@ -79,7 +77,6 @@ namespace Tess
         } while( node->key != NULL && ! (*dict->leq)(dict->frame, node->key, key));
         
         newNode = (DictNode *)bucketAlloc( dict->nodePool );
-        if (newNode == NULL) return NULL;
         
         newNode->key = key;
         newNode->next = node->next;

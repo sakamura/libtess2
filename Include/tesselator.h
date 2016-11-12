@@ -202,7 +202,7 @@ namespace Tess
     //   normal - defines the normal of the input contours, of null the normal is calculated automatically.
     // Returns:
     //   1 if succeed, 0 if failed.
-    int tessTesselate( TESStesselator *tess, int windingRule, int elementType, int polySize, const TESSreal* normal );
+    void tessTesselate( TESStesselator *tess, int windingRule, int elementType, int polySize, const TESSreal* normal );
     
     // tessGetVertexCount() - Returns number of vertices in the tesselated output.
     int tessGetVertexCount( TESStesselator *tess );

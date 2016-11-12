@@ -32,7 +32,6 @@
 #ifndef TESS_H
 #define TESS_H
 
-#include <setjmp.h>
 #include "bucketalloc.h"
 #include "mesh.h"
 #include "dict.h"
@@ -48,7 +47,6 @@ namespace Tess
         /*** state needed for collecting the input data ***/
         TESSmesh	*mesh;		/* stores the input contours, and eventually
                                  the tessellation itself */
-        int outOfMemory;
         
         TESSreal bmin[2];
         TESSreal bmax[2];
@@ -71,8 +69,6 @@ namespace Tess
         int elementCount;
         
         TESSalloc* alloc;
-        
-        jmp_buf env;			/* place to jump to when memAllocs fail */
         
         TESShalfEdge *e;
     };

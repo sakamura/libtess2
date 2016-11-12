@@ -85,22 +85,11 @@ namespace Tess
     PriorityQHeap *pqHeapNewPriorityQ( TESSalloc* alloc, int size, int (*leq)(PQkey key1, PQkey key2) )
     {
         PriorityQHeap *pq = (PriorityQHeap *)alloc->memalloc( alloc->userData, sizeof( PriorityQHeap ));
-        if (pq == NULL) return NULL;
         
         pq->size = 0;
         pq->max = size;
         pq->nodes = (PQnode *)alloc->memalloc( alloc->userData, (size + 1) * sizeof(pq->nodes[0]) );
-        if (pq->nodes == NULL) {
-            alloc->memfree( alloc->userData, pq );
-            return NULL;
-        }
-        
         pq->handles = (PQhandleElem *)alloc->memalloc( alloc->userData, (size + 1) * sizeof(pq->handles[0]) );
-        if (pq->handles == NULL) {
-            alloc->memfree( alloc->userData, pq->nodes );
-            alloc->memfree( alloc->userData, pq );
-            return NULL;
-        }
         
         pq->initialized = FALSE;
         pq->freeList = 0;
@@ -294,21 +283,11 @@ namespace Tess
     PriorityQ *pqNewPriorityQ( TESSalloc* alloc, int size, int (*leq)(PQkey key1, PQkey key2) )
     {
         PriorityQ *pq = (PriorityQ *)alloc->memalloc( alloc->userData, sizeof( PriorityQ ));
-        if (pq == NULL) return NULL;
         
         pq->heap = pqHeapNewPriorityQ( alloc, size, leq );
-        if (pq->heap == NULL) {
-            alloc->memfree( alloc->userData, pq );
-            return NULL;
-        }
         
         //	pq->keys = (PQkey *)memAlloc( INIT_SIZE * sizeof(pq->keys[0]) );
         pq->keys = (PQkey *)alloc->memalloc( alloc->userData, size * sizeof(pq->keys[0]) );
-        if (pq->keys == NULL) {
-            pqHeapDeletePriorityQ( alloc, pq->heap );
-            alloc->memfree( alloc->userData, pq );
-            return NULL;
-        }
         
         pq->size = 0;
         pq->max = size; //INIT_SIZE;
@@ -334,7 +313,7 @@ namespace Tess
 #define Swap(a,b)   if(1){PQkey *tmp = *a; *a = *b; *b = tmp;}else
     
     /* really tessPqSortInit */
-    int pqInit( TESSalloc* alloc, PriorityQ *pq )
+    void pqInit( TESSalloc* alloc, PriorityQ *pq )
     {
         PQkey **p, **r, **i, **j, *piv;
         struct { PQkey **p, **r; } Stack[50], *top = Stack;
@@ -349,11 +328,6 @@ namespace Tess
          */
         pq->order = (PQkey **)alloc->memalloc( alloc->userData,
                                               (size_t)((pq->size+1) * sizeof(pq->order[0])) );
-        /* the previous line is a patch to compensate for the fact that IBM */
-        /* machines return a null on a malloc of zero bytes (unlike SGI),   */
-        /* so we have to put in this defense to guard against a memory      */
-        /* fault four lines down. from fossum@austin.ibm.com.               */
-        if (pq->order == NULL) return 0;
         
         p = pq->order;
         r = p + pq->size - 1;
@@ -410,8 +384,6 @@ namespace Tess
             assert( LEQ( **(i+1), **i ));
         }
 #endif
-        
-        return 1;
     }
     
     /* really tessPqSortInsert */
@@ -425,24 +397,11 @@ namespace Tess
         }
         curr = pq->size;
         if( ++ pq->size >= pq->max ) {
-            if (!alloc->memrealloc)
-            {
-                return INV_HANDLE;
-            }
-            else
-            {
-                PQkey *saveKey= pq->keys;
-                // If the heap overflows, double its size.
-                pq->max <<= 1;
-                pq->keys = (PQkey *)alloc->memrealloc( alloc->userData, pq->keys, 
-                                                      (size_t)(pq->max * sizeof( pq->keys[0] )));
-                if (pq->keys == NULL) { 
-                    pq->keys = saveKey;  // restore ptr to free upon return 
-                    return INV_HANDLE;
-                }
-            }
+            // If the heap overflows, double its size.
+            pq->max <<= 1;
+            pq->keys = (PQkey *)alloc->memrealloc( alloc->userData, pq->keys, 
+                                                  (size_t)(pq->max * sizeof( pq->keys[0] )));
         }
-        assert(curr != INV_HANDLE); 
         pq->keys[curr] = keyNew;
         
         /* Negative handles index the sorted array. */

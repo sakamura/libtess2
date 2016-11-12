@@ -45,7 +45,7 @@ namespace Tess
      * to the polygon, according to the rule given by tess->windingRule.
      * Each interior region is guaranteed be monotone.
      */
-    int tessComputeInterior( TESStesselator *tess );
+    void tessComputeInterior( TESStesselator *tess );
     
     /* For each pair of adjacent edges crossing the sweep line, there is
      * an ActiveRegion to represent the region between them.  The active
