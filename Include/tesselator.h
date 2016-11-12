@@ -58,7 +58,7 @@ namespace Tess
     //         glBegin(GL_POLYGON);
     //         for (int j = 0; j < polySize; j++) {
     //             if (poly[j] == TESS_UNDEF) break;
-    //             glVertex2fv(&verts[poly[j]*vertexSize]);
+    //             glVertex2fv(&verts[poly[j]*2]);
     //         }
     //         glEnd();
     //     }
@@ -100,7 +100,7 @@ namespace Tess
     //         const TESSindex count = elems[i * 2 + 1];
     //         glBegin(GL_LINE_LOOP);
     //         for (int j = 0; j < count; j++) {
-    //             glVertex2fv(&verts[(base+j) * vertexSize]);
+    //             glVertex2fv(&verts[(base+j) * 2]);
     //         }
     //         glEnd();
     //     }
@@ -182,17 +182,16 @@ namespace Tess
     
     void tessBeginContour( TESStesselator *tess );
     
-    void tessAddVertex( TESStesselator *tess, TESSreal x, TESSreal y, TESSreal z );
+    void tessAddVertex( TESStesselator *tess, TESSreal x, TESSreal y );
     
     // tessAddContour() - Adds a contour to be tesselated.
     // The type of the vertex coordinates is assumed to be TESSreal.
     // Parameters:
     //   tess - pointer to tesselator object.
-    //   size - number of coordinates per vertex. Must be 2 or 3.
     //   pointer - pointer to the first coordinate of the first vertex in the array.
     //   stride - defines offset in bytes between consecutive vertices.
     //   count - number of vertices in contour.
-    void tessAddContour( TESStesselator *tess, int size, const void* pointer, int stride, int count );
+    void tessAddContour( TESStesselator *tess, const void* pointer, int stride, int count );
     
     // tessTesselate() - tesselate contours.
     // Parameters:
@@ -200,11 +199,10 @@ namespace Tess
     //   windingRule - winding rules used for tesselation, must be one of TessWindingRule.
     //   elementType - defines the tesselation result element type, must be one of TessElementType.
     //   polySize - defines maximum vertices per polygons if output is polygons. If elementType is TESS_CONSTRAINED_DELAUNAY_TRIANGLES, this parameter is ignored.
-    //   vertexSize - defines the number of coordinates in tesselation result vertex, must be 2 or 3.
     //   normal - defines the normal of the input contours, of null the normal is calculated automatically.
     // Returns:
     //   1 if succeed, 0 if failed.
-    int tessTesselate( TESStesselator *tess, int windingRule, int elementType, int polySize, int vertexSize, const TESSreal* normal );
+    int tessTesselate( TESStesselator *tess, int windingRule, int elementType, int polySize, const TESSreal* normal );
     
     // tessGetVertexCount() - Returns number of vertices in the tesselated output.
     int tessGetVertexCount( TESStesselator *tess );

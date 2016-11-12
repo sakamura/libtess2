@@ -50,12 +50,6 @@ namespace Tess
                                  the tessellation itself */
         int outOfMemory;
         
-        /*** state needed for projecting onto the sweep plane ***/
-        
-        TESSreal normal[3];	/* user-specified normal (if provided) */
-        TESSreal sUnit[3];	/* unit vector in s-direction (debugging) */
-        TESSreal tUnit[3];	/* unit vector in t-direction (debugging) */
-        
         TESSreal bmin[2];
         TESSreal bmax[2];
         

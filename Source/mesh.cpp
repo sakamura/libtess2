@@ -136,7 +136,6 @@ namespace Tess
         vNext->prev = vNew;
         
         vNew->anEdge = eOrig;
-        /* leave coords, s, t undefined */
         
         /* fix other edges on this vertex loop */
         e = eOrig;
