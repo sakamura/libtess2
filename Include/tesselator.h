@@ -120,46 +120,10 @@ namespace Tess
     typedef float TESSreal;
     typedef int TESSindex;
     typedef struct TESStesselator TESStesselator;
-    typedef struct TESSalloc TESSalloc;
     
 #define TESS_UNDEF (~(TESSindex)0)
     
 #define TESS_NOTUSED(v) do { (void)(1 ? (void)0 : ( (void)(v) ) ); } while(0)
-    
-    // Custom memory allocator interface.
-    // The internal memory allocator allocates mesh edges, vertices and faces
-    // as well as dictionary nodes and active regions in buckets and uses simple
-    // freelist to speed up the allocation. The bucket size should roughly match your
-    // expected input data. For example if you process only hundreds of vertices,
-    // a bucket size of 128 might be ok, where as when processing thousands of vertices
-    // bucket size of 1024 might be approproate. The bucket size is a compromise between
-    // how often to allocate memory from the system versus how much extra space the system
-    // should allocate. Reasonable defaults are show in commects below, they will be used if
-    // the bucket sizes are zero.
-    //
-    // The use may left the memrealloc to be null. In that case, the tesselator will not try to
-    // dynamically grow int's internal arrays. The tesselator only needs the reallocation when it
-    // has found intersecting segments and needs to add new vertex. This defency can be cured by
-    // allocating some extra vertices beforehand. The 'extraVertices' variable allows to specify
-    // number of expected extra vertices.
-    struct TESSalloc
-    {
-        void *(*memalloc)( void *userData, size_t size );
-        void *(*memrealloc)( void *userData, void* ptr, size_t size );
-        void (*memfree)( void *userData, void *ptr );
-        void* userData;				// User data passed to the allocator functions.
-        int meshEdgeBucketSize;		// 512
-        int meshVertexBucketSize;	// 512
-        int meshFaceBucketSize;		// 256
-        int dictNodeBucketSize;		// 512
-        int regionBucketSize;		// 256
-        int extraVertices;			// Number of extra vertices allocated for the priority queue.
-        void* freeAllocs;           // Saved previous allocators
-    };
-    void tessDisableAutomaticCleanup();
-    void tessCleanupAlloc( struct TESSalloc* alloc );     // Once done with this allocator, free up blocks used by the TESSalloc
-    void tessCleanupDefaultAlloc();
-    
     //
     // Example use:
     //
@@ -170,10 +134,9 @@ namespace Tess
     // tessNewTess() - Creates a new tesselator.
     // Use tessDeleteTess() to delete the tesselator.
     // Parameters:
-    //   alloc - pointer to a filled TESSalloc struct or NULL to use default malloc based allocator.
     // Returns:
     //   new tesselator object.
-    TESStesselator* tessNewTess( TESSalloc* alloc );
+    TESStesselator* tessNewTess( );
     
     // tessDeleteTess() - Deletes a tesselator.
     // Parameters:

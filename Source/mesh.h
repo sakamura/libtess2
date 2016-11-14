@@ -33,6 +33,7 @@
 #define MESH_H
 
 #include "tesselator.h"
+#include "bucketalloc.h"
 
 namespace Tess
 {
@@ -118,6 +119,9 @@ namespace Tess
         int pqHandle;   /* to allow deletion from priority queue */
         TESSindex n;			/* to allow identify unique vertices */
         TESSindex idx;			/* to allow map result to original verts */
+        
+        static void* operator new( std::size_t count ) { return BucketAlloc<TESSvertex>::get(count).alloc(); }
+        static void operator delete( void* ptr ) { BucketAlloc<TESSvertex>::get().free(ptr); }
     };
     
     struct TESSface {
@@ -130,7 +134,10 @@ namespace Tess
         TESSindex n;		/* to allow identiy unique faces */
         char marked;     /* flag for conversion to strips */
         char inside;     /* this face is in the polygon interior */
-    };
+
+        static void* operator new( std::size_t count ) { return BucketAlloc<TESSface>::get(count).alloc(); }
+        static void operator delete( void* ptr ) { BucketAlloc<TESSface>::get().free(ptr); }
+};
     
     struct TESShalfEdge {
         TESShalfEdge *next;      /* doubly-linked list (prev==Sym->next) */
@@ -162,10 +169,6 @@ namespace Tess
         TESSface fHead;      /* dummy header for face list */
         TESShalfEdge eHead;      /* dummy header for edge list */
         TESShalfEdge eHeadSym;   /* and its symmetric counterpart */
-        
-        struct BucketAlloc* edgeBucket;
-        struct BucketAlloc* vertexBucket;
-        struct BucketAlloc* faceBucket;
     };
     
     /* The mesh operations below have three motivations: completeness,
@@ -253,10 +256,10 @@ namespace Tess
     TESShalfEdge *tessMeshSplitEdge( TESSmesh *mesh, TESShalfEdge *eOrg );
     TESShalfEdge *tessMeshConnect( TESSmesh *mesh, TESShalfEdge *eOrg, TESShalfEdge *eDst );
     
-    TESSmesh *tessMeshNewMesh( TESSalloc* alloc );
-    TESSmesh *tessMeshUnion( TESSalloc* alloc, TESSmesh *mesh1, TESSmesh *mesh2 );
+    TESSmesh *tessMeshNewMesh( );
+    TESSmesh *tessMeshUnion( TESSmesh *mesh1, TESSmesh *mesh2 );
     void tessMeshMergeConvexFaces( TESSmesh *mesh, int maxVertsPerFace );
-    void tessMeshDeleteMesh( TESSalloc* alloc, TESSmesh *mesh );
+    void tessMeshDeleteMesh( TESSmesh *mesh );
     void tessMeshZapFace( TESSmesh *mesh, TESSface *fZap );
     
     void tessMeshFlipEdge( TESSmesh *mesh, TESShalfEdge *edge );

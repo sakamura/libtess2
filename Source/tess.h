@@ -58,8 +58,6 @@ namespace Tess
         PriorityQ *pq;		/* priority queue of vertex events */
         TESSvertex *event;		/* current sweep event being processed */
         
-        struct BucketAlloc* regionPool;
-        
         TESSindex vertexIndexCounter;
         
         TESSreal *vertices;
@@ -67,8 +65,6 @@ namespace Tess
         int vertexCount;
         TESSindex *elements;
         int elementCount;
-        
-        TESSalloc* alloc;
         
         TESShalfEdge *e;
     };

@@ -144,7 +144,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
         }
         reg->eUp->activeRegion = NULL;
         dictDelete( tess->dict, reg->nodeUp );
-        bucketFree( tess->regionPool, reg );
+        delete reg;
     }
     
     
@@ -202,7 +202,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
      * Winding number and "inside" flag are not updated.
      */
     {
-        ActiveRegion *regNew = (ActiveRegion *)bucketAlloc( tess->regionPool );
+        ActiveRegion *regNew = new ActiveRegion;
         regNew->eUp = eNewUp;
         regNew->nodeUp = dictInsertBefore( tess->dict, regAbove->nodeUp, regNew );
         regNew->fixUpperEdge = FALSE;
@@ -644,7 +644,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
         tessMeshSplice( tess->mesh, eLo->Oprev, eUp );
         eUp->Org->s = isect.s;
         eUp->Org->t = isect.t;
-        eUp->Org->pqHandle = pqInsert( tess->alloc, tess->pq, eUp->Org );
+        eUp->Org->pqHandle = pqInsert( tess->pq, eUp->Org );
         assert(eUp->Org->pqHandle != INV_HANDLE);
         eUp->Org->idx = TESS_UNDEF;
         RegionAbove(regUp)->dirty = regUp->dirty = regLo->dirty = TRUE;
@@ -1022,7 +1022,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
      */
     {
         TESShalfEdge *e;
-        ActiveRegion *reg = (ActiveRegion *)bucketAlloc( tess->regionPool );
+        ActiveRegion *reg = new ActiveRegion;
         
         e = tessMeshMakeEdge( tess->mesh );
         
@@ -1051,7 +1051,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
         TESSreal w, h;
         TESSreal smin, smax, tmin, tmax;
         
-        tess->dict = dictNewDict( tess->alloc, tess, (int (*)(void *, DictKey, DictKey)) EdgeLeq );
+        tess->dict = dictNewDict( tess, (int (*)(void *, DictKey, DictKey)) EdgeLeq );
         
         w = (tess->bmax[0] - tess->bmin[0]);
         h = (tess->bmax[1] - tess->bmin[1]);
@@ -1088,7 +1088,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
             DeleteRegion( tess, reg );
             /*    tessMeshDelete( reg->eUp );*/
         }
-        dictDeleteDict( tess->alloc, tess->dict );
+        dictDeleteDict( tess->dict );
     }
     
     
@@ -1141,21 +1141,21 @@ eDst->Sym->winding += eSrc->Sym->winding)
             vertexCount++;
         }
         /* Make sure there is enough space for sentinels. */
-        vertexCount += MAX( 8, tess->alloc->extraVertices );
+        vertexCount += 8;
         
-        pq = tess->pq = pqNewPriorityQ( tess->alloc, vertexCount, (int (*)(PQkey, PQkey)) tesvertLeq );
+        pq = tess->pq = pqNewPriorityQ( vertexCount, (int (*)(PQkey, PQkey)) tesvertLeq );
         
         vHead = &tess->mesh->vHead;
         for( v = vHead->next; v != vHead; v = v->next ) {
-            v->pqHandle = pqInsert( tess->alloc, pq, v );
+            v->pqHandle = pqInsert( pq, v );
         }
-        pqInit( tess->alloc, pq );
+        pqInit( pq );
     }
     
     
     static void DonePriorityQ( TESStesselator *tess )
     {
-        pqDeletePriorityQ( tess->alloc, tess->pq );
+        pqDeletePriorityQ( tess->pq );
     }
     
     

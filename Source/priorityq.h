@@ -92,11 +92,11 @@ namespace Tess
         int (*leq)(PQkey key1, PQkey key2);
     };
     
-    PriorityQ *pqNewPriorityQ( TESSalloc* alloc, int size, int (*leq)(PQkey key1, PQkey key2) );
-    void pqDeletePriorityQ( TESSalloc* alloc, PriorityQ *pq );
+    PriorityQ *pqNewPriorityQ( int size, int (*leq)(PQkey key1, PQkey key2) );
+    void pqDeletePriorityQ( PriorityQ *pq );
     
-    void pqInit( TESSalloc* alloc, PriorityQ *pq );
-    PQhandle pqInsert( TESSalloc* alloc, PriorityQ *pq, PQkey key );
+    void pqInit( PriorityQ *pq );
+    PQhandle pqInsert( PriorityQ *pq, PQkey key );
     PQkey pqExtractMin( PriorityQ *pq );
     void pqDelete( PriorityQ *pq, PQhandle handle );
     

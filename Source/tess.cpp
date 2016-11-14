@@ -155,23 +155,22 @@ eDst->Sym->winding += eSrc->Sym->winding)
     struct EdgeStackNode {
         TESShalfEdge *edge;
         EdgeStackNode *next;
+        
+        static void* operator new( std::size_t count ) { return BucketAlloc<EdgeStackNode>::get(count).alloc(); }
+        static void operator delete( void* ptr ) { BucketAlloc<EdgeStackNode>::get().free(ptr); }
     };
     
     struct EdgeStack {
         EdgeStackNode *top;
-        struct BucketAlloc *nodeBucket;
     };
     
-    int stackInit( EdgeStack *stack, TESSalloc *alloc )
+    void stackInit( EdgeStack *stack )
     {
         stack->top = NULL;
-        stack->nodeBucket = createBucketAlloc( alloc, "CDT nodes", sizeof(EdgeStackNode), 512 );
-        return stack->nodeBucket != NULL;
     }
     
     void stackDelete( EdgeStack *stack )
     {
-        deleteBucketAlloc( stack->nodeBucket );
     }
     
     int stackEmpty( EdgeStack *stack )
@@ -181,7 +180,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
     
     void stackPush( EdgeStack *stack, TESShalfEdge *e )
     {
-        EdgeStackNode *node = (EdgeStackNode *)bucketAlloc( stack->nodeBucket );
+        EdgeStackNode *node = new EdgeStackNode;
         if ( ! node ) return;
         node->edge = e;
         node->next = stack->top;
@@ -195,7 +194,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
         if (node) {
             stack->top = node->next;
             e = node->edge;
-            bucketFree( stack->nodeBucket, node );
+            delete node;
         }
         return e;
     }
@@ -204,7 +203,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
      Starting with a valid triangulation, uses the Edge Flip algorithm to
      refine the triangulation into a Constrained Delaunay Triangulation.
      */
-    void tessMeshRefineDelaunay( TESSmesh *mesh, TESSalloc *alloc )
+    void tessMeshRefineDelaunay( TESSmesh *mesh )
     {
         /* At this point, we have a valid, but not optimal, triangulation.
          We refine the triangulation using the Edge Flip algorithm */
@@ -218,7 +217,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
         EdgeStack stack;
         TESShalfEdge *e;
         TESShalfEdge *edges[4];
-        stackInit(&stack, alloc);
+        stackInit(&stack);
         for( f = mesh->fHead.next; f != &mesh->fHead; f = f->next ) {
             if ( f->inside) {
                 e = f->anEdge;
@@ -307,70 +306,15 @@ eDst->Sym->winding += eSrc->Sym->winding)
         }
     }
     
-    void* heapAlloc( void* userData, size_t size )
-    {
-        TESS_NOTUSED( userData );
-        return malloc( size );
-    }
-    
-    void* heapRealloc( void *userData, void* ptr, size_t size )
-    {
-        TESS_NOTUSED( userData );
-        return realloc( ptr, size );
-    }
-    
-    void heapFree( void* userData, void* ptr )
-    {
-        TESS_NOTUSED( userData );
-        free( ptr );
-    }
-    
-    static TESSalloc defaulAlloc =
-    {
-        heapAlloc,
-        heapRealloc,
-        heapFree,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    };
-    void tessCleanupDefaultAlloc()
-    {
-        tessCleanupAlloc(&defaulAlloc);
-    }
-    
-    TESStesselator* tessNewTess( TESSalloc* alloc )
+    TESStesselator* tessNewTess( )
     {
         TESStesselator* tess;
-        
-        if (alloc == NULL)
-            alloc = &defaulAlloc;
         
         /* Only initialize fields which can be changed by the api.  Other fields
          * are initialized where they are used.
          */
         
-        tess = (TESStesselator *)alloc->memalloc( alloc->userData, sizeof( TESStesselator ));
-        if ( tess == NULL ) {
-            return 0;          /* out of memory */
-        }
-        tess->alloc = alloc;
-        /* Check and set defaults. */
-        if (tess->alloc->meshEdgeBucketSize == 0)
-            tess->alloc->meshEdgeBucketSize = 512;
-        if (tess->alloc->meshVertexBucketSize == 0)
-            tess->alloc->meshVertexBucketSize = 512;
-        if (tess->alloc->meshFaceBucketSize == 0)
-            tess->alloc->meshFaceBucketSize = 256;
-        if (tess->alloc->dictNodeBucketSize == 0)
-            tess->alloc->dictNodeBucketSize = 512;
-        if (tess->alloc->regionBucketSize == 0)
-            tess->alloc->regionBucketSize = 256;
+        tess = new TESStesselator;
         
         tess->bmin[0] = MAXFLOAT;
         tess->bmin[1] = MAXFLOAT;
@@ -378,13 +322,6 @@ eDst->Sym->winding += eSrc->Sym->winding)
         tess->bmax[1] = -MAXFLOAT;
         
         tess->windingRule = TESS_WINDING_ODD;
-        
-        if (tess->alloc->regionBucketSize < 16)
-            tess->alloc->regionBucketSize = 16;
-        if (tess->alloc->regionBucketSize > 4096)
-            tess->alloc->regionBucketSize = 4096;
-        tess->regionPool = createBucketAlloc( tess->alloc, "Regions",
-                                             sizeof(ActiveRegion), tess->alloc->regionBucketSize );
         
         // Initialize to begin polygon.
         tess->mesh = NULL;
@@ -403,28 +340,24 @@ eDst->Sym->winding += eSrc->Sym->winding)
     void tessDeleteTess( TESStesselator *tess )
     {
         
-        struct TESSalloc alloc = *tess->alloc;
-        
-        deleteBucketAlloc( tess->regionPool );
-        
         if( tess->mesh != NULL ) {
-            tessMeshDeleteMesh( &alloc, tess->mesh );
+            tessMeshDeleteMesh( tess->mesh );
             tess->mesh = NULL;
         }
         if (tess->vertices != NULL) {
-            alloc.memfree( alloc.userData, tess->vertices );
+            delete[] tess->vertices;
             tess->vertices = 0;
         }
         if (tess->vertexIndices != NULL) {
-            alloc.memfree( alloc.userData, tess->vertexIndices );
+            delete[] tess->vertexIndices;
             tess->vertexIndices = 0;
         }
         if (tess->elements != NULL) {
-            alloc.memfree( alloc.userData, tess->elements );
+            delete[] tess->elements;
             tess->elements = 0;
         }
         
-        alloc.memfree( alloc.userData, tess );
+        delete tess;
     }
     
     
@@ -489,13 +422,10 @@ eDst->Sym->winding += eSrc->Sym->winding)
         tess->elementCount = maxFaceCount;
         if (elementType == TESS_CONNECTED_POLYGONS)
             maxFaceCount *= 2;
-        tess->elements = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
-                                                           sizeof(TESSindex) * maxFaceCount * polySize );
+        tess->elements = new TESSindex[maxFaceCount * polySize];
         tess->vertexCount = maxVertexCount;
-        tess->vertices = (TESSreal*)tess->alloc->memalloc( tess->alloc->userData,
-                                                          sizeof(TESSreal) * tess->vertexCount * 2 );
-        tess->vertexIndices = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
-                                                                sizeof(TESSindex) * tess->vertexCount );
+        tess->vertices = new TESSreal[tess->vertexCount * 2];
+        tess->vertexIndices = new TESSindex[tess->vertexCount];
         
         // Output vertices.
         for ( v = mesh->vHead.next; v != &mesh->vHead; v = v->next )
@@ -578,12 +508,9 @@ eDst->Sym->winding += eSrc->Sym->winding)
             ++tess->elementCount;
         }
         
-        tess->elements = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
-                                                           sizeof(TESSindex) * tess->elementCount * 2 );
-        tess->vertices = (TESSreal*)tess->alloc->memalloc( tess->alloc->userData,
-                                                          sizeof(TESSreal) * tess->vertexCount * 2 );
-        tess->vertexIndices = (TESSindex*)tess->alloc->memalloc( tess->alloc->userData,
-                                                                sizeof(TESSindex) * tess->vertexCount );
+        tess->elements = new TESSindex[tess->elementCount * 2];
+        tess->vertices = new TESSreal[tess->vertexCount * 2];
+        tess->vertexIndices = new TESSindex[tess->vertexCount];
         
         verts = tess->vertices;
         elements = tess->elements;
@@ -618,7 +545,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
     void tessBeginContour( TESStesselator *tess )
     {
         if ( tess->mesh == NULL )
-            tess->mesh = tessMeshNewMesh( tess->alloc );
+            tess->mesh = tessMeshNewMesh( );
         
         tess->e = NULL;
     }
@@ -679,15 +606,15 @@ eDst->Sym->winding += eSrc->Sym->winding)
         TESSmesh *mesh;
         
         if (tess->vertices != NULL) {
-            tess->alloc->memfree( tess->alloc->userData, tess->vertices );
+            delete[] tess->vertices;
             tess->vertices = 0;
         }
         if (tess->elements != NULL) {
-            tess->alloc->memfree( tess->alloc->userData, tess->elements );
+            delete[] tess->elements;
             tess->elements = 0;
         }
         if (tess->vertexIndices != NULL) {
-            tess->alloc->memfree( tess->alloc->userData, tess->vertexIndices );
+            delete[] tess->vertexIndices;
             tess->vertexIndices = 0;
         }
         
@@ -713,7 +640,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
         } else {
             tessMeshTessellateInterior( mesh );
             if (elementType == TESS_CONSTRAINED_DELAUNAY_TRIANGLES) {
-                tessMeshRefineDelaunay( mesh, tess->alloc );
+                tessMeshRefineDelaunay( mesh );
                 elementType = TESS_POLYGONS;
                 polySize = 3;
             }
@@ -729,7 +656,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
             OutputPolymesh( tess, mesh, elementType, polySize );     /* output polygons */
         }
         
-        tessMeshDeleteMesh( tess->alloc, mesh );
+        tessMeshDeleteMesh( mesh );
         tess->mesh = NULL;
     }
     

@@ -46,7 +46,13 @@ namespace Tess
     /* Allocate and free half-edges in pairs for efficiency.
      * The *only* place that should use this fact is allocation/free.
      */
-    typedef struct { TESShalfEdge e, eSym; } EdgePair;
+    struct EdgePair
+    {
+        TESShalfEdge e, eSym;
+        
+        static void* operator new( std::size_t count ) { return BucketAlloc<EdgePair>::get(count).alloc(); }
+        static void operator delete( void* ptr ) { BucketAlloc<EdgePair>::get().free(ptr); }
+    };
     
     /* MakeEdge creates a new pair of half-edges which form their own loop.
      * No vertex or face structures are allocated, but these must be assigned
@@ -57,7 +63,7 @@ namespace Tess
         TESShalfEdge *e;
         TESShalfEdge *eSym;
         TESShalfEdge *ePrev;
-        EdgePair *pair = (EdgePair *)bucketAlloc( mesh->edgeBucket );
+        EdgePair *pair = new EdgePair;
         
         e = &pair->e;
         eSym = &pair->eSym;
@@ -197,8 +203,7 @@ namespace Tess
         ePrev = eDel->Sym->next;
         eNext->Sym->next = ePrev;
         ePrev->Sym->next = eNext;
-        
-        bucketFree( mesh->edgeBucket, eDel );
+        delete reinterpret_cast<EdgePair*>(eDel);
     }
     
     
@@ -222,8 +227,7 @@ namespace Tess
         vNext = vDel->next;
         vNext->prev = vPrev;
         vPrev->next = vNext;
-        
-        bucketFree( mesh->vertexBucket, vDel );
+        delete vDel;
     }
     
     /* KillFace( fDel ) destroys a face and removes it from the global face
@@ -246,8 +250,7 @@ namespace Tess
         fNext = fDel->next;
         fNext->prev = fPrev;
         fPrev->next = fNext;
-        
-        bucketFree( mesh->faceBucket, fDel );
+        delete fDel;
     }
     
     
@@ -258,9 +261,9 @@ namespace Tess
      */
     TESShalfEdge *tessMeshMakeEdge( TESSmesh *mesh )
     {
-        TESSvertex *newVertex1 = (TESSvertex*)bucketAlloc(mesh->vertexBucket);
-        TESSvertex *newVertex2 = (TESSvertex*)bucketAlloc(mesh->vertexBucket);
-        TESSface *newFace = (TESSface*)bucketAlloc(mesh->faceBucket);
+        TESSvertex *newVertex1 = new TESSvertex;
+        TESSvertex *newVertex2 = new TESSvertex;
+        TESSface *newFace = new TESSface;
         TESShalfEdge *e = MakeEdge( mesh, &mesh->eHead );
         
         MakeVertex( newVertex1, e, &mesh->vHead );
@@ -315,7 +318,7 @@ namespace Tess
         Splice( eDst, eOrg );
         
         if( ! joiningVertices ) {
-            TESSvertex *newVertex = (TESSvertex*)bucketAlloc( mesh->vertexBucket );
+            TESSvertex *newVertex = new TESSvertex;
             
             /* We split one vertex into two -- the new vertex is eDst->Org.
              * Make sure the old vertex points to a valid half-edge.
@@ -324,7 +327,7 @@ namespace Tess
             eOrg->Org->anEdge = eOrg;
         }
         if( ! joiningLoops ) {
-            TESSface *newFace = (TESSface*)bucketAlloc( mesh->faceBucket );
+            TESSface *newFace = new TESSface;
             
             /* We split one loop into two -- the new loop is eDst->Lface.
              * Make sure the old face points to a valid half-edge.
@@ -368,7 +371,7 @@ namespace Tess
             
             Splice( eDel, eDel->Oprev );
             if( ! joiningLoops ) {
-                TESSface *newFace= (TESSface*)bucketAlloc( mesh->faceBucket );
+                TESSface *newFace= new TESSface;
                 
                 /* We are splitting one loop into two -- create a new loop for eDel. */
                 MakeFace( newFace, eDel, eDel->Lface );
@@ -417,7 +420,7 @@ namespace Tess
         /* Set the vertex and face information */
         eNew->Org = eOrg->Dst;
         {
-            TESSvertex *newVertex= (TESSvertex*)bucketAlloc( mesh->vertexBucket );
+            TESSvertex *newVertex= new TESSvertex;
             
             MakeVertex( newVertex, eNewSym, eNew->Org );
         }
@@ -490,7 +493,7 @@ namespace Tess
         eOrg->Lface->anEdge = eNewSym;
         
         if( ! joiningLoops ) {
-            TESSface *newFace= (TESSface*)bucketAlloc( mesh->faceBucket );
+            TESSface *newFace= new TESSface;
             
             /* We split one loop into two -- the new loop is eNew->Lface */
             MakeFace( newFace, eNew, eOrg->Lface );
@@ -548,43 +551,20 @@ namespace Tess
         fNext = fZap->next;
         fNext->prev = fPrev;
         fPrev->next = fNext;
-        
-        bucketFree( mesh->faceBucket, fZap );
+        delete fZap;
     }
     
     
     /* tessMeshNewMesh() creates a new mesh with no edges, no vertices,
      * and no loops (what we usually call a "face").
      */
-    TESSmesh *tessMeshNewMesh( TESSalloc* alloc )
+    TESSmesh *tessMeshNewMesh( )
     {
         TESSvertex *v;
         TESSface *f;
         TESShalfEdge *e;
         TESShalfEdge *eSym;
-        TESSmesh *mesh = (TESSmesh *)alloc->memalloc( alloc->userData, sizeof( TESSmesh ));
-        if (mesh == NULL) {
-            return NULL;
-        }
-        
-        if (alloc->meshEdgeBucketSize < 16)
-            alloc->meshEdgeBucketSize = 16;
-        if (alloc->meshEdgeBucketSize > 4096)
-            alloc->meshEdgeBucketSize = 4096;
-        
-        if (alloc->meshVertexBucketSize < 16)
-            alloc->meshVertexBucketSize = 16;
-        if (alloc->meshVertexBucketSize > 4096)
-            alloc->meshVertexBucketSize = 4096;
-        
-        if (alloc->meshFaceBucketSize < 16)
-            alloc->meshFaceBucketSize = 16;
-        if (alloc->meshFaceBucketSize > 4096)
-            alloc->meshFaceBucketSize = 4096;
-        
-        mesh->edgeBucket = createBucketAlloc( alloc, "Mesh Edges", sizeof(EdgePair), alloc->meshEdgeBucketSize );
-        mesh->vertexBucket = createBucketAlloc( alloc, "Mesh Vertices", sizeof(TESSvertex), alloc->meshVertexBucketSize );
-        mesh->faceBucket = createBucketAlloc( alloc, "Mesh Faces", sizeof(TESSface), alloc->meshFaceBucketSize );
+        TESSmesh *mesh = new TESSmesh;
         
         v = &mesh->vHead;
         f = &mesh->fHead;
@@ -625,7 +605,7 @@ namespace Tess
     /* tessMeshUnion( mesh1, mesh2 ) forms the union of all structures in
      * both meshes, and returns the new mesh (the old meshes are destroyed).
      */
-    TESSmesh *tessMeshUnion( TESSalloc* alloc, TESSmesh *mesh1, TESSmesh *mesh2 )
+    TESSmesh *tessMeshUnion( TESSmesh *mesh1, TESSmesh *mesh2 )
     {
         TESSface *f1 = &mesh1->fHead;
         TESSvertex *v1 = &mesh1->vHead;
@@ -655,8 +635,7 @@ namespace Tess
             e2->Sym->next->Sym->next = e1;
             e1->Sym->next = e2->Sym->next;
         }
-        
-        alloc->memfree( alloc->userData, mesh2 );
+        delete mesh2;
         return mesh1;
     }
     
@@ -804,13 +783,9 @@ namespace Tess
     
     /* tessMeshDeleteMesh( mesh ) will free all storage for any valid mesh.
      */
-    void tessMeshDeleteMesh( TESSalloc* alloc, TESSmesh *mesh )
+    void tessMeshDeleteMesh( TESSmesh *mesh )
     {
-        deleteBucketAlloc(mesh->edgeBucket);
-        deleteBucketAlloc(mesh->vertexBucket);
-        deleteBucketAlloc(mesh->faceBucket);
-        
-        alloc->memfree( alloc->userData, mesh );
+        delete mesh;
     }
     
 #ifndef NDEBUG

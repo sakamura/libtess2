@@ -82,14 +82,14 @@ namespace Tess
     
     
     /* really pqHeapNewPriorityQHeap */
-    PriorityQHeap *pqHeapNewPriorityQ( TESSalloc* alloc, int size, int (*leq)(PQkey key1, PQkey key2) )
+    PriorityQHeap *pqHeapNewPriorityQ( int size, int (*leq)(PQkey key1, PQkey key2) )
     {
-        PriorityQHeap *pq = (PriorityQHeap *)alloc->memalloc( alloc->userData, sizeof( PriorityQHeap ));
+        PriorityQHeap *pq = new PriorityQHeap;
         
         pq->size = 0;
         pq->max = size;
-        pq->nodes = (PQnode *)alloc->memalloc( alloc->userData, (size + 1) * sizeof(pq->nodes[0]) );
-        pq->handles = (PQhandleElem *)alloc->memalloc( alloc->userData, (size + 1) * sizeof(pq->handles[0]) );
+        pq->nodes = new PQnode[size+1];
+        pq->handles = new PQhandleElem[size+1];
         
         pq->initialized = FALSE;
         pq->freeList = 0;
@@ -101,11 +101,11 @@ namespace Tess
     }
     
     /* really pqHeapDeletePriorityQHeap */
-    void pqHeapDeletePriorityQ( TESSalloc* alloc, PriorityQHeap *pq )
+    void pqHeapDeletePriorityQ( PriorityQHeap *pq )
     {
-        alloc->memfree( alloc->userData, pq->handles );
-        alloc->memfree( alloc->userData, pq->nodes );
-        alloc->memfree( alloc->userData, pq );
+        delete[] pq->handles;
+        delete[] pq->nodes;
+        delete pq;
     }
     
     
@@ -175,39 +175,13 @@ namespace Tess
     }
     
     /* really pqHeapInsert */
-    /* returns INV_HANDLE iff out of memory */
-    PQhandle pqHeapInsert( TESSalloc* alloc, PriorityQHeap *pq, PQkey keyNew )
+    PQhandle pqHeapInsert( PriorityQHeap *pq, PQkey keyNew )
     {
         int curr;
         PQhandle free;
         
         curr = ++ pq->size;
-        if( (curr*2) > pq->max ) {
-            if (!alloc->memrealloc)
-            {
-                return INV_HANDLE;
-            }
-            else
-            {
-                PQnode *saveNodes= pq->nodes;
-                PQhandleElem *saveHandles= pq->handles;
-                
-                // If the heap overflows, double its size.
-                pq->max <<= 1;
-                pq->nodes = (PQnode *)alloc->memrealloc( alloc->userData, pq->nodes,
-                                                        (size_t)((pq->max + 1) * sizeof( pq->nodes[0] )));
-                if (pq->nodes == NULL) {
-                    pq->nodes = saveNodes;	// restore ptr to free upon return
-                    return INV_HANDLE;
-                }
-                pq->handles = (PQhandleElem *)alloc->memrealloc( alloc->userData, pq->handles,
-                                                                (size_t) ((pq->max + 1) * sizeof( pq->handles[0] )));
-                if (pq->handles == NULL) {
-                    pq->handles = saveHandles; // restore ptr to free upon return
-                    return INV_HANDLE;
-                }
-            }
-        }
+        assert((curr*2) <= pq->max );
         
         if( pq->freeList == 0 ) {
             free = curr;
@@ -280,14 +254,13 @@ namespace Tess
     /* Now redefine all the function names to map to their "Sort" versions. */
     
     /* really tessPqSortNewPriorityQ */
-    PriorityQ *pqNewPriorityQ( TESSalloc* alloc, int size, int (*leq)(PQkey key1, PQkey key2) )
+    PriorityQ *pqNewPriorityQ( int size, int (*leq)(PQkey key1, PQkey key2) )
     {
-        PriorityQ *pq = (PriorityQ *)alloc->memalloc( alloc->userData, sizeof( PriorityQ ));
+        PriorityQ *pq = new PriorityQ;
         
-        pq->heap = pqHeapNewPriorityQ( alloc, size, leq );
+        pq->heap = pqHeapNewPriorityQ( size, leq );
         
-        //	pq->keys = (PQkey *)memAlloc( INIT_SIZE * sizeof(pq->keys[0]) );
-        pq->keys = (PQkey *)alloc->memalloc( alloc->userData, size * sizeof(pq->keys[0]) );
+        pq->keys = new PQkey[size];
         
         pq->size = 0;
         pq->max = size; //INIT_SIZE;
@@ -298,13 +271,13 @@ namespace Tess
     }
     
     /* really tessPqSortDeletePriorityQ */
-    void pqDeletePriorityQ( TESSalloc* alloc, PriorityQ *pq )
+    void pqDeletePriorityQ( PriorityQ *pq )
     {
         assert(pq != NULL);
-        if (pq->heap != NULL) pqHeapDeletePriorityQ( alloc, pq->heap );
-        if (pq->order != NULL) alloc->memfree( alloc->userData, pq->order );
-        if (pq->keys != NULL) alloc->memfree( alloc->userData, pq->keys );
-        alloc->memfree( alloc->userData, pq );
+        if (pq->heap != NULL) pqHeapDeletePriorityQ( pq->heap );
+        if (pq->order != NULL) delete[] pq->order;
+        if (pq->keys != NULL) delete[] pq->keys;
+        delete pq;
     }
     
     
@@ -313,7 +286,7 @@ namespace Tess
 #define Swap(a,b)   if(1){PQkey *tmp = *a; *a = *b; *b = tmp;}else
     
     /* really tessPqSortInit */
-    void pqInit( TESSalloc* alloc, PriorityQ *pq )
+    void pqInit( PriorityQ *pq )
     {
         PQkey **p, **r, **i, **j, *piv;
         struct { PQkey **p, **r; } Stack[50], *top = Stack;
@@ -322,12 +295,7 @@ namespace Tess
         /* Create an array of indirect pointers to the keys, so that we
          * the handles we have returned are still valid.
          */
-        /*
-         pq->order = (PQkey **)memAlloc( (size_t)
-         (pq->size * sizeof(pq->order[0])) );
-         */
-        pq->order = (PQkey **)alloc->memalloc( alloc->userData,
-                                              (size_t)((pq->size+1) * sizeof(pq->order[0])) );
+        pq->order = new PQkey*[pq->size+1];
         
         p = pq->order;
         r = p + pq->size - 1;
@@ -388,20 +356,16 @@ namespace Tess
     
     /* really tessPqSortInsert */
     /* returns INV_HANDLE iff out of memory */ 
-    PQhandle pqInsert( TESSalloc* alloc, PriorityQ *pq, PQkey keyNew )
+    PQhandle pqInsert( PriorityQ *pq, PQkey keyNew )
     {
         int curr;
         
         if( pq->initialized ) {
-            return pqHeapInsert( alloc, pq->heap, keyNew );
+            return pqHeapInsert( pq->heap, keyNew );
         }
         curr = pq->size;
-        if( ++ pq->size >= pq->max ) {
-            // If the heap overflows, double its size.
-            pq->max <<= 1;
-            pq->keys = (PQkey *)alloc->memrealloc( alloc->userData, pq->keys, 
-                                                  (size_t)(pq->max * sizeof( pq->keys[0] )));
-        }
+        ++pq->size;
+        assert(pq->size < pq->max);
         pq->keys[curr] = keyNew;
         
         /* Negative handles index the sorted array. */

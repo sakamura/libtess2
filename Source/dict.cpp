@@ -37,9 +37,9 @@
 namespace Tess
 {
     /* really tessDictListNewDict */
-    Dict *dictNewDict( TESSalloc* alloc, void *frame, int (*leq)(void *frame, DictKey key1, DictKey key2) )
+    Dict *dictNewDict( void *frame, int (*leq)(void *frame, DictKey key1, DictKey key2) )
     {
-        Dict *dict = (Dict *)alloc->memalloc( alloc->userData, sizeof( Dict ));
+        Dict *dict = new Dict;
         DictNode *head;
         
         head = &dict->head;
@@ -50,21 +50,14 @@ namespace Tess
         
         dict->frame = frame;
         dict->leq = leq;
-        
-        if (alloc->dictNodeBucketSize < 16)
-            alloc->dictNodeBucketSize = 16;
-        if (alloc->dictNodeBucketSize > 4096)
-            alloc->dictNodeBucketSize = 4096;
-        dict->nodePool = createBucketAlloc( alloc, "Dict", sizeof(DictNode), alloc->dictNodeBucketSize );
-        
+
         return dict;
     }
     
     /* really tessDictListDeleteDict */
-    void dictDeleteDict( TESSalloc* alloc, Dict *dict )
+    void dictDeleteDict( Dict *dict )
     {
-        deleteBucketAlloc( dict->nodePool );
-        alloc->memfree( alloc->userData, dict );
+        delete dict;
     }
     
     /* really tessDictListInsertBefore */
@@ -76,7 +69,7 @@ namespace Tess
             node = node->prev;
         } while( node->key != NULL && ! (*dict->leq)(dict->frame, node->key, key));
         
-        newNode = (DictNode *)bucketAlloc( dict->nodePool );
+        newNode = new DictNode;
         
         newNode->key = key;
         newNode->next = node->next;
@@ -92,7 +85,7 @@ namespace Tess
     {
         node->next->prev = node->prev;
         node->prev->next = node->next;
-        bucketFree( dict->nodePool, node );
+        delete node;
     }
     
     /* really tessDictListSearch */

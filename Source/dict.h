@@ -38,9 +38,9 @@ namespace Tess
     typedef struct Dict Dict;
     typedef struct DictNode DictNode;
     
-    Dict *dictNewDict( TESSalloc* alloc, void *frame, int (*leq)(void *frame, DictKey key1, DictKey key2) );
+    Dict *dictNewDict( void *frame, int (*leq)(void *frame, DictKey key1, DictKey key2) );
     
-    void dictDeleteDict( TESSalloc* alloc, Dict *dict );
+    void dictDeleteDict( Dict *dict );
     
     /* Search returns the node with the smallest key greater than or equal
      * to the given key.  If there is no such key, returns a node whose
@@ -64,12 +64,14 @@ namespace Tess
         DictKey	key;
         DictNode *next;
         DictNode *prev;
+
+        static void* operator new( std::size_t count ) { return BucketAlloc<DictNode>::get(count).alloc(); }
+        static void operator delete( void* ptr ) { BucketAlloc<DictNode>::get().free(ptr); }
     };
     
     struct Dict {
         DictNode head;
         void *frame;
-        struct BucketAlloc *nodePool;
         int (*leq)(void *frame, DictKey key1, DictKey key2);
     };
 }

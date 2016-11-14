@@ -33,9 +33,8 @@
 #define SWEEP_H
 
 #include "mesh.h"
-
-/* The following is here *only* for access by debugging routines */
 #include "dict.h"
+#include "bucketalloc.h"
 
 namespace Tess
 {
@@ -66,6 +65,9 @@ namespace Tess
         int fixUpperEdge;	/* marks temporary edges introduced when
                              * we process a "right vertex" (one without
                              * any edges leaving to the right) */
+        
+        static void* operator new( std::size_t count ) { return BucketAlloc<ActiveRegion>::get(count).alloc(); }
+        static void operator delete( void* ptr ) { BucketAlloc<ActiveRegion>::get().free(ptr); }
     };
     
 #define RegionBelow(r) ((ActiveRegion *) dictKey(dictPred((r)->nodeUp)))
