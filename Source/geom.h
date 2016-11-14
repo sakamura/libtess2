@@ -33,38 +33,24 @@
 #define GEOM_H
 
 #include "mesh.h"
+#include <cmath>
 
 namespace Tess
 {
-#define VertEq(u,v) ((u)->s == (v)->s && (u)->t == (v)->t)
-#define VertLeq(u,v) (((u)->s < (v)->s) || ((u)->s == (v)->s && (u)->t <= (v)->t))
-#define EdgeEval(u,v,w)	tesedgeEval(u,v,w)
-#define EdgeSign(u,v,w)	tesedgeSign(u,v,w)
+    inline bool vertAreEqual(const TESSvertex* u, const TESSvertex* v) { return ((u)->s == (v)->s && (u)->t == (v)->t); }
+    inline bool vertAreLessOrEqual(const TESSvertex* u, const TESSvertex* v) { return (((u)->s < (v)->s) || ((u)->s == (v)->s && (u)->t <= (v)->t)); }
+    inline bool transVertAreLessOrEqual(const TESSvertex* u, const TESSvertex* v) { return (((u)->t < (v)->t) || ((u)->t == (v)->t && (u)->s <= (v)->s)); }
+    inline bool edgeGoesLeft(const TESShalfEdge* e) { return vertAreLessOrEqual( (e)->Dst, (e)->Org ); }
+    inline bool edgeGoesRight(const TESShalfEdge* e) { return vertAreLessOrEqual( (e)->Org, (e)->Dst ); }
+    inline bool edgeIsInternal(const TESShalfEdge* e) { return e->Rface && e->Rface->inside; }
+    inline bool vertAreCCW( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w ) { return (u->s*(v->t - w->t) + v->s*(w->t - u->t) + w->s*(u->t - v->t)) >= 0; }
     
-    /* Versions of VertLeq, EdgeSign, EdgeEval with s and t transposed. */
-    
-#define TransLeq(u,v) (((u)->t < (v)->t) || ((u)->t == (v)->t && (u)->s <= (v)->s))
-#define TransEval(u,v,w) testransEval(u,v,w)
-#define TransSign(u,v,w) testransSign(u,v,w)
-    
-    
-#define EdgeGoesLeft(e) VertLeq( (e)->Dst, (e)->Org )
-#define EdgeGoesRight(e) VertLeq( (e)->Org, (e)->Dst )
-#define EdgeIsInternal(e) e->Rface && e->Rface->inside
-    
-#define ABS(x) ((x) < 0 ? -(x) : (x))
-#define VertL1dist(u,v) (ABS(u->s - v->s) + ABS(u->t - v->t))
-    
-#define VertCCW(u,v,w) tesvertCCW(u,v,w)
-    
-    int tesvertLeq( TESSvertex *u, TESSvertex *v );
-    TESSreal	tesedgeEval( TESSvertex *u, TESSvertex *v, TESSvertex *w );
-    TESSreal	tesedgeSign( TESSvertex *u, TESSvertex *v, TESSvertex *w );
-    TESSreal	testransEval( TESSvertex *u, TESSvertex *v, TESSvertex *w );
-    TESSreal	testransSign( TESSvertex *u, TESSvertex *v, TESSvertex *w );
-    int tesvertCCW( TESSvertex *u, TESSvertex *v, TESSvertex *w );
-    void tesedgeIntersect( TESSvertex *o1, TESSvertex *d1, TESSvertex *o2, TESSvertex *d2, TESSvertex *v );
-    int tesedgeIsLocallyDelaunay( TESShalfEdge *e );
+    float edgeEval( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w ); // Returns the signed distance from uw to v.
+    float edgeSign( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w ); // Returns a number whose sign matches edgeEval(u,v,w) but which is cheaper to evaluate.
+    float transEdgeEval( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w ); // Transposed version of edgeEval
+    float transEdgeSign( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w ); // Transposed version of edgeSign
+    void edgeIntersect( const TESSvertex *o1, const TESSvertex *d1, const TESSvertex *o2, const TESSvertex *d2, TESSvertex *v ); // Given edges (o1,d1) and (o2,d2), compute their point of intersection.
+    bool edgeIsLocallyDelaunay( const TESShalfEdge *e );
 }
 
 #endif

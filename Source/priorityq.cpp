@@ -32,18 +32,18 @@
 //#include "tesos.h"
 #include <stddef.h>
 #include <assert.h>
-#include "../Include/tesselator.h"
+#include "tess.h"
 #include "priorityq.h"
 
 
 #define INIT_SIZE	32
 
-#define TRUE 1
-#define FALSE 0
+#define true 1
+#define false 0
 
 /* Violates modularity, but a little faster */
 #include "geom.h"
-#define LEQ(x,y)	VertLeq((TESSvertex *)x, (TESSvertex *)y)
+#define LEQ(x,y)	vertAreLessOrEqual((TESSvertex *)x, (TESSvertex *)y)
 
 /* Include all the code for the regular heap-based queue here. */
 
@@ -59,7 +59,7 @@ namespace Tess
      * repeatedly, then calling pqInit.  In any case pqInit must be called
      * before any operations other than pqInsert are used.
      *
-     * If the heap is empty, pqMinimum/pqExtractMin will return a NULL key.
+     * If the heap is empty, pqMinimum/pqExtractMin will return a nullptr key.
      * This may also be tested with pqIsEmpty.
      */
     
@@ -91,12 +91,12 @@ namespace Tess
         pq->nodes = new PQnode[size+1];
         pq->handles = new PQhandleElem[size+1];
         
-        pq->initialized = FALSE;
+        pq->initialized = false;
         pq->freeList = 0;
         pq->leq = leq;
         
-        pq->nodes[1].handle = 1;	/* so that Minimum() returns NULL */
-        pq->handles[1].key = NULL;
+        pq->nodes[1].handle = 1;	/* so that Minimum() returns nullptr */
+        pq->handles[1].key = nullptr;
         return pq;
     }
     
@@ -171,7 +171,7 @@ namespace Tess
         for( i = pq->size; i >= 1; --i ) {
             FloatDown( pq, i );
         }
-        pq->initialized = TRUE;
+        pq->initialized = true;
     }
     
     /* really pqHeapInsert */
@@ -213,7 +213,7 @@ namespace Tess
             n[1].handle = n[pq->size].handle;
             h[n[1].handle].node = 1;
             
-            h[hMin].key = NULL;
+            h[hMin].key = nullptr;
             h[hMin].node = pq->freeList;
             pq->freeList = hMin;
             
@@ -231,7 +231,7 @@ namespace Tess
         PQhandleElem *h = pq->handles;
         int curr;
         
-        assert( hCurr >= 1 && hCurr <= pq->max && h[hCurr].key != NULL );
+        assert( hCurr >= 1 && hCurr <= pq->max && h[hCurr].key != nullptr );
         
         curr = h[hCurr].node;
         n[curr].handle = n[pq->size].handle;
@@ -244,7 +244,7 @@ namespace Tess
                 FloatUp( pq, curr );
             }
         }
-        h[hCurr].key = NULL;
+        h[hCurr].key = nullptr;
         h[hCurr].node = pq->freeList;
         pq->freeList = hCurr;
     }
@@ -264,7 +264,7 @@ namespace Tess
         
         pq->size = 0;
         pq->max = size; //INIT_SIZE;
-        pq->initialized = FALSE;
+        pq->initialized = false;
         pq->leq = leq;
         
         return pq;
@@ -273,10 +273,10 @@ namespace Tess
     /* really tessPqSortDeletePriorityQ */
     void pqDeletePriorityQ( PriorityQ *pq )
     {
-        assert(pq != NULL);
-        if (pq->heap != NULL) pqHeapDeletePriorityQ( pq->heap );
-        if (pq->order != NULL) delete[] pq->order;
-        if (pq->keys != NULL) delete[] pq->keys;
+        assert(pq != nullptr);
+        if (pq->heap != nullptr) pqHeapDeletePriorityQ( pq->heap );
+        if (pq->order != nullptr) delete[] pq->order;
+        if (pq->keys != nullptr) delete[] pq->keys;
         delete pq;
     }
     
@@ -342,7 +342,7 @@ namespace Tess
             }
         }
         pq->max = pq->size;
-        pq->initialized = TRUE;
+        pq->initialized = true;
         pqHeapInit( pq->heap );  /* always succeeds */
         
 #ifndef NDEBUG
@@ -389,7 +389,7 @@ namespace Tess
         }
         do {
             -- pq->size;
-        } while( pq->size > 0 && *(pq->order[pq->size-1]) == NULL );
+        } while( pq->size > 0 && *(pq->order[pq->size-1]) == nullptr );
         return sortMin;
     }
     
@@ -425,10 +425,10 @@ namespace Tess
             return;
         }
         curr = -(curr+1);
-        assert( curr < pq->max && pq->keys[curr] != NULL );
+        assert( curr < pq->max && pq->keys[curr] != nullptr );
         
-        pq->keys[curr] = NULL;
-        while( pq->size > 0 && *(pq->order[pq->size-1]) == NULL ) {
+        pq->keys[curr] = nullptr;
+        while( pq->size > 0 && *(pq->order[pq->size-1]) == nullptr ) {
             -- pq->size;
         }
     }

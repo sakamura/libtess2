@@ -38,16 +38,9 @@
 
 namespace Tess
 {
-    int tesvertLeq( TESSvertex *u, TESSvertex *v )
+    float edgeEval( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w )
     {
-        /* Returns TRUE if u is lexicographically <= v. */
-        
-        return VertLeq( u, v );
-    }
-    
-    TESSreal tesedgeEval( TESSvertex *u, TESSvertex *v, TESSvertex *w )
-    {
-        /* Given three vertices u,v,w such that VertLeq(u,v) && VertLeq(v,w),
+        /* Given three vertices u,v,w such that vertAreLessOrEqual(u,v) && vertAreLessOrEqual(v,w),
          * evaluates the t-coord of the edge uw at the s-coord of the vertex v.
          * Returns v->t - (uw)(v->s), ie. the signed distance from uw to v.
          * If uw is vertical (and thus passes thru v), the result is zero.
@@ -57,9 +50,9 @@ namespace Tess
          * let r be the negated result (this evaluates (uw)(v->s)), then
          * r is guaranteed to satisfy MIN(u->t,w->t) <= r <= MAX(u->t,w->t).
          */
-        TESSreal gapL, gapR;
+        float gapL, gapR;
         
-        assert( VertLeq( u, v ) && VertLeq( v, w ));
+        assert( vertAreLessOrEqual( u, v ) && vertAreLessOrEqual( v, w ));
         
         gapL = v->s - u->s;
         gapR = w->s - v->s;
@@ -75,15 +68,15 @@ namespace Tess
         return 0;
     }
     
-    TESSreal tesedgeSign( TESSvertex *u, TESSvertex *v, TESSvertex *w )
+    float edgeSign( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w )
     {
-        /* Returns a number whose sign matches EdgeEval(u,v,w) but which
+        /* Returns a number whose sign matches edgeEval(u,v,w) but which
          * is cheaper to evaluate.  Returns > 0, == 0 , or < 0
          * as v is above, on, or below the edge uw.
          */
-        TESSreal gapL, gapR;
+        float gapL, gapR;
         
-        assert( VertLeq( u, v ) && VertLeq( v, w ));
+        assert( vertAreLessOrEqual( u, v ) && vertAreLessOrEqual( v, w ));
         
         gapL = v->s - u->s;
         gapR = w->s - v->s;
@@ -97,12 +90,12 @@ namespace Tess
     
     
     /***********************************************************************
-     * Define versions of EdgeSign, EdgeEval with s and t transposed.
+     * Define versions of edgeSign, edgeEval with s and t transposed.
      */
     
-    TESSreal testransEval( TESSvertex *u, TESSvertex *v, TESSvertex *w )
+    float transEdgeEval( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w )
     {
-        /* Given three vertices u,v,w such that TransLeq(u,v) && TransLeq(v,w),
+        /* Given three vertices u,v,w such that transVertAreLessOrEqual(u,v) && transVertAreLessOrEqual(v,w),
          * evaluates the t-coord of the edge uw at the s-coord of the vertex v.
          * Returns v->s - (uw)(v->t), ie. the signed distance from uw to v.
          * If uw is vertical (and thus passes thru v), the result is zero.
@@ -112,9 +105,9 @@ namespace Tess
          * let r be the negated result (this evaluates (uw)(v->t)), then
          * r is guaranteed to satisfy MIN(u->s,w->s) <= r <= MAX(u->s,w->s).
          */
-        TESSreal gapL, gapR;
+        float gapL, gapR;
         
-        assert( TransLeq( u, v ) && TransLeq( v, w ));
+        assert( transVertAreLessOrEqual( u, v ) && transVertAreLessOrEqual( v, w ));
         
         gapL = v->t - u->t;
         gapR = w->t - v->t;
@@ -130,15 +123,15 @@ namespace Tess
         return 0;
     }
     
-    TESSreal testransSign( TESSvertex *u, TESSvertex *v, TESSvertex *w )
+    float transEdgeSign( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w )
     {
-        /* Returns a number whose sign matches TransEval(u,v,w) but which
+        /* Returns a number whose sign matches transEdgeEval(u,v,w) but which
          * is cheaper to evaluate.  Returns > 0, == 0 , or < 0
          * as v is above, on, or below the edge uw.
          */
-        TESSreal gapL, gapR;
+        float gapL, gapR;
         
-        assert( TransLeq( u, v ) && TransLeq( v, w ));
+        assert( transVertAreLessOrEqual( u, v ) && transVertAreLessOrEqual( v, w ));
         
         gapL = v->t - u->t;
         gapR = w->t - v->t;
@@ -149,19 +142,8 @@ namespace Tess
         /* vertical line */
         return 0;
     }
-    
-    
-    int tesvertCCW( TESSvertex *u, TESSvertex *v, TESSvertex *w )
-    {
-        /* For almost-degenerate situations, the results are not reliable.
-         * Unless the floating-point arithmetic can be performed without
-         * rounding errors, *any* implementation will give incorrect results
-         * on some degenerate inputs, so the client must have some way to
-         * handle this situation.
-         */
-        return (u->s*(v->t - w->t) + v->s*(w->t - u->t) + w->s*(u->t - v->t)) >= 0;
-    }
-    
+
+    static inline float interpolate(float& a, float x, float& b, float y)
     /* Given parameters a,x,b,y returns the value (b*x+a*y)/(a+b),
      * or (x+y)/2 if a==b==0.  It requires that a,b >= 0, and enforces
      * this in the rare case that one argument is slightly negative.
@@ -170,88 +152,93 @@ namespace Tess
      * MIN(x,y) <= r <= MAX(x,y), and the results are very accurate
      * even when a and b differ greatly in magnitude.
      */
-#define RealInterpolate(a,x,b,y)			\
-(a = (a < 0) ? 0 : a, b = (b < 0) ? 0 : b,		\
-((a <= b) ? ((b == 0) ? ((x+y) / 2)			\
-: (x + (y-x) * (a/(a+b))))	\
-: (y + (x-y) * (b/(a+b)))))
-    
-#define Interpolate(a,x,b,y)	RealInterpolate(a,x,b,y)
-    
-#define Swap(a,b)	if (1) { TESSvertex *t = a; a = b; b = t; } else
-    
-    void tesedgeIntersect( TESSvertex *o1, TESSvertex *d1,
-                          TESSvertex *o2, TESSvertex *d2,
+    {
+        if (a < 0.f) a = 0.f;
+        if (b < 0.f) b = 0.f;
+        if (a > b)
+        {
+            return (y + (x-y) * (b/(a+b)));
+        }
+        if (b != 0)
+        {
+            return (x + (y-x) * (a/(a+b)));
+        }
+        
+        return ((x+y) / 2);
+    }
+
+    void edgeIntersect( const TESSvertex *o1, const TESSvertex *d1,
+                          const TESSvertex *o2, const TESSvertex *d2,
                           TESSvertex *v )
     /* Given edges (o1,d1) and (o2,d2), compute their point of intersection.
      * The computed point is guaranteed to lie in the intersection of the
      * bounding rectangles defined by each edge.
      */
     {
-        TESSreal z1, z2;
+        float z1, z2;
         
         /* This is certainly not the most efficient way to find the intersection
          * of two line segments, but it is very numerically stable.
          *
-         * Strategy: find the two middle vertices in the VertLeq ordering,
+         * Strategy: find the two middle vertices in the vertAreLessOrEqual ordering,
          * and interpolate the intersection s-value from these.  Then repeat
-         * using the TransLeq ordering to find the intersection t-value.
+         * using the transVertAreLessOrEqual ordering to find the intersection t-value.
          */
         
-        if( ! VertLeq( o1, d1 )) { Swap( o1, d1 ); }
-        if( ! VertLeq( o2, d2 )) { Swap( o2, d2 ); }
-        if( ! VertLeq( o1, o2 )) { Swap( o1, o2 ); Swap( d1, d2 ); }
+        if( ! vertAreLessOrEqual( o1, d1 )) { std::swap( o1, d1 ); }
+        if( ! vertAreLessOrEqual( o2, d2 )) { std::swap( o2, d2 ); }
+        if( ! vertAreLessOrEqual( o1, o2 )) { std::swap( o1, o2 ); std::swap( d1, d2 ); }
         
-        if( ! VertLeq( o2, d1 )) {
+        if( ! vertAreLessOrEqual( o2, d1 )) {
             /* Technically, no intersection -- do our best */
             v->s = (o2->s + d1->s) / 2;
-        } else if( VertLeq( d1, d2 )) {
+        } else if( vertAreLessOrEqual( d1, d2 )) {
             /* Interpolate between o2 and d1 */
-            z1 = EdgeEval( o1, o2, d1 );
-            z2 = EdgeEval( o2, d1, d2 );
+            z1 = edgeEval( o1, o2, d1 );
+            z2 = edgeEval( o2, d1, d2 );
             if( z1+z2 < 0 ) { z1 = -z1; z2 = -z2; }
-            v->s = Interpolate( z1, o2->s, z2, d1->s );
+            v->s = interpolate( z1, o2->s, z2, d1->s );
         } else {
             /* Interpolate between o2 and d2 */
-            z1 = EdgeSign( o1, o2, d1 );
-            z2 = -EdgeSign( o1, d2, d1 );
+            z1 = edgeSign( o1, o2, d1 );
+            z2 = -edgeSign( o1, d2, d1 );
             if( z1+z2 < 0 ) { z1 = -z1; z2 = -z2; }
-            v->s = Interpolate( z1, o2->s, z2, d2->s );
+            v->s = interpolate( z1, o2->s, z2, d2->s );
         }
         
         /* Now repeat the process for t */
         
-        if( ! TransLeq( o1, d1 )) { Swap( o1, d1 ); }
-        if( ! TransLeq( o2, d2 )) { Swap( o2, d2 ); }
-        if( ! TransLeq( o1, o2 )) { Swap( o1, o2 ); Swap( d1, d2 ); }
+        if( ! transVertAreLessOrEqual( o1, d1 )) { std::swap( o1, d1 ); }
+        if( ! transVertAreLessOrEqual( o2, d2 )) { std::swap( o2, d2 ); }
+        if( ! transVertAreLessOrEqual( o1, o2 )) { std::swap( o1, o2 ); std::swap( d1, d2 ); }
         
-        if( ! TransLeq( o2, d1 )) {
+        if( ! transVertAreLessOrEqual( o2, d1 )) {
             /* Technically, no intersection -- do our best */
             v->t = (o2->t + d1->t) / 2;
-        } else if( TransLeq( d1, d2 )) {
+        } else if( transVertAreLessOrEqual( d1, d2 )) {
             /* Interpolate between o2 and d1 */
-            z1 = TransEval( o1, o2, d1 );
-            z2 = TransEval( o2, d1, d2 );
+            z1 = transEdgeEval( o1, o2, d1 );
+            z2 = transEdgeEval( o2, d1, d2 );
             if( z1+z2 < 0 ) { z1 = -z1; z2 = -z2; }
-            v->t = Interpolate( z1, o2->t, z2, d1->t );
+            v->t = interpolate( z1, o2->t, z2, d1->t );
         } else {
             /* Interpolate between o2 and d2 */
-            z1 = TransSign( o1, o2, d1 );
-            z2 = -TransSign( o1, d2, d1 );
+            z1 = transEdgeSign( o1, o2, d1 );
+            z2 = -transEdgeSign( o1, d2, d1 );
             if( z1+z2 < 0 ) { z1 = -z1; z2 = -z2; }
-            v->t = Interpolate( z1, o2->t, z2, d2->t );
+            v->t = interpolate( z1, o2->t, z2, d2->t );
         }
     }
     
     /*
      Calculate the angle between v1-v2 and v1-v0
      */
-    TESSreal calcAngle( TESSvertex *v0, TESSvertex *v1, TESSvertex *v2 )
+    static inline float calcAngle( const TESSvertex *v0, const TESSvertex *v1, const TESSvertex *v2 )
     {
-        TESSreal num;
-        TESSreal den;
-        TESSreal a[2];
-        TESSreal b[2];
+        float num;
+        float den;
+        float a[2];
+        float b[2];
         a[0] = v2->s - v1->s;
         a[1] = v2->t - v1->t;
         b[0] = v0->s - v1->s;
@@ -264,10 +251,7 @@ namespace Tess
         return acos( num );
     }
     
-    /*
-     Returns 1 is edge is locally delaunay
-     */
-    int tesedgeIsLocallyDelaunay( TESShalfEdge *e )
+    bool edgeIsLocallyDelaunay( const TESShalfEdge *e )
     {
         return (calcAngle(e->Lnext->Org, e->Lnext->Lnext->Org, e->Org) +
                 calcAngle(e->Sym->Lnext->Org, e->Sym->Lnext->Lnext->Org, e->Sym->Org)) < (M_PI + 0.01);

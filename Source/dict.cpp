@@ -30,21 +30,21 @@
 */
 
 #include <stddef.h>
-#include "../Include/tesselator.h"
+#include "tess.h"
 #include "bucketalloc.h"
 #include "dict.h"
 
 namespace Tess
 {
     /* really tessDictListNewDict */
-    Dict *dictNewDict( void *frame, int (*leq)(void *frame, DictKey key1, DictKey key2) )
+    Dict *dictNewDict( void *frame, bool (*leq)(void *frame, DictKey key1, DictKey key2) )
     {
         Dict *dict = new Dict;
         DictNode *head;
         
         head = &dict->head;
         
-        head->key = NULL;
+        head->key = nullptr;
         head->next = head;
         head->prev = head;
         
@@ -67,7 +67,7 @@ namespace Tess
         
         do {
             node = node->prev;
-        } while( node->key != NULL && ! (*dict->leq)(dict->frame, node->key, key));
+        } while( node->key != nullptr && ! (*dict->leq)(dict->frame, node->key, key));
         
         newNode = new DictNode;
         
@@ -95,7 +95,7 @@ namespace Tess
         
         do {
             node = node->next;
-        } while( node->key != NULL && ! (*dict->leq)(dict->frame, key, node->key));
+        } while( node->key != nullptr && ! (*dict->leq)(dict->frame, key, node->key));
         
         return node;
     }

@@ -32,7 +32,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "tesselator.h"
+#include "tess.h"
 #include "bucketalloc.h"
 
 namespace Tess
@@ -84,12 +84,12 @@ namespace Tess
      *
      * Each vertex has a pointer to next and previous vertices in the
      * circular list, and a pointer to a half-edge with this vertex as
-     * the origin (NULL if this is the dummy header).  There is also a
+     * the origin (nullptr if this is the dummy header).  There is also a
      * field "data" for client data.
      *
      * Each face has a pointer to the next and previous faces in the
      * circular list, and a pointer to a half-edge with this face as
-     * the left face (NULL if this is the dummy header).  There is also
+     * the left face (nullptr if this is the dummy header).  There is also
      * a field "data" for client data.
      *
      * Note that what we call a "face" is really a loop; faces may consist
@@ -102,36 +102,36 @@ namespace Tess
      * The mesh does NOT support isolated vertices; a vertex is deleted along
      * with its last edge.  Similarly when two faces are merged, one of the
      * faces is deleted (see tessMeshDelete below).  For mesh operations,
-     * all face (loop) and vertex pointers must not be NULL.  However, once
+     * all face (loop) and vertex pointers must not be nullptr.  However, once
      * mesh manipulation is finished, TESSmeshZapFace can be used to delete
      * faces of the mesh, one at a time.  All external faces can be "zapped"
-     * before the mesh is returned to the client; then a NULL face indicates
+     * before the mesh is returned to the client; then a nullptr face indicates
      * a region which is not part of the output polygon.
      */
     
     struct TESSvertex {
-        TESSvertex *next;      /* next vertex (never NULL) */
-        TESSvertex *prev;      /* previous vertex (never NULL) */
+        TESSvertex *next;      /* next vertex (never nullptr) */
+        TESSvertex *prev;      /* previous vertex (never nullptr) */
         TESShalfEdge *anEdge;    /* a half-edge with this origin */
         
         /* Internal data (keep hidden) */
-        TESSreal s, t;       /* projection onto the sweep plane */
+        float s, t;       /* projection onto the sweep plane */
         int pqHandle;   /* to allow deletion from priority queue */
-        TESSindex n;			/* to allow identify unique vertices */
-        TESSindex idx;			/* to allow map result to original verts */
+        int n;			/* to allow identify unique vertices */
+        int idx;			/* to allow map result to original verts */
         
         static void* operator new( std::size_t count ) { return BucketAlloc<TESSvertex>::get(count).alloc(); }
         static void operator delete( void* ptr ) { BucketAlloc<TESSvertex>::get().free(ptr); }
     };
     
     struct TESSface {
-        TESSface *next;      /* next face (never NULL) */
-        TESSface *prev;      /* previous face (never NULL) */
+        TESSface *next;      /* next face (never nullptr) */
+        TESSface *prev;      /* previous face (never nullptr) */
         TESShalfEdge *anEdge;    /* a half edge with this left face */
         
         /* Internal data (keep hidden) */
         TESSface *trail;     /* "stack" for conversion to strips */
-        TESSindex n;		/* to allow identiy unique faces */
+        int n;		/* to allow identiy unique faces */
         char marked;     /* flag for conversion to strips */
         char inside;     /* this face is in the polygon interior */
 
@@ -239,8 +239,8 @@ namespace Tess
      * tessMeshDeleteMesh( mesh ) will free all storage for any valid mesh.
      *
      * tessMeshZapFace( fZap ) destroys a face and removes it from the
-     * global face list.  All edges of fZap will have a NULL pointer as their
-     * left face.  Any edges which also have a NULL pointer as their right face
+     * global face list.  All edges of fZap will have a nullptr pointer as their
+     * left face.  Any edges which also have a nullptr pointer as their right face
      * are deleted entirely (along with any isolated vertices this produces).
      * An entire mesh can be deleted by zapping its faces, one at a time,
      * in any order.  Zapped faces cannot be used in further mesh operations!

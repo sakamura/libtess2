@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		96042D791DD963AD007EB86E /* bucketalloc.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B01D65E59200404BDA /* bucketalloc.h */; };
+		96042D7A1DD963AD007EB86E /* dict.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B21D65E59200404BDA /* dict.h */; };
+		96042D7B1DD963AD007EB86E /* geom.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B41D65E59200404BDA /* geom.h */; };
+		96042D7C1DD963AD007EB86E /* mesh.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B61D65E59200404BDA /* mesh.h */; };
+		96042D7D1DD963AD007EB86E /* priorityq.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B81D65E59200404BDA /* priorityq.h */; };
+		96042D7E1DD963AD007EB86E /* sweep.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98BA1D65E59200404BDA /* sweep.h */; };
+		96042D7F1DD963AD007EB86E /* tess.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98BC1D65E59200404BDA /* tess.h */; };
 		96FF98C01D65E59200404BDA /* bucketalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98AF1D65E59200404BDA /* bucketalloc.cpp */; };
 		96FF98C11D65E59200404BDA /* dict.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B11D65E59200404BDA /* dict.cpp */; };
 		96FF98C21D65E59200404BDA /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B31D65E59200404BDA /* geom.cpp */; };
@@ -14,7 +21,6 @@
 		96FF98C41D65E59200404BDA /* priorityq.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B71D65E59200404BDA /* priorityq.cpp */; };
 		96FF98C51D65E59200404BDA /* sweep.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B91D65E59200404BDA /* sweep.cpp */; };
 		96FF98C61D65E59200404BDA /* tess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98BB1D65E59200404BDA /* tess.cpp */; };
-		96FF98C71D65E5A600404BDA /* tesselator.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98AB1D65E59200404BDA /* tesselator.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,7 +30,13 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
-				96FF98C71D65E5A600404BDA /* tesselator.h in CopyFiles */,
+				96042D791DD963AD007EB86E /* bucketalloc.h in CopyFiles */,
+				96042D7A1DD963AD007EB86E /* dict.h in CopyFiles */,
+				96042D7B1DD963AD007EB86E /* geom.h in CopyFiles */,
+				96042D7C1DD963AD007EB86E /* mesh.h in CopyFiles */,
+				96042D7D1DD963AD007EB86E /* priorityq.h in CopyFiles */,
+				96042D7E1DD963AD007EB86E /* sweep.h in CopyFiles */,
+				96042D7F1DD963AD007EB86E /* tess.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,7 +45,6 @@
 /* Begin PBXFileReference section */
 		96FF989A1D65E54800404BDA /* libTess2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libTess2.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		96FF98A71D65E59200404BDA /* alg_outline.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = alg_outline.md; sourceTree = "<group>"; };
-		96FF98AB1D65E59200404BDA /* tesselator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tesselator.h; sourceTree = "<group>"; };
 		96FF98AC1D65E59200404BDA /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		96FF98AD1D65E59200404BDA /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		96FF98AF1D65E59200404BDA /* bucketalloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bucketalloc.cpp; sourceTree = "<group>"; };
@@ -67,7 +78,6 @@
 			isa = PBXGroup;
 			children = (
 				96FF98A71D65E59200404BDA /* alg_outline.md */,
-				96FF98AA1D65E59200404BDA /* Include */,
 				96FF98AC1D65E59200404BDA /* LICENSE.txt */,
 				96FF98AD1D65E59200404BDA /* README.md */,
 				96FF98AE1D65E59200404BDA /* Source */,
@@ -89,14 +99,6 @@
 				96FF989A1D65E54800404BDA /* libTess2.a */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		96FF98AA1D65E59200404BDA /* Include */ = {
-			isa = PBXGroup;
-			children = (
-				96FF98AB1D65E59200404BDA /* tesselator.h */,
-			);
-			path = Include;
 			sourceTree = "<group>";
 		};
 		96FF98AE1D65E59200404BDA /* Source */ = {

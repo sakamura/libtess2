@@ -38,14 +38,6 @@
 
 namespace Tess
 {
-    /* tessComputeInterior( tess ) computes the planar arrangement specified
-     * by the given contours, and further subdivides this arrangement
-     * into regions.  Each region is marked "inside" if it belongs
-     * to the polygon, according to the rule given by tess->windingRule.
-     * Each interior region is guaranteed be monotone.
-     */
-    void tessComputeInterior( TESStesselator *tess );
-    
     /* For each pair of adjacent edges crossing the sweep line, there is
      * an ActiveRegion to represent the region between them.  The active
      * regions are kept in sorted order in a dynamic dictionary.  As the
@@ -68,10 +60,10 @@ namespace Tess
         
         static void* operator new( std::size_t count ) { return BucketAlloc<ActiveRegion>::get(count).alloc(); }
         static void operator delete( void* ptr ) { BucketAlloc<ActiveRegion>::get().free(ptr); }
+        
+        inline ActiveRegion* regionBelow() { return (ActiveRegion*)dictKey(dictPred(nodeUp)); }
+        inline ActiveRegion* regionAbove() { return (ActiveRegion*)dictKey(dictSucc(nodeUp)); }
     };
-    
-#define RegionBelow(r) ((ActiveRegion *) dictKey(dictPred((r)->nodeUp)))
-#define RegionAbove(r) ((ActiveRegion *) dictKey(dictSucc((r)->nodeUp)))
 }
 
 #endif

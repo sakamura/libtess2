@@ -38,13 +38,13 @@ namespace Tess
     typedef struct Dict Dict;
     typedef struct DictNode DictNode;
     
-    Dict *dictNewDict( void *frame, int (*leq)(void *frame, DictKey key1, DictKey key2) );
+    Dict *dictNewDict( void *frame, bool (*leq)(void *frame, DictKey key1, DictKey key2) );
     
     void dictDeleteDict( Dict *dict );
     
     /* Search returns the node with the smallest key greater than or equal
      * to the given key.  If there is no such key, returns a node whose
-     * key is NULL.  Similarly, Succ(Max(d)) has a NULL key, etc.
+     * key is nullptr.  Similarly, Succ(Max(d)) has a nullptr key, etc.
      */
     DictNode *dictSearch( Dict *dict, DictKey key );
     DictNode *dictInsertBefore( Dict *dict, DictNode *node, DictKey key );
@@ -72,7 +72,7 @@ namespace Tess
     struct Dict {
         DictNode head;
         void *frame;
-        int (*leq)(void *frame, DictKey key1, DictKey key2);
+        bool (*leq)(void *frame, DictKey key1, DictKey key2);
     };
 }
 

@@ -43,15 +43,6 @@
 
 namespace Tess
 {
-#define TRUE 1
-#define FALSE 0
-    
-#define S_UNIT_X	(TESSreal)1.0
-#define S_UNIT_Y	(TESSreal)0.0
-    
-#define AddWinding(eDst,eSrc)	(eDst->winding += eSrc->winding, \
-eDst->Sym->winding += eSrc->Sym->winding)
-    
     /* tessMeshTessellateMonoRegion( face ) tessellates a monotone region
      * (what else would it do??)  The region must consist of a single
      * loop of half-edges (see mesh.h) oriented CCW.  "Monotone" in this
@@ -79,7 +70,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
      * to the fan is a simple orientation test.  By making the fan as large
      * as possible, we restore the invariant (check it yourself).
      */
-    void tessMeshTessellateMonoRegion( TESSmesh *mesh, TESSface *face )
+    void Tesselator::meshTessellateMonoRegion( TESSface *face )
     {
         TESShalfEdge *up, *lo;
         
@@ -91,28 +82,28 @@ eDst->Sym->winding += eSrc->Sym->winding)
         up = face->anEdge;
         assert( up->Lnext != up && up->Lnext->Lnext != up );
         
-        for( ; VertLeq( up->Dst, up->Org ); up = up->Lprev )
+        for( ; vertAreLessOrEqual( up->Dst, up->Org ); up = up->Lprev )
             ;
-        for( ; VertLeq( up->Org, up->Dst ); up = up->Lnext )
+        for( ; vertAreLessOrEqual( up->Org, up->Dst ); up = up->Lnext )
             ;
         lo = up->Lprev;
         
         while( up->Lnext != lo ) {
-            if( VertLeq( up->Dst, lo->Org )) {
+            if( vertAreLessOrEqual( up->Dst, lo->Org )) {
                 /* up->Dst is on the left.  It is safe to form triangles from lo->Org.
-                 * The EdgeGoesLeft test guarantees progress even when some triangles
+                 * The edgeGoesLeft test guarantees progress even when some triangles
                  * are CW, given that the upper and lower chains are truly monotone.
                  */
-                while( lo->Lnext != up && (EdgeGoesLeft( lo->Lnext )
-                                           || EdgeSign( lo->Org, lo->Dst, lo->Lnext->Dst ) <= 0 )) {
+                while( lo->Lnext != up && (edgeGoesLeft( lo->Lnext )
+                                           || edgeSign( lo->Org, lo->Dst, lo->Lnext->Dst ) <= 0 )) {
                     TESShalfEdge *tempHalfEdge= tessMeshConnect( mesh, lo->Lnext, lo );
                     lo = tempHalfEdge->Sym;
                 }
                 lo = lo->Lprev;
             } else {
                 /* lo->Org is on the left.  We can make CCW triangles from up->Dst. */
-                while( lo->Lnext != up && (EdgeGoesRight( up->Lprev )
-                                           || EdgeSign( up->Dst, up->Org, up->Lprev->Org ) >= 0 )) {
+                while( lo->Lnext != up && (edgeGoesRight( up->Lprev )
+                                           || edgeSign( up->Dst, up->Org, up->Lprev->Org ) >= 0 )) {
                     TESShalfEdge *tempHalfEdge= tessMeshConnect( mesh, up, up->Lprev );
                     up = tempHalfEdge->Sym;
                 }
@@ -134,25 +125,23 @@ eDst->Sym->winding += eSrc->Sym->winding)
      * the mesh which is marked "inside" the polygon.  Each such region
      * must be monotone.
      */
-    void tessMeshTessellateInterior( TESSmesh *mesh )
+    void Tesselator::meshTessellateInterior( )
     {
         TESSface *f, *next;
         
         /*LINTED*/
         for( f = mesh->fHead.next; f != &mesh->fHead; f = next ) {
-            /* Make sure we don''t try to tessellate the new triangles. */
+            /* Make sure we don't try to tessellate the new triangles. */
             next = f->next;
             if( f->inside ) {
-                tessMeshTessellateMonoRegion( mesh, f );
+                meshTessellateMonoRegion( f );
             }
         }
     }
     
     
-    typedef struct EdgeStackNode EdgeStackNode;
-    typedef struct EdgeStack EdgeStack;
-    
-    struct EdgeStackNode {
+    struct EdgeStackNode
+    {
         TESShalfEdge *edge;
         EdgeStackNode *next;
         
@@ -160,13 +149,14 @@ eDst->Sym->winding += eSrc->Sym->winding)
         static void operator delete( void* ptr ) { BucketAlloc<EdgeStackNode>::get().free(ptr); }
     };
     
-    struct EdgeStack {
+    struct EdgeStack
+    {
         EdgeStackNode *top;
     };
     
     void stackInit( EdgeStack *stack )
     {
-        stack->top = NULL;
+        stack->top = nullptr;
     }
     
     void stackDelete( EdgeStack *stack )
@@ -175,7 +165,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
     
     int stackEmpty( EdgeStack *stack )
     {
-        return stack->top == NULL;
+        return stack->top == nullptr;
     }
     
     void stackPush( EdgeStack *stack, TESShalfEdge *e )
@@ -189,7 +179,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
     
     TESShalfEdge *stackPop( EdgeStack *stack )
     {
-        TESShalfEdge *e = NULL;
+        TESShalfEdge *e = nullptr;
         EdgeStackNode *node = stack->top;
         if (node) {
             stack->top = node->next;
@@ -203,7 +193,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
      Starting with a valid triangulation, uses the Edge Flip algorithm to
      refine the triangulation into a Constrained Delaunay Triangulation.
      */
-    void tessMeshRefineDelaunay( TESSmesh *mesh )
+    void Tesselator::meshRefineDelaunay( )
     {
         /* At this point, we have a valid, but not optimal, triangulation.
          We refine the triangulation using the Edge Flip algorithm */
@@ -222,7 +212,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
             if ( f->inside) {
                 e = f->anEdge;
                 do {
-                    e->mark = EdgeIsInternal(e); /* Mark internal edges */
+                    e->mark = edgeIsInternal(e); /* Mark internal edges */
                     if (e->mark && !e->Sym->mark) stackPush(&stack, e); /* Insert into queue */
                     e = e->Lnext;
                 } while (e != f->anEdge);
@@ -235,7 +225,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
         while (!stackEmpty(&stack)) {
             e = stackPop(&stack);
             e->mark = e->Sym->mark = 0;
-            if (!tesedgeIsLocallyDelaunay(e)) {
+            if (!edgeIsLocallyDelaunay(e)) {
                 int i;
                 tessMeshFlipEdge(mesh, e);
                 // for each opposite edge
@@ -244,7 +234,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
                 edges[2] = e->Sym->Lnext;
                 edges[3] = e->Sym->Lprev;
                 for (i=0;i<3;i++) {
-                    if (!edges[i]->mark && EdgeIsInternal(edges[i])) {
+                    if (!edges[i]->mark && edgeIsInternal(edges[i])) {
                         edges[i]->mark = edges[i]->Sym->mark = 1;
                         stackPush(&stack, edges[i]);
                     }
@@ -256,12 +246,12 @@ eDst->Sym->winding += eSrc->Sym->winding)
     }
     
     
-    /* tessMeshDiscardExterior( mesh ) zaps (ie. sets to NULL) all faces
+    /* tessMeshDiscardExterior( mesh ) zaps (ie. sets to nullptr) all faces
      * which are not marked "inside" the polygon.  Since further mesh operations
-     * on NULL faces are not allowed, the main purpose is to clean up the
+     * on nullptr faces are not allowed, the main purpose is to clean up the
      * mesh so that exterior loops are not represented in the data structure.
      */
-    void tessMeshDiscardExterior( TESSmesh *mesh )
+    void Tesselator::meshDiscardExterior()
     {
         TESSface *f, *next;
         
@@ -280,11 +270,10 @@ eDst->Sym->winding += eSrc->Sym->winding)
      * polygon have a winding number of "value", and regions outside
      * have a winding number of 0.
      *
-     * If keepOnlyBoundary is TRUE, it also deletes all edges which do not
+     * If keepOnlyBoundary is true, it also deletes all edges which do not
      * separate an interior region from an exterior one.
      */
-    void tessMeshSetWindingNumber( TESSmesh *mesh, int value,
-                                 int keepOnlyBoundary )
+    void Tesselator::meshSetWindingNumber( int value, bool keepOnlyBoundary )
     {
         TESShalfEdge *e, *eNext;
         
@@ -306,71 +295,58 @@ eDst->Sym->winding += eSrc->Sym->winding)
         }
     }
     
-    TESStesselator* tessNewTess( )
+    Tesselator::Tesselator()
     {
-        TESStesselator* tess;
+        bmin[0] = MAXFLOAT;
+        bmin[1] = MAXFLOAT;
+        bmax[0] = -MAXFLOAT;
+        bmax[1] = -MAXFLOAT;
         
-        /* Only initialize fields which can be changed by the api.  Other fields
-         * are initialized where they are used.
-         */
-        
-        tess = new TESStesselator;
-        
-        tess->bmin[0] = MAXFLOAT;
-        tess->bmin[1] = MAXFLOAT;
-        tess->bmax[0] = -MAXFLOAT;
-        tess->bmax[1] = -MAXFLOAT;
-        
-        tess->windingRule = TESS_WINDING_ODD;
+        windingRule = TESS_WINDING_ODD;
         
         // Initialize to begin polygon.
-        tess->mesh = NULL;
+        mesh = nullptr;
         
-        tess->vertexIndexCounter = 0;
+        vertexIndexCounter = 0;
         
-        tess->vertices = 0;
-        tess->vertexIndices = 0;
-        tess->vertexCount = 0;
-        tess->elements = 0;
-        tess->elementCount = 0;
-        
-        return tess;
+        vertices = 0;
+        vertexIndices = 0;
+        vertexCount = 0;
+        elements = 0;
+        elementCount = 0;
     }
-    
-    void tessDeleteTess( TESStesselator *tess )
+
+    Tesselator::~Tesselator()
     {
-        
-        if( tess->mesh != NULL ) {
-            tessMeshDeleteMesh( tess->mesh );
-            tess->mesh = NULL;
+        if( mesh != nullptr ) {
+            tessMeshDeleteMesh( mesh );
+            mesh = nullptr;
         }
-        if (tess->vertices != NULL) {
-            delete[] tess->vertices;
-            tess->vertices = 0;
+        if (vertices != nullptr) {
+            delete[] vertices;
+            vertices = nullptr;
         }
-        if (tess->vertexIndices != NULL) {
-            delete[] tess->vertexIndices;
-            tess->vertexIndices = 0;
+        if (vertexIndices != nullptr) {
+            delete[] vertexIndices;
+            vertexIndices = nullptr;
         }
-        if (tess->elements != NULL) {
-            delete[] tess->elements;
-            tess->elements = 0;
+        if (elements != nullptr) {
+            delete[] elements;
+            elements = nullptr;
         }
-        
-        delete tess;
     }
     
     
-    static TESSindex GetNeighbourFace(TESShalfEdge* edge)
+    static int GetNeighbourFace(TESShalfEdge* edge)
     {
         if (!edge->Rface)
-            return TESS_UNDEF;
+            return sTessUndef;
         if (!edge->Rface->inside)
-            return TESS_UNDEF;
+            return sTessUndef;
         return edge->Rface->n;
     }
     
-    void OutputPolymesh( TESStesselator *tess, TESSmesh *mesh, int elementType, int polySize )
+    void Tesselator::outputPolymesh( ElementType elementType, int polySize )
     {
         TESSvertex* v = 0;
         TESSface* f = 0;
@@ -378,8 +354,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
         int maxFaceCount = 0;
         int maxVertexCount = 0;
         int faceVerts, i;
-        TESSindex *elements = 0;
-        TESSreal *vert;
+        float *vert;
         
         // Assume that the input data is triangles now.
         // Try to merge as many polygons as possible
@@ -390,12 +365,12 @@ eDst->Sym->winding += eSrc->Sym->winding)
         
         // Mark unused
         for ( v = mesh->vHead.next; v != &mesh->vHead; v = v->next )
-            v->n = TESS_UNDEF;
+            v->n = sTessUndef;
         
         // Create unique IDs for all vertices and faces.
         for ( f = mesh->fHead.next; f != &mesh->fHead; f = f->next )
         {
-            f->n = TESS_UNDEF;
+            f->n = sTessUndef;
             if( !f->inside ) continue;
             
             edge = f->anEdge;
@@ -403,7 +378,7 @@ eDst->Sym->winding += eSrc->Sym->winding)
             do
             {
                 v = edge->Org;
-                if ( v->n == TESS_UNDEF )
+                if ( v->n == sTessUndef )
                 {
                     v->n = maxVertexCount;
                     maxVertexCount++;
@@ -419,30 +394,29 @@ eDst->Sym->winding += eSrc->Sym->winding)
             ++maxFaceCount;
         }
         
-        tess->elementCount = maxFaceCount;
+        elementCount = maxFaceCount;
         if (elementType == TESS_CONNECTED_POLYGONS)
             maxFaceCount *= 2;
-        tess->elements = new TESSindex[maxFaceCount * polySize];
-        tess->vertexCount = maxVertexCount;
-        tess->vertices = new TESSreal[tess->vertexCount * 2];
-        tess->vertexIndices = new TESSindex[tess->vertexCount];
+        int* elems = elements = new int[maxFaceCount * polySize];
+        vertexCount = maxVertexCount;
+        vertices = new float[vertexCount * 2];
+        vertexIndices = new int[vertexCount];
         
         // Output vertices.
         for ( v = mesh->vHead.next; v != &mesh->vHead; v = v->next )
         {
-            if ( v->n != TESS_UNDEF )
+            if ( v->n != sTessUndef )
             {
                 // Store coordinate
-                vert = &tess->vertices[v->n*2];
+                vert = &vertices[v->n*2];
                 vert[0] = v->s;
                 vert[1] = v->t;
                 // Store vertex index.
-                tess->vertexIndices[v->n] = v->idx;
+                vertexIndices[v->n] = v->idx;
             }
         }
         
         // Output indices.
-        elements = tess->elements;
         for ( f = mesh->fHead.next; f != &mesh->fHead; f = f->next )
         {
             if ( !f->inside ) continue;
@@ -453,14 +427,14 @@ eDst->Sym->winding += eSrc->Sym->winding)
             do
             {
                 v = edge->Org;
-                *elements++ = v->n;
+                *elems++ = v->n;
                 faceVerts++;
                 edge = edge->Lnext;
             }
             while (edge != f->anEdge);
             // Fill unused.
             for (i = faceVerts; i < polySize; ++i)
-                *elements++ = TESS_UNDEF;
+                *elems++ = sTessUndef;
             
             // Store polygon connectivity
             if ( elementType == TESS_CONNECTED_POLYGONS )
@@ -468,30 +442,27 @@ eDst->Sym->winding += eSrc->Sym->winding)
                 edge = f->anEdge;
                 do
                 {
-                    *elements++ = GetNeighbourFace( edge );
+                    *elems++ = GetNeighbourFace( edge );
                     edge = edge->Lnext;
                 }
                 while (edge != f->anEdge);
                 // Fill unused.
                 for (i = faceVerts; i < polySize; ++i)
-                    *elements++ = TESS_UNDEF;
+                    *elems++ = sTessUndef;
             }
         }
     }
     
-    void OutputContours( TESStesselator *tess, TESSmesh *mesh )
+    void Tesselator::outputContours()
     {
         TESSface *f = 0;
         TESShalfEdge *edge = 0;
         TESShalfEdge *start = 0;
-        TESSreal *verts = 0;
-        TESSindex *elements = 0;
-        TESSindex *vertInds = 0;
         int startVert = 0;
         int vertCount = 0;
         
-        tess->vertexCount = 0;
-        tess->elementCount = 0;
+        vertexCount = 0;
+        elementCount = 0;
         
         for ( f = mesh->fHead.next; f != &mesh->fHead; f = f->next )
         {
@@ -500,21 +471,17 @@ eDst->Sym->winding += eSrc->Sym->winding)
             start = edge = f->anEdge;
             do
             {
-                ++tess->vertexCount;
+                ++vertexCount;
                 edge = edge->Lnext;
             }
             while ( edge != start );
             
-            ++tess->elementCount;
+            ++elementCount;
         }
         
-        tess->elements = new TESSindex[tess->elementCount * 2];
-        tess->vertices = new TESSreal[tess->vertexCount * 2];
-        tess->vertexIndices = new TESSindex[tess->vertexCount];
-        
-        verts = tess->vertices;
-        elements = tess->elements;
-        vertInds = tess->vertexIndices;
+        int* elems = elements = new int[elementCount * 2];
+        float* verts = vertices = new float[vertexCount * 2];
+        int* vertInds = vertexIndices = new int[vertexCount];
         
         startVert = 0;
         
@@ -534,92 +501,88 @@ eDst->Sym->winding += eSrc->Sym->winding)
             }
             while ( edge != start );
             
-            elements[0] = startVert;
-            elements[1] = vertCount;
-            elements += 2;
+            elems[0] = startVert;
+            elems[1] = vertCount;
+            elems += 2;
             
             startVert += vertCount;
         }
     }
     
-    void tessBeginContour( TESStesselator *tess )
+    void Tesselator::beginContour()
     {
-        if ( tess->mesh == NULL )
-            tess->mesh = tessMeshNewMesh( );
+        if ( mesh == nullptr )
+            mesh = tessMeshNewMesh( );
         
-        tess->e = NULL;
+        e = nullptr;
     }
     
-    void tessAddVertex( TESStesselator *tess, TESSreal x, TESSreal y )
+    void Tesselator::addVertex( float x, float y )
     {
-        if( tess->e == NULL ) {
+        if( e == nullptr ) {
             /* Make a self-loop (one vertex, one edge). */
-            tess->e = tessMeshMakeEdge( tess->mesh );
-            tessMeshSplice( tess->mesh, tess->e, tess->e->Sym );
+            e = tessMeshMakeEdge( mesh );
+            tessMeshSplice( mesh, e, e->Sym );
         } else {
             /* Create a new vertex and edge which immediately follow tess->e
              * in the ordering around the left face.
              */
-            tessMeshSplitEdge( tess->mesh, tess->e );
-            tess->e = tess->e->Lnext;
+            tessMeshSplitEdge( mesh, e );
+            e = e->Lnext;
         }
         
         /* The new vertex is now tess->e->Org. */
-        tess->e->Org->s = x;
-        tess->e->Org->t = y;
-        if (tess->bmin[0] > x) tess->bmin[0] = x;
-        if (tess->bmin[1] > y) tess->bmin[1] = y;
-        if (tess->bmax[0] < x) tess->bmax[0] = x;
-        if (tess->bmax[1] < y) tess->bmax[1] = y;
+        e->Org->s = x;
+        e->Org->t = y;
+        if (bmin[0] > x) bmin[0] = x;
+        if (bmin[1] > y) bmin[1] = y;
+        if (bmax[0] < x) bmax[0] = x;
+        if (bmax[1] < y) bmax[1] = y;
         
         /* Store the insertion number so that the vertex can be later recognized. */
-        tess->e->Org->idx = tess->vertexIndexCounter++;
+        e->Org->idx = vertexIndexCounter++;
         
         /* The winding of an edge says how the winding number changes as we
          * cross from the edge''s right face to its left face.  We add the
          * vertices in such an order that a CCW contour will add +1 to
          * the winding number of the region inside the contour.
          */
-        tess->e->winding = 1;
-        tess->e->Sym->winding = -1;
+        e->winding = 1;
+        e->Sym->winding = -1;
     }
     
-    void tessAddContour( TESStesselator *tess, int size, const void* vertices,
-                        int stride, int numVertices )
+    void Tesselator::addContour( const void* vertices, int stride, int numVertices )
     {
         const unsigned char *src = (const unsigned char*)vertices;
         int i;
         
-        tessBeginContour(tess);
+        beginContour();
         
         for( i = 0; i < numVertices; ++i )
         {
-            const TESSreal* coords = (const TESSreal*)src;
+            const float* coords = (const float*)src;
             src += stride;
-            tessAddVertex(tess, coords[0], coords[1]);
+            addVertex(coords[0], coords[1]);
         }
     }
     
-    void tessTesselate( TESStesselator *tess, int windingRule, int elementType,
-                      int polySize, const TESSreal* normal )
+    void Tesselator::tesselate( WindingRule windingRule, ElementType elementType, int polySize, const float* normal )
     {
-        TESSmesh *mesh;
-        
-        if (tess->vertices != NULL) {
-            delete[] tess->vertices;
-            tess->vertices = 0;
+        if (vertices != nullptr) {
+            delete[] vertices;
+            vertices = nullptr;
         }
-        if (tess->elements != NULL) {
-            delete[] tess->elements;
-            tess->elements = 0;
+        if (elements != nullptr) {
+            delete[] elements;
+            elements = nullptr;
         }
-        if (tess->vertexIndices != NULL) {
-            delete[] tess->vertexIndices;
-            tess->vertexIndices = 0;
+        if (vertexIndices != nullptr) {
+            delete[] vertexIndices;
+            vertexIndices = nullptr;
         }
         
-        tess->vertexIndexCounter = 0;
-        tess->windingRule = windingRule;
+        vertexIndexCounter = 0;
+        windingRule = windingRule;
         
         /* tessComputeInterior( tess ) computes the planar arrangement specified
          * by the given contours, and further subdivides this arrangement
@@ -627,20 +590,18 @@ eDst->Sym->winding += eSrc->Sym->winding)
          * to the polygon, according to the rule given by tess->windingRule.
          * Each interior region is guaranteed be monotone.
          */
-        tessComputeInterior( tess );
-        
-        mesh = tess->mesh;
+        computeInterior();
         
         /* If the user wants only the boundary contours, we throw away all edges
          * except those which separate the interior from the exterior.
          * Otherwise we tessellate all the regions marked "inside".
          */
         if (elementType == TESS_BOUNDARY_CONTOURS) {
-            tessMeshSetWindingNumber( mesh, 1, TRUE );
+            meshSetWindingNumber( 1, true );
         } else {
-            tessMeshTessellateInterior( mesh );
+            meshTessellateInterior( );
             if (elementType == TESS_CONSTRAINED_DELAUNAY_TRIANGLES) {
-                tessMeshRefineDelaunay( mesh );
+                meshRefineDelaunay( );
                 elementType = TESS_POLYGONS;
                 polySize = 3;
             }
@@ -649,39 +610,14 @@ eDst->Sym->winding += eSrc->Sym->winding)
         tessMeshCheckMesh( mesh );
         
         if (elementType == TESS_BOUNDARY_CONTOURS) {
-            OutputContours( tess, mesh );     /* output contours */
+            outputContours( );     /* output contours */
         }
         else
         {
-            OutputPolymesh( tess, mesh, elementType, polySize );     /* output polygons */
+            outputPolymesh( elementType, polySize );     /* output polygons */
         }
         
         tessMeshDeleteMesh( mesh );
-        tess->mesh = NULL;
-    }
-    
-    int tessGetVertexCount( TESStesselator *tess )
-    {
-        return tess->vertexCount;
-    }
-    
-    const TESSreal* tessGetVertices( TESStesselator *tess )
-    {
-        return tess->vertices;
-    }
-    
-    const TESSindex* tessGetVertexIndices( TESStesselator *tess )
-    {
-        return tess->vertexIndices;
-    }
-    
-    int tessGetElementCount( TESStesselator *tess )
-    {
-        return tess->elementCount;
-    }
-    
-    const int* tessGetElements( TESStesselator *tess )
-    {
-        return tess->elements;
+        mesh = nullptr;
     }
 }
