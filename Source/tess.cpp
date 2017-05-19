@@ -80,44 +80,44 @@ namespace Tess
          * be close to the edge we want.
          */
         up = face->anEdge;
-        assert( up->Lnext != up && up->Lnext->Lnext != up );
+        assert( up->Lnext() != up && up->Lnext()->Lnext() != up );
         
-        for( ; vertAreLessOrEqual( up->Dst, up->Org ); up = up->Lprev )
+        for( ; vertAreLessOrEqual( up->Dst(), up->Org() ); up = up->Lprev() )
             ;
-        for( ; vertAreLessOrEqual( up->Org, up->Dst ); up = up->Lnext )
+        for( ; vertAreLessOrEqual( up->Org(), up->Dst() ); up = up->Lnext() )
             ;
-        lo = up->Lprev;
+        lo = up->Lprev();
         
-        while( up->Lnext != lo ) {
-            if( vertAreLessOrEqual( up->Dst, lo->Org )) {
+        while( up->Lnext() != lo ) {
+            if( vertAreLessOrEqual( up->Dst(), lo->Org() )) {
                 /* up->Dst is on the left.  It is safe to form triangles from lo->Org.
                  * The edgeGoesLeft test guarantees progress even when some triangles
                  * are CW, given that the upper and lower chains are truly monotone.
                  */
-                while( lo->Lnext != up && (edgeGoesLeft( lo->Lnext )
-                                           || edgeSign( lo->Org, lo->Dst, lo->Lnext->Dst ) <= 0 )) {
-                    TESShalfEdge *tempHalfEdge= tessMeshConnect( mesh, lo->Lnext, lo );
-                    lo = tempHalfEdge->Sym;
+                while( lo->Lnext() != up && (edgeGoesLeft( lo->Lnext() )
+                                           || edgeSign( lo->Org(), lo->Dst(), lo->Lnext()->Dst() ) <= 0 )) {
+                    TESShalfEdge *tempHalfEdge= mesh->connect( lo->Lnext(), lo );
+                    lo = tempHalfEdge->Sym();
                 }
-                lo = lo->Lprev;
+                lo = lo->Lprev();
             } else {
                 /* lo->Org is on the left.  We can make CCW triangles from up->Dst. */
-                while( lo->Lnext != up && (edgeGoesRight( up->Lprev )
-                                           || edgeSign( up->Dst, up->Org, up->Lprev->Org ) >= 0 )) {
-                    TESShalfEdge *tempHalfEdge= tessMeshConnect( mesh, up, up->Lprev );
-                    up = tempHalfEdge->Sym;
+                while( lo->Lnext() != up && (edgeGoesRight( up->Lprev() )
+                                           || edgeSign( up->Dst(), up->Org(), up->Lprev()->Org() ) >= 0 )) {
+                    TESShalfEdge *tempHalfEdge= mesh->connect( up, up->Lprev() );
+                    up = tempHalfEdge->Sym();
                 }
-                up = up->Lnext;
+                up = up->Lnext();
             }
         }
         
         /* Now lo->Org == up->Dst == the leftmost vertex.  The remaining region
          * can be tessellated in a fan from this leftmost vertex.
          */
-        assert( lo->Lnext != up );
-        while( lo->Lnext->Lnext != up ) {
-            TESShalfEdge *tempHalfEdge= tessMeshConnect( mesh, lo->Lnext, lo );
-            lo = tempHalfEdge->Sym;
+        assert( lo->Lnext() != up );
+        while( lo->Lnext()->Lnext() != up ) {
+            TESShalfEdge *tempHalfEdge= mesh->connect( lo->Lnext(), lo );
+            lo = tempHalfEdge->Sym();
         }
     }
     
@@ -130,7 +130,7 @@ namespace Tess
         TESSface *f, *next;
         
         /*LINTED*/
-        for( f = mesh->fHead.next; f != &mesh->fHead; f = next ) {
+        for( f = mesh->fBegin(); f != mesh->fEnd(); f = next ) {
             /* Make sure we don't try to tessellate the new triangles. */
             next = f->next;
             if( f->inside ) {
@@ -208,13 +208,13 @@ namespace Tess
         TESShalfEdge *e;
         TESShalfEdge *edges[4];
         stackInit(&stack);
-        for( f = mesh->fHead.next; f != &mesh->fHead; f = f->next ) {
+        for( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next ) {
             if ( f->inside) {
                 e = f->anEdge;
                 do {
-                    e->mark = edgeIsInternal(e); /* Mark internal edges */
-                    if (e->mark && !e->Sym->mark) stackPush(&stack, e); /* Insert into queue */
-                    e = e->Lnext;
+                    e->SetMark(edgeIsInternal(e)); /* Mark internal edges */
+                    if (e->mark() && !e->Sym()->mark()) stackPush(&stack, e); /* Insert into queue */
+                    e = e->Lnext();
                 } while (e != f->anEdge);
             }
         }
@@ -224,18 +224,20 @@ namespace Tess
         // which are internal and not already in the stack (!marked)
         while (!stackEmpty(&stack)) {
             e = stackPop(&stack);
-            e->mark = e->Sym->mark = 0;
+            e->SetMark(0);
+            e->Sym()->SetMark(0);
             if (!edgeIsLocallyDelaunay(e)) {
                 int i;
-                tessMeshFlipEdge(mesh, e);
+                mesh->flipEdge(e);
                 // for each opposite edge
-                edges[0] = e->Lnext;
-                edges[1] = e->Lprev;
-                edges[2] = e->Sym->Lnext;
-                edges[3] = e->Sym->Lprev;
+                edges[0] = e->Lnext();
+                edges[1] = e->Lprev();
+                edges[2] = e->Sym()->Lnext();
+                edges[3] = e->Sym()->Lprev();
                 for (i=0;i<3;i++) {
-                    if (!edges[i]->mark && edgeIsInternal(edges[i])) {
-                        edges[i]->mark = edges[i]->Sym->mark = 1;
+                    if (!edges[i]->mark() && edgeIsInternal(edges[i])) {
+                        edges[i]->SetMark(1);
+                        edges[i]->Sym()->SetMark(1);
                         stackPush(&stack, edges[i]);
                     }
                 }
@@ -256,11 +258,11 @@ namespace Tess
         TESSface *f, *next;
         
         /*LINTED*/
-        for( f = mesh->fHead.next; f != &mesh->fHead; f = next ) {
+        for( f = mesh->fBegin(); f != mesh->fEnd(); f = next ) {
             /* Since f will be destroyed, save its next pointer. */
             next = f->next;
             if( ! f->inside ) {
-                tessMeshZapFace( mesh, f );
+                mesh->zapFace( f );
             }
         }
     }
@@ -277,19 +279,19 @@ namespace Tess
     {
         TESShalfEdge *e, *eNext;
         
-        for( e = mesh->eHead.next; e != &mesh->eHead; e = eNext ) {
-            eNext = e->next;
-            if( e->Rface->inside != e->Lface->inside ) {
+        for( e = mesh->eBegin(); e != mesh->eEnd(); e = eNext ) {
+            eNext = e->next();
+            if( e->Rface()->inside != e->Lface()->inside ) {
                 
                 /* This is a boundary edge (one side is interior, one is exterior). */
-                e->winding = (e->Lface->inside) ? value : -value;
+                e->SetWinding((e->Lface()->inside) ? value : -value);
             } else {
                 
                 /* Both regions are interior, or both are exterior. */
                 if( ! keepOnlyBoundary ) {
-                    e->winding = 0;
+                    e->SetWinding( 0 );
                 } else {
-                    tessMeshDelete( mesh, e );
+                    mesh->remove( e );
                 }
             }
         }
@@ -319,7 +321,7 @@ namespace Tess
     Tesselator::~Tesselator()
     {
         if( mesh != nullptr ) {
-            tessMeshDeleteMesh( mesh );
+            delete mesh;
             mesh = nullptr;
         }
         if (vertices != nullptr) {
@@ -339,11 +341,11 @@ namespace Tess
     
     static int GetNeighbourFace(TESShalfEdge* edge)
     {
-        if (!edge->Rface)
+        if (!edge->Rface())
             return sTessUndef;
-        if (!edge->Rface->inside)
+        if (!edge->Rface()->inside)
             return sTessUndef;
-        return edge->Rface->n;
+        return edge->Rface()->n;
     }
     
     void Tesselator::outputPolymesh( ElementType elementType, int polySize )
@@ -360,15 +362,15 @@ namespace Tess
         // Try to merge as many polygons as possible
         if (polySize > 3)
         {
-            tessMeshMergeConvexFaces( mesh, polySize );
+            mesh->mergeConvexFaces( polySize );
         }
         
         // Mark unused
-        for ( v = mesh->vHead.next; v != &mesh->vHead; v = v->next )
+        for ( v = mesh->vBegin(); v != mesh->vEnd(); v = v->next )
             v->n = sTessUndef;
         
         // Create unique IDs for all vertices and faces.
-        for ( f = mesh->fHead.next; f != &mesh->fHead; f = f->next )
+        for ( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next )
         {
             f->n = sTessUndef;
             if( !f->inside ) continue;
@@ -377,14 +379,14 @@ namespace Tess
             faceVerts = 0;
             do
             {
-                v = edge->Org;
+                v = edge->Org();
                 if ( v->n == sTessUndef )
                 {
                     v->n = maxVertexCount;
                     maxVertexCount++;
                 }
                 faceVerts++;
-                edge = edge->Lnext;
+                edge = edge->Lnext();
             }
             while (edge != f->anEdge);
             
@@ -403,7 +405,7 @@ namespace Tess
         vertexIndices = new int[vertexCount];
         
         // Output vertices.
-        for ( v = mesh->vHead.next; v != &mesh->vHead; v = v->next )
+        for ( v = mesh->vBegin(); v != mesh->vEnd(); v = v->next )
         {
             if ( v->n != sTessUndef )
             {
@@ -417,7 +419,7 @@ namespace Tess
         }
         
         // Output indices.
-        for ( f = mesh->fHead.next; f != &mesh->fHead; f = f->next )
+        for ( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next )
         {
             if ( !f->inside ) continue;
             
@@ -426,10 +428,10 @@ namespace Tess
             faceVerts = 0;
             do
             {
-                v = edge->Org;
+                v = edge->Org();
                 *elems++ = v->n;
                 faceVerts++;
-                edge = edge->Lnext;
+                edge = edge->Lnext();
             }
             while (edge != f->anEdge);
             // Fill unused.
@@ -443,7 +445,7 @@ namespace Tess
                 do
                 {
                     *elems++ = GetNeighbourFace( edge );
-                    edge = edge->Lnext;
+                    edge = edge->Lnext();
                 }
                 while (edge != f->anEdge);
                 // Fill unused.
@@ -464,7 +466,7 @@ namespace Tess
         vertexCount = 0;
         elementCount = 0;
         
-        for ( f = mesh->fHead.next; f != &mesh->fHead; f = f->next )
+        for ( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next )
         {
             if ( !f->inside ) continue;
             
@@ -472,7 +474,7 @@ namespace Tess
             do
             {
                 ++vertexCount;
-                edge = edge->Lnext;
+                edge = edge->Lnext();
             }
             while ( edge != start );
             
@@ -485,7 +487,7 @@ namespace Tess
         
         startVert = 0;
         
-        for ( f = mesh->fHead.next; f != &mesh->fHead; f = f->next )
+        for ( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next )
         {
             if ( !f->inside ) continue;
             
@@ -493,11 +495,11 @@ namespace Tess
             start = edge = f->anEdge;
             do
             {
-                *verts++ = edge->Org->s;
-                *verts++ = edge->Org->t;
-                *vertInds++ = edge->Org->idx;
+                *verts++ = edge->Org()->s;
+                *verts++ = edge->Org()->t;
+                *vertInds++ = edge->Org()->idx;
                 ++vertCount;
-                edge = edge->Lnext;
+                edge = edge->Lnext();
             }
             while ( edge != start );
             
@@ -512,7 +514,7 @@ namespace Tess
     void Tesselator::beginContour()
     {
         if ( mesh == nullptr )
-            mesh = tessMeshNewMesh( );
+            mesh = new TESSmesh;
         
         e = nullptr;
     }
@@ -521,34 +523,34 @@ namespace Tess
     {
         if( e == nullptr ) {
             /* Make a self-loop (one vertex, one edge). */
-            e = tessMeshMakeEdge( mesh );
-            tessMeshSplice( mesh, e, e->Sym );
+            e = mesh->makeEdge();
+            mesh->splice(e, e->Sym() );
         } else {
             /* Create a new vertex and edge which immediately follow tess->e
              * in the ordering around the left face.
              */
-            tessMeshSplitEdge( mesh, e );
-            e = e->Lnext;
+            mesh->splitEdge( e );
+            e = e->Lnext();
         }
         
         /* The new vertex is now tess->e->Org. */
-        e->Org->s = x;
-        e->Org->t = y;
+        e->Org()->s = x;
+        e->Org()->t = y;
         if (bmin[0] > x) bmin[0] = x;
         if (bmin[1] > y) bmin[1] = y;
         if (bmax[0] < x) bmax[0] = x;
         if (bmax[1] < y) bmax[1] = y;
         
         /* Store the insertion number so that the vertex can be later recognized. */
-        e->Org->idx = vertexIndexCounter++;
+        e->Org()->idx = vertexIndexCounter++;
         
         /* The winding of an edge says how the winding number changes as we
          * cross from the edge''s right face to its left face.  We add the
          * vertices in such an order that a CCW contour will add +1 to
          * the winding number of the region inside the contour.
          */
-        e->winding = 1;
-        e->Sym->winding = -1;
+        e->SetWinding(1);
+        e->Sym()->SetWinding(-1);
     }
     
     void Tesselator::addContour( const void* vertices, int stride, int numVertices )
@@ -607,7 +609,7 @@ namespace Tess
             }
         }
         
-        tessMeshCheckMesh( mesh );
+        mesh->checkMesh( );
         
         if (elementType == TESS_BOUNDARY_CONTOURS) {
             outputContours( );     /* output contours */
@@ -617,7 +619,7 @@ namespace Tess
             outputPolymesh( elementType, polySize );     /* output polygons */
         }
         
-        tessMeshDeleteMesh( mesh );
+        delete mesh;
         mesh = nullptr;
     }
 }

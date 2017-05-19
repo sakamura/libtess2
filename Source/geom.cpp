@@ -253,7 +253,7 @@ namespace Tess
     
     bool edgeIsLocallyDelaunay( const TESShalfEdge *e )
     {
-        return (calcAngle(e->Lnext->Org, e->Lnext->Lnext->Org, e->Org) +
-                calcAngle(e->Sym->Lnext->Org, e->Sym->Lnext->Lnext->Org, e->Sym->Org)) < (M_PI + 0.01);
+        return (calcAngle(e->Lnext()->Org(), e->Lnext()->Lnext()->Org(), e->Org()) +
+                calcAngle(e->Sym()->Lnext()->Org(), e->Sym()->Lnext()->Lnext()->Org(), e->Sym()->Org())) < (M_PI + 0.01);
     }
 }

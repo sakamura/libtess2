@@ -40,9 +40,9 @@ namespace Tess
     inline bool vertAreEqual(const TESSvertex* u, const TESSvertex* v) { return ((u)->s == (v)->s && (u)->t == (v)->t); }
     inline bool vertAreLessOrEqual(const TESSvertex* u, const TESSvertex* v) { return (((u)->s < (v)->s) || ((u)->s == (v)->s && (u)->t <= (v)->t)); }
     inline bool transVertAreLessOrEqual(const TESSvertex* u, const TESSvertex* v) { return (((u)->t < (v)->t) || ((u)->t == (v)->t && (u)->s <= (v)->s)); }
-    inline bool edgeGoesLeft(const TESShalfEdge* e) { return vertAreLessOrEqual( (e)->Dst, (e)->Org ); }
-    inline bool edgeGoesRight(const TESShalfEdge* e) { return vertAreLessOrEqual( (e)->Org, (e)->Dst ); }
-    inline bool edgeIsInternal(const TESShalfEdge* e) { return e->Rface && e->Rface->inside; }
+    inline bool edgeGoesLeft(const TESShalfEdge* e) { return vertAreLessOrEqual( e->Dst(), e->Org() ); }
+    inline bool edgeGoesRight(const TESShalfEdge* e) { return vertAreLessOrEqual( e->Org(), e->Dst() ); }
+    inline bool edgeIsInternal(const TESShalfEdge* e) { return e->Rface() && e->Rface()->inside; }
     inline bool vertAreCCW( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w ) { return (u->s*(v->t - w->t) + v->s*(w->t - u->t) + w->s*(u->t - v->t)) >= 0; }
     
     float edgeEval( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w ); // Returns the signed distance from uw to v.
