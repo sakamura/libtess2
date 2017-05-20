@@ -624,14 +624,14 @@ namespace Tess
         return n;
     }
     
-    void tessMeshMergeConvexFaces( TESSmesh *mesh, int maxVertsPerFace )
+    void TESSmesh::mergeConvexFaces( int maxVertsPerFace )
     {
         TESSface *f;
         TESShalfEdge *eCur, *eNext, *eSym;
         TESSvertex *vStart;
         int curNv, symNv;
         
-        for( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next )
+        for( f = fBegin(); f != fEnd(); f = f->next )
         {
             // Skip faces which are outside the result.
             if( !f->inside )
@@ -659,7 +659,7 @@ namespace Tess
                            vertAreCCW( eSym->Lprev()->Org(), eSym->Org(), eCur->Lnext()->Lnext()->Org() ) )
                         {
                             eNext = eSym->Lnext();
-                            mesh->remove( eSym );
+                            remove( eSym );
                             eCur = 0;
                         }
                     }
@@ -674,7 +674,7 @@ namespace Tess
         }
     }
     
-    void tessMeshFlipEdge( TESSmesh *mesh, TESShalfEdge *edge )
+    void TESSmesh::flipEdge( TESShalfEdge *edge )
     {
         TESShalfEdge *a0 = edge;
         TESShalfEdge *a1 = a0->Lnext();
@@ -752,22 +752,13 @@ namespace Tess
         assert(a0->Oprev()->Onext()->Org() == a0->Org());
     }
     
-    /* tessMeshDeleteMesh( mesh ) will free all storage for any valid mesh.
-     */
-    void tessMeshDeleteMesh( TESSmesh *mesh )
-    {
-        delete mesh;
-    }
-    
-#ifndef NDEBUG
-    
     /* tessMeshCheckMesh( mesh ) checks a mesh for self-consistency.
      */
-    void tessMeshCheckMesh( TESSmesh *mesh )
+    void TESSmesh::checkMesh( )
     {
-        TESSface *fHead = mesh->fEnd();
-        TESSvertex *vHead = mesh->vEnd();
-        TESShalfEdge *eHead = mesh->eEnd();
+        TESSface *fHead = fEnd();
+        TESSvertex *vHead = vEnd();
+        TESShalfEdge *eHead = eEnd();
         TESSface *f, *fPrev;
         TESSvertex *v, *vPrev;
         TESShalfEdge *e, *ePrev;
@@ -810,11 +801,9 @@ namespace Tess
             assert( e->Onext()->Sym()->Lnext() == e );
         }
         assert( e->Sym()->next() == ePrev->Sym()
-               && e->Sym() == mesh->eSymEnd()
+               && e->Sym() == eSymEnd()
                && e->Sym()->Sym() == e
                && e->Org() == nullptr && e->Dst() == nullptr
                && e->Lface() == nullptr && e->Rface() == nullptr );
     }
 }
-
-#endif

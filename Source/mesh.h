@@ -241,8 +241,6 @@ namespace Tess
     };
     struct EdgePair : public TESShalfEdge
     {
-        EdgePair();
-        
         TESShalfEdge eSym;
         
         static void* operator new( std::size_t count ) { return BucketAlloc<EdgePair>::get(count).alloc(); }
