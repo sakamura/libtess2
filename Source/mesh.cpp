@@ -570,6 +570,31 @@ namespace Tess
     }
     Mesh::~Mesh( )
     {
+        for (auto v = vBegin(); v != vEnd(); )
+        {
+            auto toDelete = v;
+            v = v->next;
+            delete toDelete;
+        }
+        for (auto f = fBegin(); f != fEnd(); )
+        {
+            auto toDelete = f;
+            f = f->next;
+            delete toDelete;
+        }
+        for (auto e = eBegin(); e != eEnd(); )
+        {
+            auto toDelete = e;
+            e = e->next();
+            if (toDelete->Sym() < toDelete)
+            {
+                delete (EdgePair*)toDelete->Sym();
+            }
+            else
+            {
+                delete (EdgePair*)toDelete;
+            }
+        }
     }
     
     
@@ -756,6 +781,7 @@ namespace Tess
      */
     void Mesh::checkMesh( )
     {
+#ifndef NDEBUG
         Face *fHead = fEnd();
         Vertex *vHead = vEnd();
         HalfEdge *eHead = eEnd();
@@ -805,5 +831,6 @@ namespace Tess
                && e->Sym()->Sym() == e
                && e->Org() == nullptr && e->Dst() == nullptr
                && e->Lface() == nullptr && e->Rface() == nullptr );
+#endif
     }
 }

@@ -145,8 +145,8 @@ namespace Tess
         HalfEdge *edge;
         EdgeStackNode *next;
         
-        static void* operator new( std::size_t count ) { return BucketAlloc<EdgeStackNode>::get(count).alloc(); }
-        static void operator delete( void* ptr ) { BucketAlloc<EdgeStackNode>::get().free(ptr); }
+        static void* operator new( std::size_t count ) { return BucketAlloc<EdgeStackNode, 2048>::get(count).alloc(); }
+        static void operator delete( void* ptr ) { BucketAlloc<EdgeStackNode, 2048>::get().free(ptr); }
     };
     
     struct EdgeStack
@@ -157,10 +157,6 @@ namespace Tess
     void stackInit( EdgeStack *stack )
     {
         stack->top = nullptr;
-    }
-    
-    void stackDelete( EdgeStack *stack )
-    {
     }
     
     int stackEmpty( EdgeStack *stack )
@@ -187,6 +183,11 @@ namespace Tess
             delete node;
         }
         return e;
+    }
+
+    void stackDelete( EdgeStack *stack )
+    {
+        do {} while (stackPop(stack) != nullptr);
     }
     
     /*

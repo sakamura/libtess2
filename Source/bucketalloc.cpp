@@ -85,7 +85,7 @@ namespace Tess
     }
     void BucketAllocImpl::free(void* ptr)
     {
-        ptr = (void*)firstFree;
+        *(void**)(ptr) = (void*)firstFree;
         firstFree = (void**)ptr;
         ++freed;
     }
