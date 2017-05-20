@@ -88,7 +88,7 @@ namespace Tess
      * we sort the edges by slope (they would otherwise compare equally).
      */
     {
-        TESShalfEdge *e1, *e2;
+        HalfEdge *e1, *e2;
         float t1, t2;
         
         e1 = reg1->eUp;
@@ -131,7 +131,7 @@ namespace Tess
     }
     
     
-    void Tesselator::fixUpperEdge( ActiveRegion *reg, TESShalfEdge *newEdge )
+    void Tesselator::fixUpperEdge( ActiveRegion *reg, HalfEdge *newEdge )
     /*
      * Replace an upper edge which needs fixing (see ConnectRightVertex).
      */
@@ -145,8 +145,8 @@ namespace Tess
     
     ActiveRegion* Tesselator::topLeftRegion( ActiveRegion *reg )
     {
-        const TESSvertex *org = reg->eUp->Org();
-        TESShalfEdge *e;
+        const Vertex *org = reg->eUp->Org();
+        HalfEdge *e;
         
         /* Find the region above the uppermost edge with the same origin */
         do {
@@ -166,7 +166,7 @@ namespace Tess
     
     ActiveRegion* Tesselator::topRightRegion( ActiveRegion *reg )
     {
-        const TESSvertex *dst = reg->eUp->Dst();
+        const Vertex *dst = reg->eUp->Dst();
         
         /* Find the region above the uppermost edge with the same destination */
         do {
@@ -175,7 +175,7 @@ namespace Tess
         return reg;
     }
     
-    ActiveRegion* Tesselator::addRegionBelow( ActiveRegion *regAbove, TESShalfEdge *eNewUp )
+    ActiveRegion* Tesselator::addRegionBelow( ActiveRegion *regAbove, HalfEdge *eNewUp )
     /*
      * Add a new active region to the sweep line, *somewhere* below "regAbove"
      * (according to where the new edge belongs in the sweep-line dictionary).
@@ -230,8 +230,8 @@ namespace Tess
      * changing, this face may not have even existed until now).
      */
     {
-        TESShalfEdge *e = reg->eUp;
-        TESSface *f = e->Lface();
+        HalfEdge *e = reg->eUp;
+        Face *f = e->Lface();
         
         f->inside = reg->inside;
         f->anEdge = e;   /* optimization for tessMeshTessellateMonoRegion() */
@@ -239,7 +239,7 @@ namespace Tess
     }
     
     
-    TESShalfEdge* Tesselator::finishLeftRegions( ActiveRegion *regFirst, ActiveRegion *regLast )
+    HalfEdge* Tesselator::finishLeftRegions( ActiveRegion *regFirst, ActiveRegion *regLast )
     /*
      * We are given a vertex with one or more left-going edges.  All affected
      * edges should be in the edge dictionary.  Starting at regFirst->eUp,
@@ -254,7 +254,7 @@ namespace Tess
      */
     {
         ActiveRegion *reg, *regPrev;
-        TESShalfEdge *e, *ePrev;
+        HalfEdge *e, *ePrev;
         
         regPrev = regFirst;
         ePrev = regFirst->eUp;
@@ -293,7 +293,7 @@ namespace Tess
     }
     
     
-    void Tesselator::addRightEdges( ActiveRegion *regUp, TESShalfEdge *eFirst, TESShalfEdge *eLast, TESShalfEdge *eTopLeft, bool cleanUp )
+    void Tesselator::addRightEdges( ActiveRegion *regUp, HalfEdge *eFirst, HalfEdge *eLast, HalfEdge *eTopLeft, bool cleanUp )
     /*
      * Purpose: insert right-going edges into the edge dictionary, and update
      * winding numbers and mesh connectivity appropriately.  All right-going
@@ -306,7 +306,7 @@ namespace Tess
      */
     {
         ActiveRegion *reg, *regPrev;
-        TESShalfEdge *e, *ePrev;
+        HalfEdge *e, *ePrev;
         int firstTime = true;
         
         /* Insert the new right-going edges in the dictionary */
@@ -345,7 +345,7 @@ namespace Tess
              */
             regPrev->dirty = true;
             if( ! firstTime && checkForRightSplice( regPrev )) {
-                e->AddWinding( ePrev );
+                e->addWinding( ePrev );
                 delete regPrev ;
                 mesh->remove( ePrev );
             }
@@ -363,7 +363,7 @@ namespace Tess
     }
     
     
-    void Tesselator::spliceMergeVertices( TESShalfEdge *e1, TESShalfEdge *e2 )
+    void Tesselator::spliceMergeVertices( HalfEdge *e1, HalfEdge *e2 )
     /*
      * Two vertices with idential coordinates are combined into one.
      * e1->Org is kept, while e2->Org is discarded.
@@ -400,15 +400,15 @@ namespace Tess
      */
     {
         ActiveRegion *regLo = regUp->regionBelow();
-        TESShalfEdge *eUp = regUp->eUp;
-        TESShalfEdge *eLo = regLo->eUp;
+        HalfEdge *eUp = regUp->eUp;
+        HalfEdge *eLo = regLo->eUp;
         
         if( vertAreLessOrEqual( eUp->Org(), eLo->Org() )) {
             if( edgeSign( eLo->Dst(), eUp->Org(), eLo->Org() ) > 0 ) return false;
             
             /* eUp->Org appears to be below eLo */
             if( ! vertAreEqual( eUp->Org(), eLo->Org() )) {
-                /* Splice eUp->Org into eLo */
+                /* splice eUp->Org into eLo */
                 mesh->splitEdge( eLo->Sym() );
                 mesh->splice( eUp, eLo->Oprev() );
                 regUp->dirty = regLo->dirty = true;
@@ -450,9 +450,9 @@ namespace Tess
      */
     {
         ActiveRegion *regLo = regUp->regionBelow();
-        TESShalfEdge *eUp = regUp->eUp;
-        TESShalfEdge *eLo = regLo->eUp;
-        TESShalfEdge *e;
+        HalfEdge *eUp = regUp->eUp;
+        HalfEdge *eLo = regLo->eUp;
+        HalfEdge *e;
         
         assert( ! vertAreEqual( eUp->Dst(), eLo->Dst() ));
         
@@ -489,15 +489,15 @@ namespace Tess
      */
     {
         ActiveRegion *regLo = regUp->regionBelow();
-        TESShalfEdge *eUp = regUp->eUp;
-        TESShalfEdge *eLo = regLo->eUp;
-        TESSvertex *orgUp = eUp->Org();
-        TESSvertex *orgLo = eLo->Org();
-        TESSvertex *dstUp = eUp->Dst();
-        TESSvertex *dstLo = eLo->Dst();
+        HalfEdge *eUp = regUp->eUp;
+        HalfEdge *eLo = regLo->eUp;
+        Vertex *orgUp = eUp->Org();
+        Vertex *orgLo = eLo->Org();
+        Vertex *dstUp = eUp->Dst();
+        Vertex *dstLo = eLo->Dst();
         float tMinUp, tMaxLo;
-        TESSvertex isect, *orgMin;
-        TESShalfEdge *e;
+        Vertex isect, *orgMin;
+        HalfEdge *e;
         
         assert( ! vertAreEqual( dstLo, dstUp ));
         assert( edgeSign( dstUp, event, orgUp ) <= 0 );
@@ -563,7 +563,7 @@ namespace Tess
              * due to very small numerical errors in the intersection calculation.
              */
             if( dstLo == event ) {
-                /* Splice dstLo into eUp, and process the new region(s) */
+                /* splice dstLo into eUp, and process the new region(s) */
                 mesh->splitEdge( eUp->Sym() );
                 mesh->splice( eLo->Sym(), eUp );
                 regUp = topLeftRegion( regUp );
@@ -573,7 +573,7 @@ namespace Tess
                 return true;
             }
             if( dstUp == event ) {
-                /* Splice dstUp into eLo, and process the new region(s) */
+                /* splice dstUp into eLo, and process the new region(s) */
                 mesh->splitEdge( eLo->Sym() );
                 mesh->splice( eUp->Lnext(), eLo->Oprev() );
                 regLo = regUp;
@@ -635,7 +635,7 @@ namespace Tess
      */
     {
         ActiveRegion *regLo = regUp->regionBelow();
-        TESShalfEdge *eUp, *eLo;
+        HalfEdge *eUp, *eLo;
         
         for( ;; ) {
             /* Find the lowest dirty region (we walk from the bottom up). */
@@ -702,7 +702,7 @@ namespace Tess
             }
             if( eUp->Org() == eLo->Org() && eUp->Dst() == eLo->Dst() ) {
                 /* A degenerate loop consisting of only two edges -- delete it. */
-                eLo->AddWinding( eUp );
+                eLo->addWinding( eUp );
                 deleteRegion( regUp );
                 mesh->remove( eUp );
                 regUp = regLo->regionAbove();
@@ -711,7 +711,7 @@ namespace Tess
     }
     
     
-    void Tesselator::connectRightVertex( ActiveRegion *regUp, TESShalfEdge *eBottomLeft )
+    void Tesselator::connectRightVertex( ActiveRegion *regUp, HalfEdge *eBottomLeft )
     /*
      * Purpose: connect a "right" vertex vEvent (one where all edges go left)
      * to the unprocessed portion of the mesh.  Since there are no right-going
@@ -744,11 +744,11 @@ namespace Tess
      * closest one, in which case we won''t need to make any changes.
      */
     {
-        TESShalfEdge *eNew;
-        TESShalfEdge *eTopLeft = eBottomLeft->Onext();
+        HalfEdge *eNew;
+        HalfEdge *eTopLeft = eBottomLeft->Onext();
         ActiveRegion *regLo = regUp->regionBelow();
-        TESShalfEdge *eUp = regUp->eUp;
-        TESShalfEdge *eLo = regLo->eUp;
+        HalfEdge *eUp = regUp->eUp;
+        HalfEdge *eLo = regLo->eUp;
         int degenerate = false;
         
         if( eUp->Dst() != eLo->Dst() ) {
@@ -802,14 +802,14 @@ namespace Tess
      */
 #define TOLERANCE_NONZERO	false
     
-    void Tesselator::connectLeftDegenerate( ActiveRegion *regUp, TESSvertex *vEvent )
+    void Tesselator::connectLeftDegenerate( ActiveRegion *regUp, Vertex *vEvent )
     /*
      * The event vertex lies exacty on an already-processed edge or vertex.
      * Adding the new vertex involves splicing it into the already-processed
      * part of the mesh.
      */
     {
-        TESShalfEdge *e, *eTopLeft, *eTopRight, *eLast;
+        HalfEdge *e, *eTopLeft, *eTopRight, *eLast;
         ActiveRegion *reg;
         
         e = regUp->eUp;
@@ -836,7 +836,7 @@ namespace Tess
         }
         
         /* vEvent coincides with e->Dst, which has already been processed.
-         * Splice in the additional right-going edges.
+         * splice in the additional right-going edges.
          */
         assert( TOLERANCE_NONZERO );
         regUp = topRightRegion( regUp );
@@ -861,7 +861,7 @@ namespace Tess
     }
     
     
-    void Tesselator::connectLeftVertex( TESSvertex *vEvent )
+    void Tesselator::connectLeftVertex( Vertex *vEvent )
     /*
      * Purpose: connect a "left" vertex (one where both edges go right)
      * to the processed portion of the mesh.  Let R be the active region
@@ -879,7 +879,7 @@ namespace Tess
      */
     {
         ActiveRegion *regUp, *regLo, *reg;
-        TESShalfEdge *eUp, *eLo, *eNew;
+        HalfEdge *eUp, *eLo, *eNew;
         ActiveRegion tmp;
         
         /* assert( vEvent->anEdge->Onext->Onext == vEvent->anEdge ); */
@@ -911,7 +911,7 @@ namespace Tess
             if( reg == regUp ) {
                 eNew = mesh->connect( vEvent->anEdge->Sym(), eUp->Lnext() );
             } else {
-                TESShalfEdge *tempHalfEdge = mesh->connect( eLo->Dnext(), vEvent->anEdge);
+                HalfEdge *tempHalfEdge = mesh->connect( eLo->Dnext(), vEvent->anEdge);
                 
                 eNew = tempHalfEdge->Sym();
             }
@@ -930,14 +930,14 @@ namespace Tess
     }
     
     
-    void Tesselator::sweepEvent( TESSvertex *vEvent )
+    void Tesselator::sweepEvent( Vertex *vEvent )
     /*
      * Does everything necessary when the sweep line crosses a vertex.
      * Updates the mesh and the edge dictionary.
      */
     {
         ActiveRegion *regUp, *reg;
-        TESShalfEdge *e, *eTopLeft, *eBottomLeft;
+        HalfEdge *e, *eTopLeft, *eBottomLeft;
         
         event = vEvent;		/* for access in EdgeLeq() */
         
@@ -991,7 +991,7 @@ namespace Tess
      * to avoid special cases at the top and bottom.
      */
     {
-        TESShalfEdge *e;
+        HalfEdge *e;
         ActiveRegion *reg = new ActiveRegion;
         
         e = mesh->makeEdge();
@@ -1067,8 +1067,8 @@ namespace Tess
      * Remove zero-length edges, and contours with fewer than 3 vertices.
      */
     {
-        TESShalfEdge *e, *eNext, *eLnext;
-        TESShalfEdge *eHead = mesh->eEnd();
+        HalfEdge *e, *eNext, *eLnext;
+        HalfEdge *eHead = mesh->eEnd();
         
         /*LINTED*/
         for( e = eHead->next(); e != eHead; e = eNext ) {
@@ -1102,7 +1102,7 @@ namespace Tess
      * order in which vertices cross the sweep line.
      */
     {
-        TESSvertex *v, *vHead;
+        Vertex *v, *vHead;
         int vertexCount = 0;
         
         vHead = mesh->vEnd();
@@ -1144,8 +1144,8 @@ namespace Tess
      * will sometimes be keeping a pointer to that edge.
      */
     {
-        TESSface *f, *fNext;
-        TESShalfEdge *e;
+        Face *f, *fNext;
+        HalfEdge *e;
         
         /*LINTED*/
         for( f = mesh->fBegin(); f != mesh->fEnd(); f = fNext ) {
@@ -1155,7 +1155,7 @@ namespace Tess
             
             if( e->Lnext()->Lnext() == e ) {
                 /* A face with only two edges */
-                e->Onext()->AddWinding( e );
+                e->Onext()->addWinding( e );
                 mesh->remove( e );
             }
         }
@@ -1170,7 +1170,7 @@ namespace Tess
      * Each interior region is guaranteed be monotone.
      */
     {
-        TESSvertex *v, *vNext;
+        Vertex *v, *vNext;
         
         /* Each vertex defines an event for our sweep line.  Start by inserting
          * all the vertices in a priority queue.  Events are processed in
@@ -1182,9 +1182,9 @@ namespace Tess
         initPriorityQ( );
         initEdgeDict( );
         
-        while( (v = (TESSvertex *)pqExtractMin( pq )) != nullptr ) {
+        while( (v = (Vertex *)pqExtractMin( pq )) != nullptr ) {
             for( ;; ) {
-                vNext = (TESSvertex *)pqMinimum( pq );
+                vNext = (Vertex *)pqMinimum( pq );
                 if( vNext == nullptr || ! vertAreEqual( vNext, v )) break;
                 
                 /* Merge together all vertices at exactly the same location.
@@ -1201,7 +1201,7 @@ namespace Tess
                  * gap between them.  This kind of error is especially obvious
                  * when using boundary extraction (TESS_BOUNDARY_ONLY).
                  */
-                vNext = (TESSvertex *)pqExtractMin( pq );
+                vNext = (Vertex *)pqExtractMin( pq );
                 spliceMergeVertices( v->anEdge, vNext->anEdge );
             }
             sweepEvent( v );

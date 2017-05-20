@@ -45,7 +45,7 @@ namespace Tess
      */
     
     struct ActiveRegion {
-        TESShalfEdge *eUp;		/* upper edge, directed right to left */
+        HalfEdge *eUp;		/* upper edge, directed right to left */
         DictNode *nodeUp;	/* dictionary node corresponding to eUp */
         int windingNumber;	/* used to determine which regions are
                              * inside the polygon */

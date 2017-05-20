@@ -103,18 +103,18 @@ namespace Tess
      * a region which is not part of the output polygon.
      */
     
-    struct TESSvertex {
-        /* MakeVertex( newVertex, eOrig, vNext ) attaches a new vertex and makes it the
+    struct Vertex {
+        /* makeVertex( newVertex, eOrig, vNext ) attaches a new vertex and makes it the
          * origin of all edges in the vertex loop to which eOrig belongs. "vNext" gives
          * a place to insert the new vertex in the global vertex list.  We insert
          * the new vertex *before* vNext so that algorithms which walk the vertex
          * list will not see the newly created vertices.
          */
-        static TESSvertex* MakeVertex( TESShalfEdge *eOrig, TESSvertex *vNext );
+        static Vertex* makeVertex( HalfEdge *eOrig, Vertex *vNext );
 
-        TESSvertex *next;      /* next vertex (never nullptr) */
-        TESSvertex *prev;      /* previous vertex (never nullptr) */
-        TESShalfEdge *anEdge;    /* a half-edge with this origin */
+        Vertex *next;      /* next vertex (never nullptr) */
+        Vertex *prev;      /* previous vertex (never nullptr) */
+        HalfEdge *anEdge;    /* a half-edge with this origin */
         
         /* Internal data (keep hidden) */
         float s, t;       /* projection onto the sweep plane */
@@ -122,27 +122,27 @@ namespace Tess
         int n;			/* to allow identify unique vertices */
         int idx;			/* to allow map result to original verts */
         
-        static void* operator new( std::size_t count ) { return BucketAlloc<TESSvertex>::get(count).alloc(); }
-        static void operator delete( void* ptr ) { BucketAlloc<TESSvertex>::get().free(ptr); }
+        static void* operator new( std::size_t count ) { return BucketAlloc<Vertex>::get(count).alloc(); }
+        static void operator delete( void* ptr ) { BucketAlloc<Vertex>::get().free(ptr); }
     };
     
-    struct TESSface {
-        TESSface *next;      /* next face (never nullptr) */
-        TESSface *prev;      /* previous face (never nullptr) */
-        TESShalfEdge *anEdge;    /* a half edge with this left face */
+    struct Face {
+        Face *next;      /* next face (never nullptr) */
+        Face *prev;      /* previous face (never nullptr) */
+        HalfEdge *anEdge;    /* a half edge with this left face */
         
         /* Internal data (keep hidden) */
-        TESSface *trail;     /* "stack" for conversion to strips */
+        Face *trail;     /* "stack" for conversion to strips */
         int n;		/* to allow identiy unique faces */
         char marked;     /* flag for conversion to strips */
         char inside;     /* this face is in the polygon interior */
 
-        static void* operator new( std::size_t count ) { return BucketAlloc<TESSface>::get(count).alloc(); }
-        static void operator delete( void* ptr ) { BucketAlloc<TESSface>::get().free(ptr); }
+        static void* operator new( std::size_t count ) { return BucketAlloc<Face>::get(count).alloc(); }
+        static void operator delete( void* ptr ) { BucketAlloc<Face>::get().free(ptr); }
 };
     
-    struct TESShalfEdge {
-        TESShalfEdge() :
+    struct HalfEdge {
+        HalfEdge() :
             next_(nullptr),
             Sym_(nullptr),
             Onext_(nullptr),
@@ -155,83 +155,83 @@ namespace Tess
         {
         }
         
-        /* MakeEdge creates a new pair of half-edges which form their own loop.
+        /* makeEdge creates a new pair of half-edges which form their own loop.
          * No vertex or face structures are allocated, but these must be assigned
          * before the current edge operation is completed.
          */
-        static TESShalfEdge *MakeEdge( TESSmesh* mesh, TESShalfEdge *eNext );
+        static HalfEdge *makeEdge( Mesh* mesh, HalfEdge *eNext );
         
-        /* Splice( a, b ) is best described by the Guibas/Stolfi paper or the
+        /* splice( a, b ) is best described by the Guibas/Stolfi paper or the
          * CS348a notes (see mesh.h).  Basically it modifies the mesh so that
          * a->Onext and b->Onext are exchanged.  This can have various effects
          * depending on whether a and b belong to different face or vertex rings.
          * For more explanation see tessMeshSplice() below.
          */
-        static void Splice( TESShalfEdge *a, TESShalfEdge *b );
+        static void splice( HalfEdge *a, HalfEdge *b );
 
         /* When we merge two edges into one, we need to compute the combined
          * winding of the new edge.
          */
-        void AddWinding( TESShalfEdge *src )
+        void addWinding( HalfEdge *src )
         {
             winding_ += src->winding_;
             Sym()->winding_ += src->Sym()->winding_;
         }
 
-        TESShalfEdge *next() { return next_; }
-        const TESShalfEdge *next() const { return next_; }
-        void SetNext(TESShalfEdge* next) { next_ = next; }
-        TESShalfEdge *Sym() { return Sym_; }
-        const TESShalfEdge *Sym() const { return Sym_; }
-        void SetSym(TESShalfEdge* sym) { Sym_ = sym; }
-        TESShalfEdge *Onext() { return Onext_; }
-        const TESShalfEdge *Onext() const { return Onext_; }
-        void SetOnext(TESShalfEdge *Onext) { Onext_ = Onext; }
-        TESShalfEdge *Lnext() { return Lnext_; }
-        const TESShalfEdge *Lnext() const { return Lnext_; }
-        void SetLnext(TESShalfEdge *Lnext) { Lnext_ = Lnext; }
-        TESSvertex *Org() { return Org_; }
-        const TESSvertex *Org() const { return Org_; }
-        void SetOrg(TESSvertex* org) { Org_ = org; }
-        TESSface *Lface() { return Lface_; }
-        const TESSface *Lface() const { return Lface_; }
-        void SetLface(TESSface *lface) { Lface_ = lface; }
+        HalfEdge *next() { return next_; }
+        const HalfEdge *next() const { return next_; }
+        void setNext(HalfEdge* next) { next_ = next; }
+        HalfEdge *Sym() { return Sym_; }
+        const HalfEdge *Sym() const { return Sym_; }
+        void setSym(HalfEdge* sym) { Sym_ = sym; }
+        HalfEdge *Onext() { return Onext_; }
+        const HalfEdge *Onext() const { return Onext_; }
+        void setOnext(HalfEdge *Onext) { Onext_ = Onext; }
+        HalfEdge *Lnext() { return Lnext_; }
+        const HalfEdge *Lnext() const { return Lnext_; }
+        void setLnext(HalfEdge *Lnext) { Lnext_ = Lnext; }
+        Vertex *Org() { return Org_; }
+        const Vertex *Org() const { return Org_; }
+        void setOrg(Vertex* org) { Org_ = org; }
+        Face *Lface() { return Lface_; }
+        const Face *Lface() const { return Lface_; }
+        void setLface(Face *lface) { Lface_ = lface; }
         
-        TESSface *Rface() { return Sym()->Lface(); }
-        const TESSface *Rface() const { return Sym()->Lface(); }
-        void SetRface(TESSface *rface) { Sym()->SetLface(rface); }
-        TESSvertex *Dst() { return Sym()->Org(); }
-        const TESSvertex *Dst() const { return Sym()->Org(); }
-        void SetDst(TESSvertex* Dst) { Sym()->SetOrg(Dst); }
+        Face *Rface() { return Sym()->Lface(); }
+        const Face *Rface() const { return Sym()->Lface(); }
+        void setRface(Face *rface) { Sym()->setLface(rface); }
+        Vertex *Dst() { return Sym()->Org(); }
+        const Vertex *Dst() const { return Sym()->Org(); }
+        void setDst(Vertex* Dst) { Sym()->setOrg(Dst); }
         
-        TESShalfEdge *Oprev() { return Sym()->Lnext(); }
-        const TESShalfEdge *Oprev() const { return Sym()->Lnext(); }
-        TESShalfEdge *Lprev() { return Onext()->Sym(); }
-        const TESShalfEdge *Lprev() const { return Onext()->Sym(); }
-        TESShalfEdge *Dprev() { return Lnext()->Sym(); }
-        const TESShalfEdge *Dprev() const { return Lnext()->Sym(); }
-        TESShalfEdge *Rprev() { return Sym()->Onext(); }
-        const TESShalfEdge *Rprev() const { return Sym()->Onext(); }
-        TESShalfEdge *Dnext() { return Rprev()->Sym(); }  /* 3 pointers */
-        const TESShalfEdge *Dnext() const { return Rprev()->Sym(); }  /* 3 pointers */
-        TESShalfEdge *Rnext() { return Oprev()->Sym(); }  /* 3 pointers */
-        const TESShalfEdge *Rnext() const { return Oprev()->Sym(); }  /* 3 pointers */
+        HalfEdge *Oprev() { return Sym()->Lnext(); }
+        const HalfEdge *Oprev() const { return Sym()->Lnext(); }
+        HalfEdge *Lprev() { return Onext()->Sym(); }
+        const HalfEdge *Lprev() const { return Onext()->Sym(); }
+        HalfEdge *Dprev() { return Lnext()->Sym(); }
+        const HalfEdge *Dprev() const { return Lnext()->Sym(); }
+        HalfEdge *Rprev() { return Sym()->Onext(); }
+        const HalfEdge *Rprev() const { return Sym()->Onext(); }
+        HalfEdge *Dnext() { return Rprev()->Sym(); }  /* 3 pointers */
+        const HalfEdge *Dnext() const { return Rprev()->Sym(); }  /* 3 pointers */
+        HalfEdge *Rnext() { return Oprev()->Sym(); }  /* 3 pointers */
+        const HalfEdge *Rnext() const { return Oprev()->Sym(); }  /* 3 pointers */
         
         ActiveRegion *activeRegion() { return activeRegion_; }
         const ActiveRegion *activeRegion() const { return activeRegion_; }
         void resetActiveRegion() { activeRegion_ = nullptr; }
         void setActiveRegion(ActiveRegion * newActiveRegion) { activeRegion_ = newActiveRegion; }
         const int winding() const { return winding_; }
-        void SetWinding(int winding) { winding_ = winding; }
+        void setWinding(int winding) { winding_ = winding; }
         const int mark() const { return mark_; }
-        void SetMark(int mark) { mark_ = mark; }
+        void setMark(int mark) { mark_ = mark; }
 
-        TESShalfEdge *next_;      /* doubly-linked list (prev==Sym->next) */
-        TESShalfEdge *Sym_;       /* same edge, opposite direction */
-        TESShalfEdge *Onext_;     /* next edge CCW around origin */
-        TESShalfEdge *Lnext_;     /* next edge CCW around left face */
-        TESSvertex *Org_;       /* origin vertex (Overtex too long) */
-        TESSface *Lface_;     /* left face */
+        HalfEdge *next_;      /* doubly-linked list (prev==Sym->next) */
+        HalfEdge *Sym_;       /* same edge, opposite direction */
+        HalfEdge *Onext_;     /* next edge CCW around origin */
+        HalfEdge *Lnext_;     /* next edge CCW around left face */
+        Vertex *Org_;       /* origin vertex (Overtex too long) */
+        Face *Lface_;     /* left face */
         
         /* Internal data (keep hidden) */
         ActiveRegion *activeRegion_;  /* a region with this upper edge (sweep.c) */
@@ -239,53 +239,53 @@ namespace Tess
                          from the right face to the left face */
         int mark_; /* Used by the Edge Flip algorithm */
     };
-    struct EdgePair : public TESShalfEdge
+    struct EdgePair : public HalfEdge
     {
-        TESShalfEdge eSym;
+        HalfEdge eSym;
         
         static void* operator new( std::size_t count ) { return BucketAlloc<EdgePair>::get(count).alloc(); }
         static void operator delete( void* ptr ) { BucketAlloc<EdgePair>::get().free(ptr); }
     };
     
-    class TESSmesh {
-        TESSvertex vHead;      /* dummy header for vertex list */
-        TESSface fHead;      /* dummy header for face list */
-        TESShalfEdge eHead;      /* dummy header for edge list */
-        TESShalfEdge eHeadSym;   /* and its symmetric counterpart */
+    class Mesh {
+        Vertex vHead;      /* dummy header for vertex list */
+        Face fHead;      /* dummy header for face list */
+        HalfEdge eHead;      /* dummy header for edge list */
+        HalfEdge eHeadSym;   /* and its symmetric counterpart */
         
     public:
-        TESSmesh();
-        ~TESSmesh();
+        Mesh();
+        ~Mesh();
 
-        TESShalfEdge *makeEdge( );
-        void splice( TESShalfEdge *eOrg, TESShalfEdge *eDst );
-        void remove( TESShalfEdge *eDel );
+        HalfEdge *makeEdge( );
+        void splice( HalfEdge *eOrg, HalfEdge *eDst );
+        void remove( HalfEdge *eDel );
         
-        TESShalfEdge *addEdgeVertex( TESShalfEdge *eOrg );
-        TESShalfEdge *splitEdge( TESShalfEdge *eOrg );
-        TESShalfEdge *connect( TESShalfEdge *eOrg, TESShalfEdge *eDst );
+        HalfEdge *addEdgeVertex( HalfEdge *eOrg );
+        HalfEdge *splitEdge( HalfEdge *eOrg );
+        HalfEdge *connect( HalfEdge *eOrg, HalfEdge *eDst );
         
-        static TESSmesh *merge( TESSmesh *mesh1, TESSmesh *mesh2 );
+        static Mesh *merge( Mesh *mesh1, Mesh *mesh2 );
         void mergeConvexFaces( int maxVertsPerFace );
-        void zapFace( TESSface *fZap );
+        void zapFace( Face *fZap );
         
-        void flipEdge( TESShalfEdge *edge );
+        void flipEdge( HalfEdge *edge );
         
         void checkMesh( );
         
-        TESSvertex* vBegin() { return vHead.next; }
-        TESSvertex* vEnd() { return &vHead; }
-        TESSface* fBegin() { return fHead.next; }
-        TESSface* fEnd() { return &fHead; }
-        TESShalfEdge* eBegin() { return eHead.next(); }
-        TESShalfEdge* eEnd() { return &eHead; }
-        TESShalfEdge* eSymBegin() { return eHeadSym.next(); }
-        TESShalfEdge* eSymEnd() { return &eHeadSym; }
+        Vertex* vBegin() { return vHead.next; }
+        Vertex* vEnd() { return &vHead; }
+        Face* fBegin() { return fHead.next; }
+        Face* fEnd() { return &fHead; }
+        HalfEdge* eBegin() { return eHead.next(); }
+        HalfEdge* eEnd() { return &eHead; }
+        HalfEdge* eSymBegin() { return eHeadSym.next(); }
+        HalfEdge* eSymEnd() { return &eHeadSym; }
     };
     
     /* The mesh operations below have three motivations: completeness,
-     * convenience, and efficiency.  The basic mesh operations are MakeEdge,
-     * Splice, and Delete.  All the other edge operations can be implemented
+     * convenience, and efficiency.  The basic mesh operations are makeEdge,
+     * splice, and Delete.  All the other edge operations can be implemented
      * in terms of these.  The other operations are provided for convenience
      * and/or efficiency.
      *

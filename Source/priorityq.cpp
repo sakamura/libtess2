@@ -43,7 +43,7 @@
 
 /* Violates modularity, but a little faster */
 #include "geom.h"
-#define LEQ(x,y)	vertAreLessOrEqual((TESSvertex *)x, (TESSvertex *)y)
+#define LEQ(x,y)	vertAreLessOrEqual((Vertex *)x, (Vertex *)y)
 
 /* Include all the code for the regular heap-based queue here. */
 

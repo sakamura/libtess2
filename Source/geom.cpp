@@ -38,7 +38,7 @@
 
 namespace Tess
 {
-    float edgeEval( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w )
+    float edgeEval( const Vertex *u, const Vertex *v, const Vertex *w )
     {
         /* Given three vertices u,v,w such that vertAreLessOrEqual(u,v) && vertAreLessOrEqual(v,w),
          * evaluates the t-coord of the edge uw at the s-coord of the vertex v.
@@ -68,7 +68,7 @@ namespace Tess
         return 0;
     }
     
-    float edgeSign( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w )
+    float edgeSign( const Vertex *u, const Vertex *v, const Vertex *w )
     {
         /* Returns a number whose sign matches edgeEval(u,v,w) but which
          * is cheaper to evaluate.  Returns > 0, == 0 , or < 0
@@ -93,7 +93,7 @@ namespace Tess
      * Define versions of edgeSign, edgeEval with s and t transposed.
      */
     
-    float transEdgeEval( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w )
+    float transEdgeEval( const Vertex *u, const Vertex *v, const Vertex *w )
     {
         /* Given three vertices u,v,w such that transVertAreLessOrEqual(u,v) && transVertAreLessOrEqual(v,w),
          * evaluates the t-coord of the edge uw at the s-coord of the vertex v.
@@ -123,7 +123,7 @@ namespace Tess
         return 0;
     }
     
-    float transEdgeSign( const TESSvertex *u, const TESSvertex *v, const TESSvertex *w )
+    float transEdgeSign( const Vertex *u, const Vertex *v, const Vertex *w )
     {
         /* Returns a number whose sign matches transEdgeEval(u,v,w) but which
          * is cheaper to evaluate.  Returns > 0, == 0 , or < 0
@@ -167,9 +167,9 @@ namespace Tess
         return ((x+y) / 2);
     }
 
-    void edgeIntersect( const TESSvertex *o1, const TESSvertex *d1,
-                          const TESSvertex *o2, const TESSvertex *d2,
-                          TESSvertex *v )
+    void edgeIntersect( const Vertex *o1, const Vertex *d1,
+                          const Vertex *o2, const Vertex *d2,
+                          Vertex *v )
     /* Given edges (o1,d1) and (o2,d2), compute their point of intersection.
      * The computed point is guaranteed to lie in the intersection of the
      * bounding rectangles defined by each edge.
@@ -233,7 +233,7 @@ namespace Tess
     /*
      Calculate the angle between v1-v2 and v1-v0
      */
-    static inline float calcAngle( const TESSvertex *v0, const TESSvertex *v1, const TESSvertex *v2 )
+    static inline float calcAngle( const Vertex *v0, const Vertex *v1, const Vertex *v2 )
     {
         float num;
         float den;
@@ -251,7 +251,7 @@ namespace Tess
         return acos( num );
     }
     
-    bool edgeIsLocallyDelaunay( const TESShalfEdge *e )
+    bool edgeIsLocallyDelaunay( const HalfEdge *e )
     {
         return (calcAngle(e->Lnext()->Org(), e->Lnext()->Lnext()->Org(), e->Org()) +
                 calcAngle(e->Sym()->Lnext()->Org(), e->Sym()->Lnext()->Lnext()->Org(), e->Sym()->Org())) < (M_PI + 0.01);

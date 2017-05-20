@@ -70,9 +70,9 @@ namespace Tess
      * to the fan is a simple orientation test.  By making the fan as large
      * as possible, we restore the invariant (check it yourself).
      */
-    void Tesselator::meshTessellateMonoRegion( TESSface *face )
+    void Tesselator::meshTessellateMonoRegion( Face *face )
     {
-        TESShalfEdge *up, *lo;
+        HalfEdge *up, *lo;
         
         /* All edges are oriented CCW around the boundary of the region.
          * First, find the half-edge whose origin vertex is rightmost.
@@ -96,7 +96,7 @@ namespace Tess
                  */
                 while( lo->Lnext() != up && (edgeGoesLeft( lo->Lnext() )
                                            || edgeSign( lo->Org(), lo->Dst(), lo->Lnext()->Dst() ) <= 0 )) {
-                    TESShalfEdge *tempHalfEdge= mesh->connect( lo->Lnext(), lo );
+                    HalfEdge *tempHalfEdge= mesh->connect( lo->Lnext(), lo );
                     lo = tempHalfEdge->Sym();
                 }
                 lo = lo->Lprev();
@@ -104,7 +104,7 @@ namespace Tess
                 /* lo->Org is on the left.  We can make CCW triangles from up->Dst. */
                 while( lo->Lnext() != up && (edgeGoesRight( up->Lprev() )
                                            || edgeSign( up->Dst(), up->Org(), up->Lprev()->Org() ) >= 0 )) {
-                    TESShalfEdge *tempHalfEdge= mesh->connect( up, up->Lprev() );
+                    HalfEdge *tempHalfEdge= mesh->connect( up, up->Lprev() );
                     up = tempHalfEdge->Sym();
                 }
                 up = up->Lnext();
@@ -116,7 +116,7 @@ namespace Tess
          */
         assert( lo->Lnext() != up );
         while( lo->Lnext()->Lnext() != up ) {
-            TESShalfEdge *tempHalfEdge= mesh->connect( lo->Lnext(), lo );
+            HalfEdge *tempHalfEdge= mesh->connect( lo->Lnext(), lo );
             lo = tempHalfEdge->Sym();
         }
     }
@@ -127,7 +127,7 @@ namespace Tess
      */
     void Tesselator::meshTessellateInterior( )
     {
-        TESSface *f, *next;
+        Face *f, *next;
         
         /*LINTED*/
         for( f = mesh->fBegin(); f != mesh->fEnd(); f = next ) {
@@ -142,7 +142,7 @@ namespace Tess
     
     struct EdgeStackNode
     {
-        TESShalfEdge *edge;
+        HalfEdge *edge;
         EdgeStackNode *next;
         
         static void* operator new( std::size_t count ) { return BucketAlloc<EdgeStackNode>::get(count).alloc(); }
@@ -168,7 +168,7 @@ namespace Tess
         return stack->top == nullptr;
     }
     
-    void stackPush( EdgeStack *stack, TESShalfEdge *e )
+    void stackPush( EdgeStack *stack, HalfEdge *e )
     {
         EdgeStackNode *node = new EdgeStackNode;
         if ( ! node ) return;
@@ -177,9 +177,9 @@ namespace Tess
         stack->top = node;
     }
     
-    TESShalfEdge *stackPop( EdgeStack *stack )
+    HalfEdge *stackPop( EdgeStack *stack )
     {
-        TESShalfEdge *e = nullptr;
+        HalfEdge *e = nullptr;
         EdgeStackNode *node = stack->top;
         if (node) {
             stack->top = node->next;
@@ -203,16 +203,16 @@ namespace Tess
          2) Mark all dual edges
          3) insert all dual edges into a queue
          */
-        TESSface *f;
+        Face *f;
         EdgeStack stack;
-        TESShalfEdge *e;
-        TESShalfEdge *edges[4];
+        HalfEdge *e;
+        HalfEdge *edges[4];
         stackInit(&stack);
         for( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next ) {
             if ( f->inside) {
                 e = f->anEdge;
                 do {
-                    e->SetMark(edgeIsInternal(e)); /* Mark internal edges */
+                    e->setMark(edgeIsInternal(e)); /* Mark internal edges */
                     if (e->mark() && !e->Sym()->mark()) stackPush(&stack, e); /* Insert into queue */
                     e = e->Lnext();
                 } while (e != f->anEdge);
@@ -224,8 +224,8 @@ namespace Tess
         // which are internal and not already in the stack (!marked)
         while (!stackEmpty(&stack)) {
             e = stackPop(&stack);
-            e->SetMark(0);
-            e->Sym()->SetMark(0);
+            e->setMark(0);
+            e->Sym()->setMark(0);
             if (!edgeIsLocallyDelaunay(e)) {
                 int i;
                 mesh->flipEdge(e);
@@ -236,8 +236,8 @@ namespace Tess
                 edges[3] = e->Sym()->Lprev();
                 for (i=0;i<3;i++) {
                     if (!edges[i]->mark() && edgeIsInternal(edges[i])) {
-                        edges[i]->SetMark(1);
-                        edges[i]->Sym()->SetMark(1);
+                        edges[i]->setMark(1);
+                        edges[i]->Sym()->setMark(1);
                         stackPush(&stack, edges[i]);
                     }
                 }
@@ -255,7 +255,7 @@ namespace Tess
      */
     void Tesselator::meshDiscardExterior()
     {
-        TESSface *f, *next;
+        Face *f, *next;
         
         /*LINTED*/
         for( f = mesh->fBegin(); f != mesh->fEnd(); f = next ) {
@@ -277,19 +277,19 @@ namespace Tess
      */
     void Tesselator::meshSetWindingNumber( int value, bool keepOnlyBoundary )
     {
-        TESShalfEdge *e, *eNext;
+        HalfEdge *e, *eNext;
         
         for( e = mesh->eBegin(); e != mesh->eEnd(); e = eNext ) {
             eNext = e->next();
             if( e->Rface()->inside != e->Lface()->inside ) {
                 
                 /* This is a boundary edge (one side is interior, one is exterior). */
-                e->SetWinding((e->Lface()->inside) ? value : -value);
+                e->setWinding((e->Lface()->inside) ? value : -value);
             } else {
                 
                 /* Both regions are interior, or both are exterior. */
                 if( ! keepOnlyBoundary ) {
-                    e->SetWinding( 0 );
+                    e->setWinding( 0 );
                 } else {
                     mesh->remove( e );
                 }
@@ -339,7 +339,7 @@ namespace Tess
     }
     
     
-    static int GetNeighbourFace(TESShalfEdge* edge)
+    static int GetNeighbourFace(HalfEdge* edge)
     {
         if (!edge->Rface())
             return sTessUndef;
@@ -350,9 +350,9 @@ namespace Tess
     
     void Tesselator::outputPolymesh( ElementType elementType, int polySize )
     {
-        TESSvertex* v = 0;
-        TESSface* f = 0;
-        TESShalfEdge* edge = 0;
+        Vertex* v = 0;
+        Face* f = 0;
+        HalfEdge* edge = 0;
         int maxFaceCount = 0;
         int maxVertexCount = 0;
         int faceVerts, i;
@@ -457,9 +457,9 @@ namespace Tess
     
     void Tesselator::outputContours()
     {
-        TESSface *f = 0;
-        TESShalfEdge *edge = 0;
-        TESShalfEdge *start = 0;
+        Face *f = 0;
+        HalfEdge *edge = 0;
+        HalfEdge *start = 0;
         int startVert = 0;
         int vertCount = 0;
         
@@ -514,7 +514,7 @@ namespace Tess
     void Tesselator::beginContour()
     {
         if ( mesh == nullptr )
-            mesh = new TESSmesh;
+            mesh = new Mesh;
         
         e = nullptr;
     }
@@ -549,8 +549,8 @@ namespace Tess
          * vertices in such an order that a CCW contour will add +1 to
          * the winding number of the region inside the contour.
          */
-        e->SetWinding(1);
-        e->Sym()->SetWinding(-1);
+        e->setWinding(1);
+        e->Sym()->setWinding(-1);
     }
     
     void Tesselator::addContour( const void* vertices, int stride, int numVertices )

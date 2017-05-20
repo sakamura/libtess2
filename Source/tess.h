@@ -55,18 +55,18 @@ namespace Tess
     
     static const int sTessUndef = (~(int)0);
 
-    struct TESSmesh;
+    struct Mesh;
     struct Dict;
     struct PriorityQ;
-    struct TESSvertex;
-    struct TESShalfEdge;
-    struct TESSface;
+    struct Vertex;
+    struct HalfEdge;
+    struct Face;
     struct ActiveRegion;
     
     class Tesselator
     {
         /*** state needed for collecting the input data ***/
-        TESSmesh	*mesh;		/* stores the input contours, and eventually
+        Mesh	*mesh;		/* stores the input contours, and eventually
                                  the tessellation itself */
         
         float bmin[2];
@@ -76,9 +76,9 @@ namespace Tess
         WindingRule	windingRule;	/* rule for determining polygon interior */
         Dict *dict;		/* edge dictionary for sweep line */
         PriorityQ *pq;		/* priority queue of vertex events */
-        TESSvertex *event;		/* current sweep event being processed */
+        Vertex *event;		/* current sweep event being processed */
         int vertexIndexCounter;
-        TESShalfEdge *e;
+        HalfEdge *e;
         
         /*** outputs ***/
         float *vertices;
@@ -148,7 +148,7 @@ namespace Tess
         
     private:
         // tess.cpp
-        void meshTessellateMonoRegion(TESSface *face);
+        void meshTessellateMonoRegion(Face *face);
         void meshTessellateInterior();
         void meshRefineDelaunay();
         void meshDiscardExterior();
@@ -163,24 +163,24 @@ namespace Tess
         }
         bool _edgeLeq( ActiveRegion *reg1, ActiveRegion *reg2 ) const;
         void deleteRegion( ActiveRegion *reg );
-        void fixUpperEdge( ActiveRegion *reg, TESShalfEdge *newEdge );
+        void fixUpperEdge( ActiveRegion *reg, HalfEdge *newEdge );
         ActiveRegion* topLeftRegion( ActiveRegion *reg );
         ActiveRegion* topRightRegion( ActiveRegion *reg );
-        ActiveRegion* addRegionBelow( ActiveRegion *regAbove, TESShalfEdge *eNewUp );
+        ActiveRegion* addRegionBelow( ActiveRegion *regAbove, HalfEdge *eNewUp );
         bool isWindingInside( int n ) const;
         void computeWinding( ActiveRegion *reg );
         void finishRegion( ActiveRegion *reg );
-        TESShalfEdge* finishLeftRegions( ActiveRegion *regFirst, ActiveRegion *regLast );
-        void addRightEdges( ActiveRegion *regUp, TESShalfEdge *eFirst, TESShalfEdge *eLast, TESShalfEdge *eTopLeft, bool cleanUp );
-        void spliceMergeVertices(TESShalfEdge *e1, TESShalfEdge *e2);
+        HalfEdge* finishLeftRegions( ActiveRegion *regFirst, ActiveRegion *regLast );
+        void addRightEdges( ActiveRegion *regUp, HalfEdge *eFirst, HalfEdge *eLast, HalfEdge *eTopLeft, bool cleanUp );
+        void spliceMergeVertices(HalfEdge *e1, HalfEdge *e2);
         bool checkForRightSplice( ActiveRegion *regUp );
         bool checkForLeftSplice( ActiveRegion *regUp );
         bool checkForIntersect( ActiveRegion *regUp );
         void walkDirtyRegions( ActiveRegion *regUp );
-        void connectRightVertex( ActiveRegion *regUp, TESShalfEdge *eBottomLeft );
-        void connectLeftDegenerate( ActiveRegion *regUp, TESSvertex *vEvent );
-        void connectLeftVertex( TESSvertex *vEvent );
-        void sweepEvent( TESSvertex *vEvent );
+        void connectRightVertex( ActiveRegion *regUp, HalfEdge *eBottomLeft );
+        void connectLeftDegenerate( ActiveRegion *regUp, Vertex *vEvent );
+        void connectLeftVertex( Vertex *vEvent );
+        void sweepEvent( Vertex *vEvent );
         void addSentinel( float smin, float smax, float t );
         void initEdgeDict( );
         void doneEdgeDict( );
