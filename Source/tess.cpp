@@ -152,43 +152,43 @@ namespace Tess
     struct EdgeStack
     {
         EdgeStackNode *top;
-    };
-    
-    void stackInit( EdgeStack *stack )
-    {
-        stack->top = nullptr;
-    }
-    
-    int stackEmpty( EdgeStack *stack )
-    {
-        return stack->top == nullptr;
-    }
-    
-    void stackPush( EdgeStack *stack, HalfEdge *e )
-    {
-        EdgeStackNode *node = new EdgeStackNode;
-        if ( ! node ) return;
-        node->edge = e;
-        node->next = stack->top;
-        stack->top = node;
-    }
-    
-    HalfEdge *stackPop( EdgeStack *stack )
-    {
-        HalfEdge *e = nullptr;
-        EdgeStackNode *node = stack->top;
-        if (node) {
-            stack->top = node->next;
-            e = node->edge;
-            delete node;
-        }
-        return e;
-    }
 
-    void stackDelete( EdgeStack *stack )
-    {
-        do {} while (stackPop(stack) != nullptr);
-    }
+        EdgeStack() :
+            top(nullptr)
+        {
+        }
+        
+        int empty()
+        {
+            return top == nullptr;
+        }
+        
+        void push( HalfEdge *edge )
+        {
+            EdgeStackNode *node = new EdgeStackNode;
+            if ( ! node ) return;
+            node->edge = edge;
+            node->next = top;
+            top = node;
+        }
+        
+        HalfEdge *pop( )
+        {
+            HalfEdge *edge = nullptr;
+            EdgeStackNode *node = top;
+            if (node) {
+                top = node->next;
+                edge = node->edge;
+                delete node;
+            }
+            return edge;
+        }
+        
+        ~EdgeStack(  )
+        {
+            do {} while (pop() != nullptr);
+        }
+    };
     
     /*
      Starting with a valid triangulation, uses the Edge Flip algorithm to
@@ -206,46 +206,43 @@ namespace Tess
          */
         Face *f;
         EdgeStack stack;
-        HalfEdge *e;
+        HalfEdge *edge;
         HalfEdge *edges[4];
-        stackInit(&stack);
         for( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next ) {
             if ( f->inside) {
-                e = f->anEdge;
+                edge = f->anEdge;
                 do {
-                    e->setMark(edgeIsInternal(e)); /* Mark internal edges */
-                    if (e->mark() && !e->Sym()->mark()) stackPush(&stack, e); /* Insert into queue */
-                    e = e->Lnext();
-                } while (e != f->anEdge);
+                    edge->setMark(edgeIsInternal(edge)); /* Mark internal edges */
+                    if (edge->mark() && !edge->Sym()->mark()) stack.push(edge); /* Insert into queue */
+                    edge = edge->Lnext();
+                } while (edge != f->anEdge);
             }
         }
         
         // Pop stack until we find a reversed edge
         // Flip the reversed edge, and insert any of the four opposite edges
         // which are internal and not already in the stack (!marked)
-        while (!stackEmpty(&stack)) {
-            e = stackPop(&stack);
-            e->setMark(0);
-            e->Sym()->setMark(0);
-            if (!edgeIsLocallyDelaunay(e)) {
+        while (!stack.empty()) {
+            edge = stack.pop();
+            edge->setMark(0);
+            edge->Sym()->setMark(0);
+            if (!edgeIsLocallyDelaunay(edge)) {
                 int i;
-                mesh->flipEdge(e);
+                mesh->flipEdge(edge);
                 // for each opposite edge
-                edges[0] = e->Lnext();
-                edges[1] = e->Lprev();
-                edges[2] = e->Sym()->Lnext();
-                edges[3] = e->Sym()->Lprev();
+                edges[0] = edge->Lnext();
+                edges[1] = edge->Lprev();
+                edges[2] = edge->Sym()->Lnext();
+                edges[3] = edge->Sym()->Lprev();
                 for (i=0;i<3;i++) {
                     if (!edges[i]->mark() && edgeIsInternal(edges[i])) {
                         edges[i]->setMark(1);
                         edges[i]->Sym()->setMark(1);
-                        stackPush(&stack, edges[i]);
+                        stack.push(edges[i]);
                     }
                 }
             }
         }
-        
-        stackDelete(&stack);
     }
     
     
@@ -278,21 +275,21 @@ namespace Tess
      */
     void Tesselator::meshSetWindingNumber( int value, bool keepOnlyBoundary )
     {
-        HalfEdge *e, *eNext;
+        HalfEdge *edge, *eNext;
         
-        for( e = mesh->eBegin(); e != mesh->eEnd(); e = eNext ) {
-            eNext = e->next();
-            if( e->Rface()->inside != e->Lface()->inside ) {
+        for( edge = mesh->eBegin(); edge != mesh->eEnd(); edge = eNext ) {
+            eNext = edge->next();
+            if( edge->Rface()->inside != edge->Lface()->inside ) {
                 
                 /* This is a boundary edge (one side is interior, one is exterior). */
-                e->setWinding((e->Lface()->inside) ? value : -value);
+                edge->setWinding((edge->Lface()->inside) ? value : -value);
             } else {
                 
                 /* Both regions are interior, or both are exterior. */
                 if( ! keepOnlyBoundary ) {
-                    e->setWinding( 0 );
+                    edge->setWinding( 0 );
                 } else {
-                    mesh->remove( e );
+                    mesh->remove( edge );
                 }
             }
         }
@@ -400,10 +397,10 @@ namespace Tess
         elementCount = maxFaceCount;
         if (elementType == TESS_CONNECTED_POLYGONS)
             maxFaceCount *= 2;
-        int* elems = elements = new int[maxFaceCount * polySize];
+        int* elems = elements = new int[(unsigned long)(maxFaceCount * polySize)];
         vertexCount = maxVertexCount;
-        vertices = new float[vertexCount * 2];
-        vertexIndices = new int[vertexCount];
+        vertices = new float[(unsigned long)vertexCount * 2];
+        vertexIndices = new int[(unsigned long)vertexCount];
         
         // Output vertices.
         for ( v = mesh->vBegin(); v != mesh->vEnd(); v = v->next )
@@ -482,9 +479,9 @@ namespace Tess
             ++elementCount;
         }
         
-        int* elems = elements = new int[elementCount * 2];
-        float* verts = vertices = new float[vertexCount * 2];
-        int* vertInds = vertexIndices = new int[vertexCount];
+        int* elems = elements = new int[(unsigned long)elementCount * 2];
+        float* verts = vertices = new float[(unsigned long)vertexCount * 2];
+        int* vertInds = vertexIndices = new int[(unsigned long)vertexCount];
         
         startVert = 0;
         
@@ -554,9 +551,9 @@ namespace Tess
         e->Sym()->setWinding(-1);
     }
     
-    void Tesselator::addContour( const void* vertices, int stride, int numVertices )
+    void Tesselator::addContour( const void* verticesToAdd, int stride, int numVertices )
     {
-        const unsigned char *src = (const unsigned char*)vertices;
+        const unsigned char *src = (const unsigned char*)verticesToAdd;
         int i;
         
         beginContour();
@@ -569,7 +566,7 @@ namespace Tess
         }
     }
     
-    void Tesselator::tesselate( WindingRule windingRule, ElementType elementType, int polySize, const float* normal )
+    void Tesselator::tesselate( WindingRule _windingRule, ElementType elementType, int polySize, const float* normal )
     {
         if (vertices != nullptr) {
             delete[] vertices;
@@ -585,7 +582,7 @@ namespace Tess
         }
         
         vertexIndexCounter = 0;
-        windingRule = windingRule;
+        windingRule = _windingRule;
         
         /* tessComputeInterior( tess ) computes the planar arrangement specified
          * by the given contours, and further subdivides this arrangement

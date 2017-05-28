@@ -281,6 +281,8 @@ namespace Tess
         HalfEdge* eEnd() { return &eHead; }
         HalfEdge* eSymBegin() { return eHeadSym.next(); }
         HalfEdge* eSymEnd() { return &eHeadSym; }
+        
+        void meshUnion( Mesh *meshToMerge );
     };
     
     /* The mesh operations below have three motivations: completeness,

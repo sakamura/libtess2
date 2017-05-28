@@ -146,7 +146,7 @@ namespace Tess
     ActiveRegion* Tesselator::topLeftRegion( ActiveRegion *reg )
     {
         const Vertex *org = reg->eUp->Org();
-        HalfEdge *e;
+        HalfEdge *edge;
         
         /* Find the region above the uppermost edge with the same origin */
         do {
@@ -157,8 +157,8 @@ namespace Tess
          * now is the time to fix it.
          */
         if( reg->fixUpperEdge ) {
-            e = mesh->connect( reg->regionBelow()->eUp->Sym(), reg->eUp->Lnext() );
-            fixUpperEdge( reg, e );
+            edge = mesh->connect( reg->regionBelow()->eUp->Sym(), reg->eUp->Lnext() );
+            fixUpperEdge( reg, edge );
             reg = reg->regionAbove();
         }
         return reg;
@@ -230,11 +230,11 @@ namespace Tess
      * changing, this face may not have even existed until now).
      */
     {
-        HalfEdge *e = reg->eUp;
-        Face *f = e->Lface();
+        HalfEdge *newUp = reg->eUp;
+        Face *f = newUp->Lface();
         
         f->inside = reg->inside;
-        f->anEdge = e;   /* optimization for tessMeshTessellateMonoRegion() */
+        f->anEdge = newUp;   /* optimization for tessMeshTessellateMonoRegion() */
         deleteRegion( reg );
     }
     
@@ -254,15 +254,15 @@ namespace Tess
      */
     {
         ActiveRegion *reg, *regPrev;
-        HalfEdge *e, *ePrev;
+        HalfEdge *edge, *ePrev;
         
         regPrev = regFirst;
         ePrev = regFirst->eUp;
         while( regPrev != regLast ) {
             regPrev->fixUpperEdge = false;	/* placement was OK */
             reg = regPrev->regionBelow( );
-            e = reg->eUp;
-            if( e->Org() != ePrev->Org() ) {
+            edge = reg->eUp;
+            if( edge->Org() != ePrev->Org() ) {
                 if( ! reg->fixUpperEdge ) {
                     /* Remove the last left-going edge.  Even though there are no further
                      * edges in the dictionary with this origin, there may be further
@@ -276,14 +276,14 @@ namespace Tess
                 /* If the edge below was a temporary edge introduced by
                  * ConnectRightVertex, now is the time to fix it.
                  */
-                e = mesh->connect( ePrev->Lprev(), e->Sym() );
-                fixUpperEdge( reg, e );
+                edge = mesh->connect( ePrev->Lprev(), edge->Sym() );
+                fixUpperEdge( reg, edge );
             }
             
-            /* Relink edges so that ePrev->Onext == e */
-            if( ePrev->Onext() != e ) {
-                mesh->splice( e->Oprev(), e );
-                mesh->splice( ePrev, e );
+            /* Relink edges so that ePrev->Onext == edge */
+            if( ePrev->Onext() != edge ) {
+                mesh->splice( edge->Oprev(), edge );
+                mesh->splice( ePrev, edge );
             }
             finishRegion( regPrev );	/* may change reg->eUp */
             ePrev = reg->eUp;
@@ -306,18 +306,18 @@ namespace Tess
      */
     {
         ActiveRegion *reg, *regPrev;
-        HalfEdge *e, *ePrev;
+        HalfEdge *edge, *ePrev;
         int firstTime = true;
         
         /* Insert the new right-going edges in the dictionary */
-        e = eFirst;
+        edge = eFirst;
         do {
-            assert( vertAreLessOrEqual( e->Org(), e->Dst() ));
-            addRegionBelow( regUp, e->Sym() );
-            e = e->Onext();
-        } while ( e != eLast );
+            assert( vertAreLessOrEqual( edge->Org(), edge->Dst() ));
+            addRegionBelow( regUp, edge->Sym() );
+            edge = edge->Onext();
+        } while ( edge != eLast );
         
-        /* Walk *all* right-going edges from e->Org, in the dictionary order,
+        /* Walk *all* right-going edges from edge->Org, in the dictionary order,
          * updating the winding numbers of each region, and re-linking the mesh
          * edges to match the dictionary ordering (if necessary).
          */
@@ -328,16 +328,16 @@ namespace Tess
         ePrev = eTopLeft;
         for( ;; ) {
             reg = regPrev->regionBelow();
-            e = reg->eUp->Sym();
-            if( e->Org() != ePrev->Org() ) break;
+            edge = reg->eUp->Sym();
+            if( edge->Org() != ePrev->Org() ) break;
             
-            if( e->Onext() != ePrev ) {
-                /* Unlink e from its current position, and relink below ePrev */
-                mesh->splice( e->Oprev(), e );
-                mesh->splice( ePrev->Oprev(), e );
+            if( edge->Onext() != ePrev ) {
+                /* Unlink edge from its current position, and relink below ePrev */
+                mesh->splice( edge->Oprev(), edge );
+                mesh->splice( ePrev->Oprev(), edge );
             }
             /* Compute the winding number and "inside" flag for the new regions */
-            reg->windingNumber = regPrev->windingNumber - e->winding();
+            reg->windingNumber = regPrev->windingNumber - edge->winding();
             reg->inside = isWindingInside( reg->windingNumber );
             
             /* Check for two outgoing edges with same slope -- process these
@@ -345,16 +345,16 @@ namespace Tess
              */
             regPrev->dirty = true;
             if( ! firstTime && checkForRightSplice( regPrev )) {
-                e->addWinding( ePrev );
+                edge->addWinding( ePrev );
                 delete regPrev ;
                 mesh->remove( ePrev );
             }
             firstTime = false;
             regPrev = reg;
-            ePrev = e;
+            ePrev = edge;
         }
         regPrev->dirty = true;
-        assert( regPrev->windingNumber - e->winding() == reg->windingNumber );
+        assert( regPrev->windingNumber - edge->winding() == reg->windingNumber );
         
         if( cleanUp ) {
             /* Check for intersections between newly adjacent edges. */
@@ -452,7 +452,7 @@ namespace Tess
         ActiveRegion *regLo = regUp->regionBelow();
         HalfEdge *eUp = regUp->eUp;
         HalfEdge *eLo = regLo->eUp;
-        HalfEdge *e;
+        HalfEdge *edge;
         
         assert( ! vertAreEqual( eUp->Dst(), eLo->Dst() ));
         
@@ -461,17 +461,17 @@ namespace Tess
             
             /* eLo->Dst is above eUp, so splice eLo->Dst into eUp */
             regUp->regionAbove()->dirty = regUp->dirty = true;
-            e = mesh->splitEdge( eUp );
-            mesh->splice( eLo->Sym(), e );
-            e->Lface()->inside = regUp->inside;
+            edge = mesh->splitEdge( eUp );
+            mesh->splice( eLo->Sym(), edge );
+            edge->Lface()->inside = regUp->inside;
         } else {
             if( edgeSign( eLo->Dst(), eUp->Dst(), eLo->Org() ) > 0 ) return false;
             
             /* eUp->Dst is below eLo, so splice eUp->Dst into eLo */
             regUp->dirty = regLo->dirty = true;
-            e = mesh->splitEdge( eLo );
+            edge = mesh->splitEdge( eLo );
             mesh->splice( eUp->Lnext(), eLo->Sym() );
-            e->Rface()->inside = regUp->inside;
+            edge->Rface()->inside = regUp->inside;
         }
         return true;
     }
@@ -497,7 +497,7 @@ namespace Tess
         Vertex *dstLo = eLo->Dst();
         float tMinUp, tMaxLo;
         Vertex isect, *orgMin;
-        HalfEdge *e;
+        HalfEdge *edge;
         
         assert( ! vertAreEqual( dstLo, dstUp ));
         assert( edgeSign( dstUp, event, orgUp ) <= 0 );
@@ -578,10 +578,10 @@ namespace Tess
                 mesh->splice( eUp->Lnext(), eLo->Oprev() );
                 regLo = regUp;
                 regUp = topRightRegion( regUp );
-                e = regUp->regionBelow()->eUp->Rprev();
+                edge = regUp->regionBelow()->eUp->Rprev();
                 regLo->eUp = eLo->Oprev();
                 eLo = finishLeftRegions( regLo, nullptr );
-                addRightEdges( regUp, eLo->Onext(), eUp->Rprev(), e, true );
+                addRightEdges( regUp, eLo->Onext(), eUp->Rprev(), edge, true );
                 return true;
             }
             /* Special case: called from ConnectRightVertex.  If either
@@ -809,33 +809,33 @@ namespace Tess
      * part of the mesh.
      */
     {
-        HalfEdge *e, *eTopLeft, *eTopRight, *eLast;
+        HalfEdge *edge, *eTopLeft, *eTopRight, *eLast;
         ActiveRegion *reg;
         
-        e = regUp->eUp;
-        if( vertAreEqual( e->Org(), vEvent )) {
-            /* e->Org is an unprocessed vertex - just combine them, and wait
-             * for e->Org to be pulled from the queue
+        edge = regUp->eUp;
+        if( vertAreEqual( edge->Org(), vEvent )) {
+            /* edge->Org is an unprocessed vertex - just combine them, and wait
+             * for edge->Org to be pulled from the queue
              */
             assert( TOLERANCE_NONZERO );
-            spliceMergeVertices( e, vEvent->anEdge );
+            spliceMergeVertices( edge, vEvent->anEdge );
             return;
         }
         
-        if( ! vertAreEqual( e->Dst(), vEvent )) {
-            /* General case -- splice vEvent into edge e which passes through it */
-            mesh->splitEdge( e->Sym() );
+        if( ! vertAreEqual( edge->Dst(), vEvent )) {
+            /* General case -- splice vEvent into edge edge which passes through it */
+            mesh->splitEdge( edge->Sym() );
             if( regUp->fixUpperEdge ) {
                 /* This edge was fixable -- delete unused portion of original edge */
-                mesh->remove( e->Onext() );
+                mesh->remove( edge->Onext() );
                 regUp->fixUpperEdge = false;
             }
-            mesh->splice( vEvent->anEdge, e );
+            mesh->splice( vEvent->anEdge, edge );
             sweepEvent( vEvent );	/* recurse */
             return;
         }
         
-        /* vEvent coincides with e->Dst, which has already been processed.
+        /* vEvent coincides with edge->Dst, which has already been processed.
          * splice in the additional right-going edges.
          */
         assert( TOLERANCE_NONZERO );
@@ -844,7 +844,7 @@ namespace Tess
         eTopRight = reg->eUp->Sym();
         eTopLeft = eLast = eTopRight->Onext();
         if( reg->fixUpperEdge ) {
-            /* Here e->Dst has only a single fixable edge going right.
+            /* Here edge->Dst has only a single fixable edge going right.
              * We can delete it since now we have some real right-going edges.
              */
             assert( eTopLeft != eTopRight );   /* there are some left edges too */
@@ -854,7 +854,7 @@ namespace Tess
         }
         mesh->splice( vEvent->anEdge, eTopRight );
         if( ! edgeGoesLeft( eTopLeft )) {
-            /* e->Dst had no left-going edges -- indicate this to AddRightEdges() */
+            /* edge->Dst had no left-going edges -- indicate this to AddRightEdges() */
             eTopLeft = nullptr;
         }
         addRightEdges( regUp, eTopRight->Onext(), eLast, eTopLeft, true );
@@ -937,7 +937,7 @@ namespace Tess
      */
     {
         ActiveRegion *regUp, *reg;
-        HalfEdge *e, *eTopLeft, *eBottomLeft;
+        HalfEdge *edge, *eTopLeft, *eBottomLeft;
         
         event = vEvent;		/* for access in EdgeLeq() */
         
@@ -945,10 +945,10 @@ namespace Tess
          * already in the dictionary.  In this case we don't need to waste
          * time searching for the location to insert new edges.
          */
-        e = vEvent->anEdge;
-        while( e->activeRegion() == nullptr ) {
-            e = e->Onext();
-            if( e == vEvent->anEdge ) {
+        edge = vEvent->anEdge;
+        while( edge->activeRegion() == nullptr ) {
+            edge = edge->Onext();
+            if( edge == vEvent->anEdge ) {
                 /* All edges go right -- not incident to any processed edges */
                 connectLeftVertex( vEvent );
                 return;
@@ -962,7 +962,7 @@ namespace Tess
          * to their winding number, and delete the edges from the dictionary.
          * This takes care of all the left-going edges from vEvent.
          */
-        regUp = topLeftRegion( e->activeRegion() );
+        regUp = topLeftRegion( edge->activeRegion() );
         reg = regUp->regionBelow();
         eTopLeft = reg->eUp;
         eBottomLeft = finishLeftRegions( reg, nullptr );
@@ -991,18 +991,18 @@ namespace Tess
      * to avoid special cases at the top and bottom.
      */
     {
-        HalfEdge *e;
+        HalfEdge *edge;
         ActiveRegion *reg = new ActiveRegion;
         
-        e = mesh->makeEdge();
+        edge = mesh->makeEdge();
         
-        e->Org()->s = smax;
-        e->Org()->t = t;
-        e->Dst()->s = smin;
-        e->Dst()->t = t;
-        event = e->Dst();		/* initialize it */
+        edge->Org()->s = smax;
+        edge->Org()->t = t;
+        edge->Dst()->s = smin;
+        edge->Dst()->t = t;
+        event = edge->Dst();		/* initialize it */
         
-        reg->eUp = e;
+        reg->eUp = edge;
         reg->windingNumber = 0;
         reg->inside = false;
         reg->fixUpperEdge = false;
@@ -1029,10 +1029,10 @@ namespace Tess
         /* If the bbox is empty, ensure that sentinels are not coincident by
          slightly enlarging it. To avoid floating point precision issues,
          make sure to enlarge by a minimal amount. */
-        smin = bmin[0] - (w > 0.01 ? w : 0.01);
-        smax = bmax[0] + (w > 0.01 ? w : 0.01);
-        tmin = bmin[1] - (h > 0.01 ? h : 0.01);
-        tmax = bmax[1] + (h > 0.01 ? h : 0.01);
+        smin = bmin[0] - (w > 0.01f ? w : 0.01f);
+        smax = bmax[0] + (w > 0.01f ? w : 0.01f);
+        tmin = bmin[1] - (h > 0.01f ? h : 0.01f);
+        tmax = bmax[1] + (h > 0.01f ? h : 0.01f);
         
         addSentinel( smin, smax, tmin );
         addSentinel( smin, smax, tmax );
@@ -1067,31 +1067,31 @@ namespace Tess
      * Remove zero-length edges, and contours with fewer than 3 vertices.
      */
     {
-        HalfEdge *e, *eNext, *eLnext;
+        HalfEdge *edge, *eNext, *eLnext;
         HalfEdge *eHead = mesh->eEnd();
         
         /*LINTED*/
-        for( e = eHead->next(); e != eHead; e = eNext ) {
-            eNext = e->next();
-            eLnext = e->Lnext();
+        for( edge = eHead->next(); edge != eHead; edge = eNext ) {
+            eNext = edge->next();
+            eLnext = edge->Lnext();
             
-            if( vertAreEqual( e->Org(), e->Dst() ) && e->Lnext()->Lnext() != e ) {
+            if( vertAreEqual( edge->Org(), edge->Dst() ) && edge->Lnext()->Lnext() != edge ) {
                 /* Zero-length edge, contour has at least 3 edges */
                 
-                spliceMergeVertices( eLnext, e );	/* deletes e->Org */
-                mesh->remove( e );
-                e = eLnext;
-                eLnext = e->Lnext();
+                spliceMergeVertices( eLnext, edge );	/* deletes edge->Org */
+                mesh->remove( edge );
+                edge = eLnext;
+                eLnext = edge->Lnext();
             }
-            if( eLnext->Lnext() == e ) {
+            if( eLnext->Lnext() == edge ) {
                 /* Degenerate contour (one or two edges) */
                 
-                if( eLnext != e ) {
+                if( eLnext != edge ) {
                     if( eLnext == eNext || eLnext == eNext->Sym() ) { eNext = eNext->next(); }
                     mesh->remove( eLnext );
                 }
-                if( e == eNext || e == eNext->Sym() ) { eNext = eNext->next(); }
-                mesh->remove( e );
+                if( edge == eNext || edge == eNext->Sym() ) { eNext = eNext->next(); }
+                mesh->remove( edge );
             }
         }
     }
@@ -1103,16 +1103,16 @@ namespace Tess
      */
     {
         Vertex *v, *vHead;
-        int vertexCount = 0;
+        int vertexCountQ = 0;
         
         vHead = mesh->vEnd();
         for( v = vHead->next; v != vHead; v = v->next ) {
-            vertexCount++;
+            vertexCountQ++;
         }
         /* Make sure there is enough space for sentinels. */
-        vertexCount += 8;
+        vertexCountQ += 8;
         
-        pq = pqNewPriorityQ( vertexCount, (int (*)(PQkey, PQkey)) vertAreLessOrEqual );
+        pq = pqNewPriorityQ( vertexCountQ, (int (*)(PQkey, PQkey)) vertAreLessOrEqual );
         
         vHead = mesh->vEnd();
         for( v = vHead->next; v != vHead; v = v->next ) {
@@ -1145,18 +1145,18 @@ namespace Tess
      */
     {
         Face *f, *fNext;
-        HalfEdge *e;
+        HalfEdge *edge;
         
         /*LINTED*/
         for( f = mesh->fBegin(); f != mesh->fEnd(); f = fNext ) {
             fNext = f->next;
-            e = f->anEdge;
-            assert( e->Lnext() != e );
+            edge = f->anEdge;
+            assert( edge->Lnext() != edge );
             
-            if( e->Lnext()->Lnext() == e ) {
+            if( edge->Lnext()->Lnext() == edge ) {
                 /* A face with only two edges */
-                e->Onext()->addWinding( e );
-                mesh->remove( e );
+                edge->Onext()->addWinding( edge );
+                mesh->remove( edge );
             }
         }
     }

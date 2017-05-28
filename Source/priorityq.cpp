@@ -88,8 +88,9 @@ namespace Tess
         
         pq->size = 0;
         pq->max = size;
-        pq->nodes = new PQnode[size+1];
-        pq->handles = new PQhandleElem[size+1];
+        assert(size > 0);
+        pq->nodes = new PQnode[(unsigned long)size+1];
+        pq->handles = new PQhandleElem[(unsigned long)size+1];
         
         pq->initialized = false;
         pq->freeList = 0;
@@ -260,7 +261,7 @@ namespace Tess
         
         pq->heap = pqHeapNewPriorityQ( size, leq );
         
-        pq->keys = new PQkey[size];
+        pq->keys = new PQkey[(unsigned long)size];
         
         pq->size = 0;
         pq->max = size; //INIT_SIZE;
@@ -295,7 +296,7 @@ namespace Tess
         /* Create an array of indirect pointers to the keys, so that we
          * the handles we have returned are still valid.
          */
-        pq->order = new PQkey*[pq->size+1];
+        pq->order = new PQkey*[(unsigned long)pq->size+1];
         
         p = pq->order;
         r = p + pq->size - 1;

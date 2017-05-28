@@ -601,14 +601,14 @@ namespace Tess
     /* tessMeshUnion( mesh1, mesh2 ) forms the union of all structures in
      * both meshes, and returns the new mesh (the old meshes are destroyed).
      */
-    Mesh *tessMeshUnion( Mesh *mesh1, Mesh *mesh2 )
+    void Mesh::meshUnion( Mesh *meshToMerge )
     {
-        Face *f1 = mesh1->fEnd();
-        Vertex *v1 = mesh1->vEnd();
-        HalfEdge *e1 = mesh1->eEnd();
-        Face *f2 = mesh2->fEnd();
-        Vertex *v2 = mesh2->vEnd();
-        HalfEdge *e2 = mesh2->eEnd();
+        Face *f1 = fEnd();
+        Vertex *v1 = vEnd();
+        HalfEdge *e1 = eEnd();
+        Face *f2 = meshToMerge->fEnd();
+        Vertex *v2 = meshToMerge->vEnd();
+        HalfEdge *e2 = meshToMerge->eEnd();
         
         /* Add the faces, vertices, and edges of mesh2 to those of mesh1 */
         if( f2->next != f2 ) {
@@ -631,8 +631,15 @@ namespace Tess
             e2->Sym()->next()->Sym()->setNext(e1);
             e1->Sym()->setNext(e2->Sym()->next());
         }
-        delete mesh2;
-        return mesh1;
+        
+        meshToMerge->vHead.next = nullptr;
+        meshToMerge->vHead.prev = nullptr;
+        meshToMerge->fHead.next = nullptr;
+        meshToMerge->fHead.prev = nullptr;
+        meshToMerge->eHead.setNext(nullptr);
+        meshToMerge->eHeadSym.setNext(nullptr);
+
+        delete meshToMerge;
     }
     
     
@@ -782,14 +789,14 @@ namespace Tess
     void Mesh::checkMesh( )
     {
 #ifndef NDEBUG
-        Face *fHead = fEnd();
-        Vertex *vHead = vEnd();
-        HalfEdge *eHead = eEnd();
+        Face *faceHead = fEnd();
+        Vertex *vertexHead = vEnd();
+        HalfEdge *edgeHead = eEnd();
         Face *f, *fPrev;
         Vertex *v, *vPrev;
         HalfEdge *e, *ePrev;
         
-        for( fPrev = fHead ; (f = fPrev->next) != fHead; fPrev = f) {
+        for( fPrev = faceHead ; (f = fPrev->next) != faceHead; fPrev = f) {
             assert( f->prev == fPrev );
             e = f->anEdge;
             do {
@@ -803,7 +810,7 @@ namespace Tess
         }
         assert( f->prev == fPrev && f->anEdge == nullptr );
         
-        for( vPrev = vHead ; (v = vPrev->next) != vHead; vPrev = v) {
+        for( vPrev = vertexHead ; (v = vPrev->next) != vertexHead; vPrev = v) {
             assert( v->prev == vPrev );
             e = v->anEdge;
             do {
@@ -817,7 +824,7 @@ namespace Tess
         }
         assert( v->prev == vPrev && v->anEdge == nullptr );
         
-        for( ePrev = eHead ; (e = ePrev->next()) != eHead; ePrev = e) {
+        for( ePrev = edgeHead ; (e = ePrev->next()) != edgeHead; ePrev = e) {
             assert( e->Sym()->next() == ePrev->Sym() );
             assert( e->Sym() != e );
             assert( e->Sym()->Sym() == e );

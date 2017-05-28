@@ -102,6 +102,13 @@ namespace Tess
     
     PQkey pqMinimum( PriorityQ *pq );
     int pqIsEmpty( PriorityQ *pq );
+    
+    PriorityQHeap *pqHeapNewPriorityQ( int size, int (*leq)(PQkey key1, PQkey key2) );
+    void pqHeapDeletePriorityQ( PriorityQHeap *pq );
+    void pqHeapInit( PriorityQHeap *pq );
+    PQhandle pqHeapInsert( PriorityQHeap *pq, PQkey keyNew );
+    PQkey pqHeapExtractMin( PriorityQHeap *pq );
+    void pqHeapDelete( PriorityQHeap *pq, PQhandle hCurr );
 }
 
 #endif

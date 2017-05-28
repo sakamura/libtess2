@@ -49,12 +49,12 @@ namespace Tess
         DictNode *nodeUp;	/* dictionary node corresponding to eUp */
         int windingNumber;	/* used to determine which regions are
                              * inside the polygon */
-        int inside;		/* is this region inside the polygon? */
+        char inside;		/* is this region inside the polygon? */
         int sentinel;	/* marks fake edges at t = +/-infinity */
-        int dirty;		/* marks regions where the upper or lower
+        char dirty;		/* marks regions where the upper or lower
                          * edge has changed, but we haven't checked
                          * whether they intersect yet */
-        int fixUpperEdge;	/* marks temporary edges introduced when
+        char fixUpperEdge;	/* marks temporary edges introduced when
                              * we process a "right vertex" (one without
                              * any edges leaving to the right) */
         

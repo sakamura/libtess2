@@ -244,11 +244,11 @@ namespace Tess
         b[0] = v0->s - v1->s;
         b[1] = v0->t - v1->t;
         num = a[0] * b[0] + a[1] * b[1];
-        den = sqrt( a[0] * a[0] + a[1] * a[1] ) * sqrt( b[0] * b[0] + b[1] * b[1] );
+        den = sqrtf( a[0] * a[0] + a[1] * a[1] ) * sqrtf( b[0] * b[0] + b[1] * b[1] );
         if ( den > 0.0 ) num /= den;
         if ( num < -1.0 ) num = -1.0;
         if ( num >  1.0 ) num =  1.0;
-        return acos( num );
+        return acosf( num );
     }
     
     bool edgeIsLocallyDelaunay( const HalfEdge *e )
