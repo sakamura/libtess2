@@ -346,7 +346,7 @@ namespace Tess
             regPrev->dirty = true;
             if( ! firstTime && checkForRightSplice( regPrev )) {
                 edge->addWinding( ePrev );
-                delete regPrev ;
+                deleteRegion(regPrev);
                 mesh->remove( ePrev );
             }
             firstTime = false;
