@@ -61,8 +61,8 @@ namespace Tess
         static void* operator new( std::size_t count ) { return BucketAlloc<ActiveRegion>::get(count).alloc(); }
         static void operator delete( void* ptr ) { BucketAlloc<ActiveRegion>::get().free(ptr); }
         
-        inline ActiveRegion* regionBelow() { return (ActiveRegion*)dictKey(dictPred(nodeUp)); }
-        inline ActiveRegion* regionAbove() { return (ActiveRegion*)dictKey(dictSucc(nodeUp)); }
+        inline ActiveRegion* regionBelow() { return (ActiveRegion*)nodeUp->prev->key; }
+        inline ActiveRegion* regionAbove() { return (ActiveRegion*)nodeUp->next->key; }
     };
 }
 

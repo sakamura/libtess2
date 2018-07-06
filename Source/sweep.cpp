@@ -126,7 +126,7 @@ namespace Tess
             assert( reg->eUp->winding() == 0 );
         }
         reg->eUp->resetActiveRegion();
-        dictDelete( dict, reg->nodeUp );
+        dict->deleteNode( reg->nodeUp );
         delete reg;
     }
     
@@ -185,7 +185,7 @@ namespace Tess
     {
         ActiveRegion *regNew = new ActiveRegion;
         regNew->eUp = eNewUp;
-        regNew->nodeUp = dictInsertBefore( dict, regAbove->nodeUp, regNew );
+        regNew->nodeUp = dict->insertBefore( regAbove->nodeUp, regNew );
         regNew->fixUpperEdge = false;
         regNew->sentinel = false;
         regNew->dirty = false;
@@ -887,7 +887,7 @@ namespace Tess
         /* Get a pointer to the active region containing vEvent */
         tmp.eUp = vEvent->anEdge->Sym();
         /* __GL_DICTLISTKEY */ /* tessDictListSearch */
-        regUp = (ActiveRegion *)dictKey( dictSearch( dict, &tmp ));
+        regUp = (ActiveRegion *)dict->search( &tmp )->key;
         regLo = regUp->regionBelow();
         if( !regLo ) {
             // This may happen if the input polygon is coplanar.
@@ -1008,7 +1008,7 @@ namespace Tess
         reg->fixUpperEdge = false;
         reg->sentinel = true;
         reg->dirty = false;
-        reg->nodeUp = dictInsert( dict, reg );
+        reg->nodeUp = dict->insert( reg );
     }
     
     
@@ -1021,7 +1021,7 @@ namespace Tess
         float w, h;
         float smin, smax, tmin, tmax;
         
-        dict = dictNewDict( this, (bool (*)(void *, DictKey, DictKey))edgeLeq );
+        dict = new Dict( this, (LeqFunc)edgeLeq );
         
         w = (bmax[0] - bmin[0]);
         h = (bmax[1] - bmin[1]);
@@ -1044,7 +1044,7 @@ namespace Tess
         ActiveRegion *reg;
         int fixedEdges = 0;
         
-        while( (reg = (ActiveRegion *)dictKey( dictMin( dict ))) != nullptr ) {
+        while( (reg = (ActiveRegion *)dict->min()->key) != nullptr ) {
             /*
              * At the end of all processing, the dictionary should contain
              * only the two sentinel edges, plus at most one "fixable" edge
@@ -1058,7 +1058,7 @@ namespace Tess
             deleteRegion( reg );
             /*    tessMeshDelete( reg->eUp );*/
         }
-        dictDeleteDict( dict );
+        delete dict;
     }
     
     
@@ -1208,7 +1208,7 @@ namespace Tess
         }
         
         /* Set tess->event for debugging purposes */
-        event = ((ActiveRegion *) dictKey( dictMin( dict )))->eUp->Org();
+        event = ((ActiveRegion *) dict->min()->key)->eUp->Org();
         doneEdgeDict( );
         donePriorityQ( );
         

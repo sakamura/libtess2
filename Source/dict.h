@@ -37,26 +37,7 @@ namespace Tess
     typedef void *DictKey;
     typedef struct Dict Dict;
     typedef struct DictNode DictNode;
-    
-    Dict *dictNewDict( void *frame, bool (*leq)(void *frame, DictKey key1, DictKey key2) );
-    
-    void dictDeleteDict( Dict *dict );
-    
-    /* Search returns the node with the smallest key greater than or equal
-     * to the given key.  If there is no such key, returns a node whose
-     * key is nullptr.  Similarly, Succ(Max(d)) has a nullptr key, etc.
-     */
-    DictNode *dictSearch( Dict *dict, DictKey key );
-    DictNode *dictInsertBefore( Dict *dict, DictNode *node, DictKey key );
-    void dictDelete( Dict *dict, DictNode *node );
-    
-#define dictKey(n)	((n)->key)
-#define dictSucc(n)	((n)->next)
-#define dictPred(n)	((n)->prev)
-#define dictMin(d)	((d)->head.next)
-#define dictMax(d)	((d)->head.prev)
-#define dictInsert(d,k) (dictInsertBefore((d),&(d)->head,(k)))
-    
+    typedef bool (*LeqFunc)(void *frame, DictKey key1, DictKey key2);
     
     /*** Private data structures ***/
     
@@ -70,9 +51,24 @@ namespace Tess
     };
     
     struct Dict {
-        DictNode head;
-        void *frame;
-        bool (*leq)(void *frame, DictKey key1, DictKey key2);
+        DictNode _head;
+        void *_frame;
+        LeqFunc _leq;
+
+        Dict(void *frame, LeqFunc leq);
+        ~Dict();
+
+        /* Search returns the node with the smallest key greater than or equal
+         * to the given key.  If there is no such key, returns a node whose
+         * key is nullptr.  Similarly, Succ(Max(d)) has a nullptr key, etc.
+         */
+        DictNode *search( DictKey key );
+        DictNode *insertBefore( DictNode *node, DictKey key );
+        void deleteNode( DictNode *node );
+        DictNode *insert( DictKey key ) { return insertBefore(&_head, key); }
+        DictNode *min() { return _head.next; }
+        DictNode *max() { return _head.prev; }
+
     };
 }
 

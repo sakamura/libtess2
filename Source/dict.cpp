@@ -37,37 +37,33 @@
 namespace Tess
 {
     /* really tessDictListNewDict */
-    Dict *dictNewDict( void *frame, bool (*leq)(void *frame, DictKey key1, DictKey key2) )
+    Dict::Dict( void *frame, bool (*leq)(void *frame, DictKey key1, DictKey key2) )
     {
-        Dict *dict = new Dict;
         DictNode *head;
         
-        head = &dict->head;
+        head = &_head;
         
         head->key = nullptr;
         head->next = head;
         head->prev = head;
         
-        dict->frame = frame;
-        dict->leq = leq;
-
-        return dict;
+        _frame = frame;
+        _leq = leq;
     }
     
     /* really tessDictListDeleteDict */
-    void dictDeleteDict( Dict *dict )
+    Dict::~Dict( )
     {
-        delete dict;
     }
     
     /* really tessDictListInsertBefore */
-    DictNode *dictInsertBefore( Dict *dict, DictNode *node, DictKey key )
+    DictNode *Dict::insertBefore( DictNode *node, DictKey key )
     {
         DictNode *newNode;
         
         do {
             node = node->prev;
-        } while( node->key != nullptr && ! (*dict->leq)(dict->frame, node->key, key));
+        } while( node->key != nullptr && ! (*_leq)(_frame, node->key, key));
         
         newNode = new DictNode;
         
@@ -81,7 +77,7 @@ namespace Tess
     }
     
     /* really tessDictListDelete */
-    void dictDelete( Dict *dict, DictNode *node ) /*ARGSUSED*/
+    void Dict::deleteNode( DictNode *node ) /*ARGSUSED*/
     {
         node->next->prev = node->prev;
         node->prev->next = node->next;
@@ -89,13 +85,13 @@ namespace Tess
     }
     
     /* really tessDictListSearch */
-    DictNode *dictSearch( Dict *dict, DictKey key )
+    DictNode *Dict::search( DictKey key )
     {
-        DictNode *node = &dict->head;
+        DictNode *node = &_head;
         
         do {
             node = node->next;
-        } while( node->key != nullptr && ! (*dict->leq)(dict->frame, key, node->key));
+        } while( node->key != nullptr && ! (*_leq)(_frame, key, node->key));
         
         return node;
     }
