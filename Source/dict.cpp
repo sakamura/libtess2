@@ -36,63 +36,63 @@
 
 namespace Tess
 {
-    /* really tessDictListNewDict */
-    Dict::Dict( void *frame, bool (*leq)(void *frame, DictKey key1, DictKey key2) )
-    {
-        DictNode *head;
-        
-        head = &_head;
-        
-        head->key = nullptr;
-        head->next = head;
-        head->prev = head;
-        
-        _frame = frame;
-        _leq = leq;
-    }
-    
-    /* really tessDictListDeleteDict */
-    Dict::~Dict( )
-    {
-    }
-    
-    /* really tessDictListInsertBefore */
-    DictNode *Dict::insertBefore( DictNode *node, DictKey key )
-    {
-        DictNode *newNode;
-        
-        do {
-            node = node->prev;
-        } while( node->key != nullptr && ! (*_leq)(_frame, node->key, key));
-        
-        newNode = new DictNode;
-        
-        newNode->key = key;
-        newNode->next = node->next;
-        node->next->prev = newNode;
-        newNode->prev = node;
-        node->next = newNode;
-        
-        return newNode;
-    }
-    
-    /* really tessDictListDelete */
-    void Dict::deleteNode( DictNode *node ) /*ARGSUSED*/
-    {
-        node->next->prev = node->prev;
-        node->prev->next = node->next;
-        delete node;
-    }
-    
-    /* really tessDictListSearch */
-    DictNode *Dict::search( DictKey key )
-    {
-        DictNode *node = &_head;
-        
-        do {
-            node = node->next;
-        } while( node->key != nullptr && ! (*_leq)(_frame, key, node->key));
-        
-        return node;
-    }
+	/* really tessDictListNewDict */
+	Dict::Dict( void *frame, bool (*leq)(void *frame, DictKey key1, DictKey key2) )
+	{
+		DictNode *head;
+		
+		head = &_head;
+		
+		head->key = nullptr;
+		head->next = head;
+		head->prev = head;
+		
+		_frame = frame;
+		_leq = leq;
+	}
+	
+	/* really tessDictListDeleteDict */
+	Dict::~Dict( )
+	{
+	}
+	
+	/* really tessDictListInsertBefore */
+	DictNode *Dict::insertBefore( DictNode *node, DictKey key )
+	{
+		DictNode *newNode;
+		
+		do {
+			node = node->prev;
+		} while( node->key != nullptr && ! (*_leq)(_frame, node->key, key));
+		
+		newNode = new DictNode;
+		
+		newNode->key = key;
+		newNode->next = node->next;
+		node->next->prev = newNode;
+		newNode->prev = node;
+		node->next = newNode;
+		
+		return newNode;
+	}
+	
+	/* really tessDictListDelete */
+	void Dict::deleteNode( DictNode *node ) /*ARGSUSED*/
+	{
+		node->next->prev = node->prev;
+		node->prev->next = node->next;
+		delete node;
+	}
+	
+	/* really tessDictListSearch */
+	DictNode *Dict::search( DictKey key )
+	{
+		DictNode *node = &_head;
+		
+		do {
+			node = node->next;
+		} while( node->key != nullptr && ! (*_leq)(_frame, key, node->key));
+		
+		return node;
+	}
 }

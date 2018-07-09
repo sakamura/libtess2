@@ -38,32 +38,32 @@
 
 namespace Tess
 {
-    /* For each pair of adjacent edges crossing the sweep line, there is
-     * an ActiveRegion to represent the region between them.  The active
-     * regions are kept in sorted order in a dynamic dictionary.  As the
-     * sweep line crosses each vertex, we update the affected regions.
-     */
-    
-    struct ActiveRegion {
-        HalfEdge *eUp;		/* upper edge, directed right to left */
-        DictNode *nodeUp;	/* dictionary node corresponding to eUp */
-        int windingNumber;	/* used to determine which regions are
-                             * inside the polygon */
-        char inside;		/* is this region inside the polygon? */
-        int sentinel;	/* marks fake edges at t = +/-infinity */
-        char dirty;		/* marks regions where the upper or lower
-                         * edge has changed, but we haven't checked
-                         * whether they intersect yet */
-        char fixUpperEdge;	/* marks temporary edges introduced when
-                             * we process a "right vertex" (one without
-                             * any edges leaving to the right) */
-        
-        static void* operator new( std::size_t count ) { return BucketAlloc<ActiveRegion>::get(count).alloc(); }
-        static void operator delete( void* ptr ) { BucketAlloc<ActiveRegion>::get().free(ptr); }
-        
-        inline ActiveRegion* regionBelow() { return (ActiveRegion*)nodeUp->prev->key; }
-        inline ActiveRegion* regionAbove() { return (ActiveRegion*)nodeUp->next->key; }
-    };
+	/* For each pair of adjacent edges crossing the sweep line, there is
+	 * an ActiveRegion to represent the region between them.  The active
+	 * regions are kept in sorted order in a dynamic dictionary.  As the
+	 * sweep line crosses each vertex, we update the affected regions.
+	 */
+	
+	struct ActiveRegion {
+		HalfEdge *eUp;		/* upper edge, directed right to left */
+		DictNode *nodeUp;	/* dictionary node corresponding to eUp */
+		int windingNumber;	/* used to determine which regions are
+							 * inside the polygon */
+		char inside;		/* is this region inside the polygon? */
+		int sentinel;	/* marks fake edges at t = +/-infinity */
+		char dirty;		/* marks regions where the upper or lower
+						 * edge has changed, but we haven't checked
+						 * whether they intersect yet */
+		char fixUpperEdge;	/* marks temporary edges introduced when
+							 * we process a "right vertex" (one without
+							 * any edges leaving to the right) */
+		
+		static void* operator new( std::size_t count ) { return BucketAlloc<ActiveRegion>::get(count).alloc(); }
+		static void operator delete( void* ptr ) { BucketAlloc<ActiveRegion>::get().free(ptr); }
+		
+		inline ActiveRegion* regionBelow() { return (ActiveRegion*)nodeUp->prev->key; }
+		inline ActiveRegion* regionAbove() { return (ActiveRegion*)nodeUp->next->key; }
+	};
 }
 
 #endif

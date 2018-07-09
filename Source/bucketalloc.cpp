@@ -34,65 +34,65 @@
 
 namespace Tess
 {
-    struct Header
-    {
-        BucketAllocImpl* bucket;
-    };
+	struct Header
+	{
+		BucketAllocImpl* bucket;
+	};
 
-    BucketAllocImpl::BucketAllocImpl(std::size_t _objectSize, unsigned int _bucketSize) :
-        objectSize(sizeof(Header) + _objectSize),
-        bucketSize(_bucketSize),
-        firstFree(nullptr),
-        allocated(0),
-        freed(0)
-    {
-    }
-    BucketAllocImpl::~BucketAllocImpl()
-    {
-    }
-    void* BucketAllocImpl::alloc()
-    {
-        if (!firstFree)
-        {
-            if (buckets.empty())
-            {
-                newBucket();
-            }
-            else
-            {
-                Bucket& back(buckets.back());
-                if (back.capacity() == back.size())
-                {
-                    newBucket();
-                }
-            }
-            {
-                Bucket& back(buckets.back());
-                std::size_t origSize = back.size();
-                back.resize(origSize+objectSize);
-                back[origSize] = (void*)this;
-                ++allocated;
-                return (void*)&back[origSize + 1];
-            }
-        }
-        else
-        {
-            void* result = firstFree;
-            firstFree = *(void***)result;
-            ++allocated;
-            return result;
-        }
-    }
-    void BucketAllocImpl::free(void* ptr)
-    {
-        *(void**)(ptr) = (void*)firstFree;
-        firstFree = (void**)ptr;
-        ++freed;
-    }
-    void BucketAllocImpl::newBucket()
-    {
-        buckets.emplace_back();
-        buckets.back().reserve(bucketSize * objectSize);
-    }
+	BucketAllocImpl::BucketAllocImpl(std::size_t _objectSize, unsigned int _bucketSize) :
+		objectSize(sizeof(Header) + _objectSize),
+		bucketSize(_bucketSize),
+		firstFree(nullptr),
+		allocated(0),
+		freed(0)
+	{
+	}
+	BucketAllocImpl::~BucketAllocImpl()
+	{
+	}
+	void* BucketAllocImpl::alloc()
+	{
+		if (!firstFree)
+		{
+			if (buckets.empty())
+			{
+				newBucket();
+			}
+			else
+			{
+				Bucket& back(buckets.back());
+				if (back.capacity() == back.size())
+				{
+					newBucket();
+				}
+			}
+			{
+				Bucket& back(buckets.back());
+				std::size_t origSize = back.size();
+				back.resize(origSize+objectSize);
+				back[origSize] = (void*)this;
+				++allocated;
+				return (void*)&back[origSize + 1];
+			}
+		}
+		else
+		{
+			void* result = firstFree;
+			firstFree = *(void***)result;
+			++allocated;
+			return result;
+		}
+	}
+	void BucketAllocImpl::free(void* ptr)
+	{
+		*(void**)(ptr) = (void*)firstFree;
+		firstFree = (void**)ptr;
+		++freed;
+	}
+	void BucketAllocImpl::newBucket()
+	{
+		buckets.emplace_back();
+		buckets.back().reserve(bucketSize * objectSize);
+	}
 
 }

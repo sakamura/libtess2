@@ -38,47 +38,47 @@
 
 namespace Tess
 {
-    class BucketAllocImpl
-    {
-        typedef std::vector<void*> Bucket;
-        std::size_t objectSize;
-        unsigned int bucketSize;
-        void** firstFree;
-        std::deque<Bucket> buckets;
-        
-        std::size_t allocated, freed;   // For now nothing is freed. If needed, will be garbage collected.
+	class BucketAllocImpl
+	{
+		typedef std::vector<void*> Bucket;
+		std::size_t objectSize;
+		unsigned int bucketSize;
+		void** firstFree;
+		std::deque<Bucket> buckets;
+		
+		std::size_t allocated, freed;	// For now nothing is freed. If needed, will be garbage collected.
 
-    public:
-        ~BucketAllocImpl();
-        void* alloc();
-        void free(void*);
-    protected:
-        BucketAllocImpl(std::size_t objectSize, unsigned int bucketSize);
-    private:
-        void newBucket();
-    };
-    
-    template<std::size_t objectSizeTmpl, unsigned int bucketSizeTmpl = 512>
-    class BucketAllocSizeImpl : public BucketAllocImpl
-    {
-    public:
-        BucketAllocSizeImpl() : BucketAllocImpl(objectSizeTmpl, bucketSizeTmpl) {}
+	public:
+		~BucketAllocImpl();
+		void* alloc();
+		void free(void*);
+	protected:
+		BucketAllocImpl(std::size_t objectSize, unsigned int bucketSize);
+	private:
+		void newBucket();
+	};
+	
+	template<std::size_t objectSizeTmpl, unsigned int bucketSizeTmpl = 512>
+	class BucketAllocSizeImpl : public BucketAllocImpl
+	{
+	public:
+		BucketAllocSizeImpl() : BucketAllocImpl(objectSizeTmpl, bucketSizeTmpl) {}
 
-        static BucketAllocImpl& get(std::size_t count = 0)
-        {
-            if (count)
-            {
-                assert((count + sizeof(void*) - 1) / sizeof(void*) <= objectSizeTmpl);
-            }
-            static BucketAllocSizeImpl bucket;
-            return bucket;
-        }
-    };
+		static BucketAllocImpl& get(std::size_t count = 0)
+		{
+			if (count)
+			{
+				assert((count + sizeof(void*) - 1) / sizeof(void*) <= objectSizeTmpl);
+			}
+			static BucketAllocSizeImpl bucket;
+			return bucket;
+		}
+	};
 
-    template<typename T, unsigned int bucketSizeTmpl = 512>
-    class BucketAlloc : public BucketAllocSizeImpl< (sizeof(T) + sizeof(void*) - 1) / sizeof(void*), bucketSizeTmpl>
-    {
-    };
+	template<typename T, unsigned int bucketSizeTmpl = 512>
+	class BucketAlloc : public BucketAllocSizeImpl< (sizeof(T) + sizeof(void*) - 1) / sizeof(void*), bucketSizeTmpl>
+	{
+	};
 }
 
 #endif

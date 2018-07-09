@@ -34,42 +34,42 @@
 
 namespace Tess
 {
-    typedef void *DictKey;
-    typedef struct Dict Dict;
-    typedef struct DictNode DictNode;
-    typedef bool (*LeqFunc)(void *frame, DictKey key1, DictKey key2);
-    
-    /*** Private data structures ***/
-    
-    struct DictNode {
-        DictKey	key;
-        DictNode *next;
-        DictNode *prev;
+	typedef void *DictKey;
+	typedef struct Dict Dict;
+	typedef struct DictNode DictNode;
+	typedef bool (*LeqFunc)(void *frame, DictKey key1, DictKey key2);
+	
+	/*** Private data structures ***/
+	
+	struct DictNode {
+		DictKey	key;
+		DictNode *next;
+		DictNode *prev;
 
-        static void* operator new( std::size_t count ) { return BucketAlloc<DictNode>::get(count).alloc(); }
-        static void operator delete( void* ptr ) { BucketAlloc<DictNode>::get().free(ptr); }
-    };
-    
-    struct Dict {
-        DictNode _head;
-        void *_frame;
-        LeqFunc _leq;
+		static void* operator new( std::size_t count ) { return BucketAlloc<DictNode>::get(count).alloc(); }
+		static void operator delete( void* ptr ) { BucketAlloc<DictNode>::get().free(ptr); }
+	};
+	
+	struct Dict {
+		DictNode _head;
+		void *_frame;
+		LeqFunc _leq;
 
-        Dict(void *frame, LeqFunc leq);
-        ~Dict();
+		Dict(void *frame, LeqFunc leq);
+		~Dict();
 
-        /* Search returns the node with the smallest key greater than or equal
-         * to the given key.  If there is no such key, returns a node whose
-         * key is nullptr.  Similarly, Succ(Max(d)) has a nullptr key, etc.
-         */
-        DictNode *search( DictKey key );
-        DictNode *insertBefore( DictNode *node, DictKey key );
-        void deleteNode( DictNode *node );
-        DictNode *insert( DictKey key ) { return insertBefore(&_head, key); }
-        DictNode *min() { return _head.next; }
-        DictNode *max() { return _head.prev; }
+		/* Search returns the node with the smallest key greater than or equal
+		 * to the given key.  If there is no such key, returns a node whose
+		 * key is nullptr.	Similarly, Succ(Max(d)) has a nullptr key, etc.
+		 */
+		DictNode *search( DictKey key );
+		DictNode *insertBefore( DictNode *node, DictKey key );
+		void deleteNode( DictNode *node );
+		DictNode *insert( DictKey key ) { return insertBefore(&_head, key); }
+		DictNode *min() { return _head.next; }
+		DictNode *max() { return _head.prev; }
 
-    };
+	};
 }
 
 #endif
