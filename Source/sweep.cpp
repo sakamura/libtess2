@@ -419,7 +419,7 @@ namespace Tess
                 spliceMergeVertices( eLo->Oprev(), eUp );
             }
         } else {
-            if( edgeSign( eUp->Dst(), eLo->Org(), eUp->Org() ) < 0 ) return false;
+		if( EdgeSign( eUp->Dst, eLo->Org, eUp->Org ) <= 0 ) return FALSE;
             
             /* eLo->Org appears to be above eUp, so splice eLo->Org into eUp */
             regUp->regionAbove()->dirty = regUp->dirty = true;
@@ -1023,16 +1023,14 @@ namespace Tess
         
         dict = new Dict( this, (LeqFunc)edgeLeq );
         
-        w = (bmax[0] - bmin[0]);
-        h = (bmax[1] - bmin[1]);
+		/* If the bbox is empty, ensure that sentinels are not coincident by slightly enlarging it. */
+		w = (bmax[0] - bmin[0]) + 0.01f;
+		h = (bmax[1] - bmin[1]) + 0.01f;
         
-        /* If the bbox is empty, ensure that sentinels are not coincident by
-         slightly enlarging it. To avoid floating point precision issues,
-         make sure to enlarge by a minimal amount. */
-        smin = bmin[0] - (w > 0.01f ? w : 0.01f);
-        smax = bmax[0] + (w > 0.01f ? w : 0.01f);
-        tmin = bmin[1] - (h > 0.01f ? h : 0.01f);
-        tmax = bmax[1] + (h > 0.01f ? h : 0.01f);
+	    smin = bmin[0] - w;
+	    smax = bmax[0] + w;
+	    tmin = bmin[1] - h
+	    tmax = bmax[1] + h;
         
         addSentinel( smin, smax, tmin );
         addSentinel( smin, smax, tmax );

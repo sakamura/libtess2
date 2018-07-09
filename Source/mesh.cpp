@@ -125,6 +125,7 @@ namespace Tess
         vNext->prev = vNew;
         
         vNew->anEdge = eOrig;
+		/* leave coords, s, t undefined */
         
         /* fix other edges on this vertex loop */
         e = eOrig;
@@ -658,52 +659,61 @@ namespace Tess
     
     void Mesh::mergeConvexFaces( int maxVertsPerFace )
     {
-        Face *f;
-        HalfEdge *eCur, *eNext, *eSym;
-        Vertex *vStart;
-        int curNv, symNv;
+        HalfEdge *e, *eNext, *eSym;
+		HalfEdge *eHead = fBegin();
+        Vertex *va, *vb, *vc, *vd, *ve, *vf;
+		
+        int leftNv, rightNv;
         
-        for( f = fBegin(); f != fEnd(); f = f->next )
+        for( e = fBegin(); e != fEnd(); e = eNext )
         {
-            // Skip faces which are outside the result.
+	 		eNext = e->next();
+			eSym = e->Sym();
+			if( !eSym )
+				continue;
+
+			// Both faces must be inside
+			if( !e->Lface() || !e->Lface()->inside )
+				continue;
+			if( !eSym->Lface() || !eSym->Lface()->inside )
+				continue;
+
+           // Skip faces which are outside the result.
             if( !f->inside )
                 continue;
             
             eCur = f->anEdge;
             vStart = eCur->Org();
             
-            while (1)
-            {
-                eNext = eCur->Lnext();
-                eSym = eCur->Sym();
-                
-                // Try to merge if the neighbour face is valid.
-                if( eSym && eSym->Lface() && eSym->Lface()->inside )
-                {
-                    // Try to merge the neighbour faces if the resulting polygons
-                    // does not exceed maximum number of vertices.
-                    curNv = CountFaceVerts( f );
-                    symNv = CountFaceVerts( eSym->Lface() );
-                    if( (curNv+symNv-2) <= maxVertsPerFace )
-                    {
-                        // Merge if the resulting poly is convex.
-                        if( vertAreCCW( eCur->Lprev()->Org(), eCur->Org(), eSym->Lnext()->Lnext()->Org() ) &&
-                           vertAreCCW( eSym->Lprev()->Org(), eSym->Org(), eCur->Lnext()->Lnext()->Org() ) )
-                        {
-                            eNext = eSym->Lnext();
-                            remove( eSym );
-                            eCur = 0;
-                        }
-                    }
-                }
-                
-                if( eCur && eCur->Lnext()->Org() == vStart )
-                    break;
-                
-                // Continue to next edge.
-                eCur = eNext;
-            }
-        }
+			leftNv = CountFaceVerts( e->Lface() );
+			rightNv = CountFaceVerts( eSym->Lface() );
+			if( (leftNv+rightNv-2) > maxVertsPerFace )
+				continue;
+
+			// Merge if the resulting poly is convex.
+			//
+			//      vf--ve--vd
+			//          ^|
+			// left   e ||   right
+			//          |v
+			//      va--vb--vc
+
+			va = e->Lprev()->Org();
+			vb = e->Org();
+			vc = e->Sym()->Lnext()->Dst();
+
+			vd = e->Sym()->Lprev()->Org();
+			ve = e->Sym()->Org();
+			vf = e->Lnext()->Dst();
+
+			if(  vertAreCCW( va, vb, vc ) &&  vertAreCCW( vd, ve, vf ) ) {
+				if( e == eNext || e == eNext->Sym() ) { eNext = eNext->next(); }
+				if( !remove( mesh, e ) )
+					return 0;
+			}
+		}
+
+		return 1;
     }
     
     void Mesh::flipEdge( HalfEdge *edge )

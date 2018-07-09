@@ -1,5 +1,5 @@
 /*
-** SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008) 
+** SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008)
 ** Copyright (C) [dates of first publication] Silicon Graphics, Inc.
 ** All Rights Reserved.
 **
@@ -9,10 +9,10 @@
 ** to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
 ** of the Software, and to permit persons to whom the Software is furnished to do so,
 ** subject to the following conditions:
-** 
+**
 ** The above copyright notice including the dates of first publication and either this
 ** permission notice or a reference to http://oss.sgi.com/projects/FreeB/ shall be
-** included in all copies or substantial portions of the Software. 
+** included in all copies or substantial portions of the Software.
 **
 ** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 ** INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -20,7 +20,7 @@
 ** BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 ** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 ** OR OTHER DEALINGS IN THE SOFTWARE.
-** 
+**
 ** Except as contained in this notice, the name of Silicon Graphics, Inc. shall not
 ** be used in advertising or otherwise to promote the sale, use or other dealings in
 ** this Software without prior written authorization from Silicon Graphics, Inc.
@@ -230,30 +230,34 @@ namespace Tess
         }
     }
     
-    /*
-     Calculate the angle between v1-v2 and v1-v0
-     */
-    static inline float calcAngle( const Vertex *v0, const Vertex *v1, const Vertex *v2 )
-    {
-        float num;
-        float den;
-        float a[2];
-        float b[2];
-        a[0] = v2->s - v1->s;
-        a[1] = v2->t - v1->t;
-        b[0] = v0->s - v1->s;
-        b[1] = v0->t - v1->t;
-        num = a[0] * b[0] + a[1] * b[1];
-        den = sqrtf( a[0] * a[0] + a[1] * a[1] ) * sqrtf( b[0] * b[0] + b[1] * b[1] );
-        if ( den > 0.0 ) num /= den;
-        if ( num < -1.0 ) num = -1.0;
-        if ( num >  1.0 ) num =  1.0;
-        return acosf( num );
-    }
+	float inCircle( Vertex *v, Vertex *v0, Vertex *v1, Vertex *v2 ) {
+		float adx, ady, bdx, bdy, cdx, cdy;
+		float abdet, bcdet, cadet;
+		float alift, blift, clift;
+
+		adx = v0->s - v->s;
+		ady = v0->t - v->t;
+		bdx = v1->s - v->s;
+		bdy = v1->t - v->t;
+		cdx = v2->s - v->s;
+		cdy = v2->t - v->t;
+
+		abdet = adx * bdy - bdx * ady;
+		bcdet = bdx * cdy - cdx * bdy;
+		cadet = cdx * ady - adx * cdy;
+
+		alift = adx * adx + ady * ady;
+		blift = bdx * bdx + bdy * bdy;
+		clift = cdx * cdx + cdy * cdy;
+
+		return alift * bcdet + blift * cadet + clift * abdet;
+	}
     
+/*
+	Returns 1 is edge is locally delaunay
+ */
     bool edgeIsLocallyDelaunay( const HalfEdge *e )
     {
-        return (calcAngle(e->Lnext()->Org(), e->Lnext()->Lnext()->Org(), e->Org()) +
-                calcAngle(e->Sym()->Lnext()->Org(), e->Sym()->Lnext()->Lnext()->Org(), e->Sym()->Org())) < (M_PI + 0.01);
+		return inCircle(e->Sym()->Lnext()->Org(), e->Sym()->Lnext()->Lnext()->Org(), e->Sym()->Org())) < 0;
     }
 }

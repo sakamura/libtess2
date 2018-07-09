@@ -1,5 +1,5 @@
 /*
-** SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008) 
+** SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008)
 ** Copyright (C) [dates of first publication] Silicon Graphics, Inc.
 ** All Rights Reserved.
 **
@@ -9,10 +9,10 @@
 ** to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
 ** of the Software, and to permit persons to whom the Software is furnished to do so,
 ** subject to the following conditions:
-** 
+**
 ** The above copyright notice including the dates of first publication and either this
 ** permission notice or a reference to http://oss.sgi.com/projects/FreeB/ shall be
-** included in all copies or substantial portions of the Software. 
+** included in all copies or substantial portions of the Software.
 **
 ** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 ** INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -20,7 +20,7 @@
 ** BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 ** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 ** OR OTHER DEALINGS IN THE SOFTWARE.
-** 
+**
 ** Except as contained in this notice, the name of Silicon Graphics, Inc. shall not
 ** be used in advertising or otherwise to promote the sale, use or other dealings in
 ** this Software without prior written authorization from Silicon Graphics, Inc.
@@ -47,7 +47,7 @@ namespace Tess
      * (what else would it do??)  The region must consist of a single
      * loop of half-edges (see mesh.h) oriented CCW.  "Monotone" in this
      * case means that any vertical line intersects the interior of the
-     * region in a single interval.
+     * region in a single interval.  
      *
      * Tessellation consists of adding interior edges (actually pairs of
      * half-edges), to split the region into non-overlapping triangles.
@@ -190,24 +190,23 @@ namespace Tess
         }
     };
     
-    /*
-     Starting with a valid triangulation, uses the Edge Flip algorithm to
-     refine the triangulation into a Constrained Delaunay Triangulation.
-     */
+
+	//	Starting with a valid triangulation, uses the Edge Flip algorithm to
+	//	refine the triangulation into a Constrained Delaunay Triangulation.
     void Tesselator::meshRefineDelaunay( )
-    {
-        /* At this point, we have a valid, but not optimal, triangulation.
-         We refine the triangulation using the Edge Flip algorithm */
-        
-        /*
-         1) Find all internal edges
-         2) Mark all dual edges
-         3) insert all dual edges into a queue
-         */
+	{
+		// At this point, we have a valid, but not optimal, triangulation.
+		// We refine the triangulation using the Edge Flip algorithm
+		//
+		//  1) Find all internal edges
+		//	2) Mark all dual edges
+		//	3) insert all dual edges into a queue
+
         Face *f;
         EdgeStack stack;
         HalfEdge *edge;
-        HalfEdge *edges[4];
+		int maxFaces = 0, maxIter = 0, iter = 0;
+
         for( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next ) {
             if ( f->inside) {
                 edge = f->anEdge;
@@ -216,17 +215,23 @@ namespace Tess
                     if (edge->mark() && !edge->Sym()->mark()) stack.push(edge); /* Insert into queue */
                     edge = edge->Lnext();
                 } while (edge != f->anEdge);
+				maxFaces++;
             }
         }
-        
+	
+		// The algorithm should converge on O(n^2), since the predicate is not robust,
+		// we'll save guard against infinite loop.
+		maxIter = maxFaces * maxFaces;
+
         // Pop stack until we find a reversed edge
         // Flip the reversed edge, and insert any of the four opposite edges
         // which are internal and not already in the stack (!marked)
-        while (!stack.empty()) {
+		while (!stack.empty() && iter < maxIter) {
             edge = stack.pop();
             edge->setMark(0);
             edge->Sym()->setMark(0);
             if (!edgeIsLocallyDelaunay(edge)) {
+				HalfEdge *edges[4];
                 int i;
                 mesh->flipEdge(edge);
                 // for each opposite edge
@@ -234,7 +239,7 @@ namespace Tess
                 edges[1] = edge->Lprev();
                 edges[2] = edge->Sym()->Lnext();
                 edges[3] = edge->Sym()->Lprev();
-                for (i=0;i<3;i++) {
+				for (i = 0; i < 4; i++) {
                     if (!edges[i]->mark() && edgeIsInternal(edges[i])) {
                         edges[i]->setMark(1);
                         edges[i]->Sym()->setMark(1);
@@ -242,6 +247,7 @@ namespace Tess
                     }
                 }
             }
+			iter++;
         }
     }
     
@@ -298,17 +304,21 @@ namespace Tess
     Tesselator::Tesselator()
     {
         bmin[0] = MAXFLOAT;
+	
         bmin[1] = MAXFLOAT;
         bmax[0] = -MAXFLOAT;
         bmax[1] = -MAXFLOAT;
         
+		reverseContours = 0;
+    
         windingRule = TESS_WINDING_ODD;
+		processCDT = 0;
         
         // Initialize to begin polygon.
         mesh = nullptr;
         
         vertexIndexCounter = 0;
-        
+	
         vertices = 0;
         vertexIndices = 0;
         vertexCount = 0;
@@ -387,7 +397,7 @@ namespace Tess
                 edge = edge->Lnext();
             }
             while (edge != f->anEdge);
-            
+		
             assert( faceVerts <= polySize );
             
             f->n = maxFaceCount;
@@ -398,10 +408,12 @@ namespace Tess
         if (elementType == TESS_CONNECTED_POLYGONS)
             maxFaceCount *= 2;
         int* elems = elements = new int[(unsigned long)(maxFaceCount * polySize)];
+	
         vertexCount = maxVertexCount;
         vertices = new float[(unsigned long)vertexCount * 2];
         vertexIndices = new int[(unsigned long)vertexCount];
         
+	
         // Output vertices.
         for ( v = mesh->vBegin(); v != mesh->vEnd(); v = v->next )
         {
@@ -420,7 +432,7 @@ namespace Tess
         for ( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next )
         {
             if ( !f->inside ) continue;
-            
+		
             // Store polygon
             edge = f->anEdge;
             faceVerts = 0;
@@ -482,6 +494,7 @@ namespace Tess
         int* elems = elements = new int[(unsigned long)elementCount * 2];
         float* verts = vertices = new float[(unsigned long)vertexCount * 2];
         int* vertInds = vertexIndices = new int[(unsigned long)vertexCount];
+	
         
         startVert = 0;
         
@@ -524,21 +537,21 @@ namespace Tess
             e = mesh->makeEdge();
             mesh->splice(e, e->Sym() );
         } else {
-            /* Create a new vertex and edge which immediately follow tess->e
+        	/* Create a new vertex and edge which immediately follow e
              * in the ordering around the left face.
              */
             mesh->splitEdge( e );
             e = e->Lnext();
         }
         
-        /* The new vertex is now tess->e->Org. */
+    	/* The new vertex is now e->Org. */
         e->Org()->s = x;
         e->Org()->t = y;
         if (bmin[0] > x) bmin[0] = x;
         if (bmin[1] > y) bmin[1] = y;
         if (bmax[0] < x) bmax[0] = x;
         if (bmax[1] < y) bmax[1] = y;
-        
+    
         /* Store the insertion number so that the vertex can be later recognized. */
         e->Org()->idx = vertexIndexCounter++;
         
@@ -547,8 +560,8 @@ namespace Tess
          * vertices in such an order that a CCW contour will add +1 to
          * the winding number of the region inside the contour.
          */
-        e->setWinding(1);
-        e->Sym()->setWinding(-1);
+        e->setWinding(tess->reverseContours ? -1 : 1);
+        e->Sym()->setWinding(tess->reverseContours ? 1 : -1);
     }
     
     void Tesselator::addContour( const void* verticesToAdd, int stride, int numVertices )
@@ -563,6 +576,19 @@ namespace Tess
             const float* coords = (const float*)src;
             src += stride;
             addVertex(coords[0], coords[1]);
+	    }
+	}
+
+	void Tesselator::setOption( int option, int value )
+	{
+	    switch(option)
+	    {
+	        case TESS_CONSTRAINED_DELAUNAY_TRIANGULATION:
+	            processCDT = value > 0 ? 1 : 0;
+	            break;
+	        case TESS_REVERSE_CONTOURS:
+	            reverseContours = value > 0 ? 1 : 0;
+	            break;
         }
     }
     
@@ -582,6 +608,7 @@ namespace Tess
         }
         
         vertexIndexCounter = 0;
+	
         windingRule = _windingRule;
         
         /* tessComputeInterior( tess ) computes the planar arrangement specified
@@ -600,11 +627,8 @@ namespace Tess
             meshSetWindingNumber( 1, true );
         } else {
             meshTessellateInterior( );
-            if (elementType == TESS_CONSTRAINED_DELAUNAY_TRIANGLES) {
+			if (rc != 0 && tess->processCDT != 0)
                 meshRefineDelaunay( );
-                elementType = TESS_POLYGONS;
-                polySize = 3;
-            }
         }
         
         mesh->checkMesh( );
