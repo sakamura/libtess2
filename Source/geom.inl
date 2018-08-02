@@ -38,7 +38,8 @@
 
 namespace Tess
 {
-	float edgeEval( const Vertex *u, const Vertex *v, const Vertex *w )
+    template <typename Options, typename Allocators>
+	float edgeEval( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w )
 	{
 		/* Given three vertices u,v,w such that vertAreLessOrEqual(u,v) && vertAreLessOrEqual(v,w),
 		 * evaluates the t-coord of the edge uw at the s-coord of the vertex v.
@@ -68,7 +69,8 @@ namespace Tess
 		return 0;
 	}
 	
-	float edgeSign( const Vertex *u, const Vertex *v, const Vertex *w )
+    template <typename Options, typename Allocators>
+	float edgeSign( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w )
 	{
 		/* Returns a number whose sign matches edgeEval(u,v,w) but which
 		 * is cheaper to evaluate.	Returns > 0, == 0 , or < 0
@@ -93,7 +95,8 @@ namespace Tess
 	 * Define versions of edgeSign, edgeEval with s and t transposed.
 	 */
 	
-	float transEdgeEval( const Vertex *u, const Vertex *v, const Vertex *w )
+    template <typename Options, typename Allocators>
+	float transEdgeEval( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w )
 	{
 		/* Given three vertices u,v,w such that transVertAreLessOrEqual(u,v) && transVertAreLessOrEqual(v,w),
 		 * evaluates the t-coord of the edge uw at the s-coord of the vertex v.
@@ -123,7 +126,8 @@ namespace Tess
 		return 0;
 	}
 	
-	float transEdgeSign( const Vertex *u, const Vertex *v, const Vertex *w )
+    template <typename Options, typename Allocators>
+	float transEdgeSign( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w )
 	{
 		/* Returns a number whose sign matches transEdgeEval(u,v,w) but which
 		 * is cheaper to evaluate.	Returns > 0, == 0 , or < 0
@@ -167,9 +171,10 @@ namespace Tess
 		return ((x+y) / 2);
 	}
 
-	void edgeIntersect( const Vertex *o1, const Vertex *d1,
-						  const Vertex *o2, const Vertex *d2,
-						  Vertex *v )
+    template <typename Options, typename Allocators>
+	void edgeIntersect( const VertexT<Options, Allocators> *o1, const VertexT<Options, Allocators> *d1,
+						  const VertexT<Options, Allocators> *o2, const VertexT<Options, Allocators> *d2,
+						  VertexT<Options, Allocators> *v )
 	/* Given edges (o1,d1) and (o2,d2), compute their point of intersection.
 	 * The computed point is guaranteed to lie in the intersection of the
 	 * bounding rectangles defined by each edge.
@@ -230,7 +235,8 @@ namespace Tess
 		}
 	}
 	
-	static inline float inCircle( const Tess::Vertex *v, const Tess::Vertex *v0, const Tess::Vertex *v1, const Tess::Vertex *v2 ) {
+    template <typename Options, typename Allocators>
+	static inline float inCircle( const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *v0, const VertexT<Options, Allocators> *v1, const VertexT<Options, Allocators> *v2 ) {
 		float adx, ady, bdx, bdy, cdx, cdy;
 		float abdet, bcdet, cadet;
 		float alift, blift, clift;
@@ -256,7 +262,8 @@ namespace Tess
 	/*
 		Returns 1 is edge is locally delaunay
 	 */
-	bool edgeIsLocallyDelaunay( const HalfEdge *e )
+    template <typename Options, typename Allocators>
+	bool edgeIsLocallyDelaunay( const HalfEdgeT<Options, Allocators> *e )
 	{
 		return inCircle(e->Sym()->Lnext()->Org(), e->Lnext()->Org(), e->Sym()->Lnext()->Lnext()->Org(), e->Sym()->Org()) < 0;
 	}

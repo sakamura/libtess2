@@ -29,8 +29,7 @@
 ** Author: Eric Veach, July 1994.
 */
 
-#ifndef DICT_LIST_H
-#define DICT_LIST_H
+#pragma once
 
 namespace Tess
 {
@@ -45,9 +44,6 @@ namespace Tess
 		DictKey	key;
 		DictNode *next;
 		DictNode *prev;
-
-		static void* operator new( std::size_t count ) { return BucketAlloc<DictNode>::get(count).alloc(); }
-		static void operator delete( void* ptr ) { BucketAlloc<DictNode>::get().free(ptr); }
 	};
 	
 	struct Dict {
@@ -72,4 +68,4 @@ namespace Tess
 	};
 }
 
-#endif
+#include "dict.inl"

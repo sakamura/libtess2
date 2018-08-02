@@ -29,8 +29,7 @@
 ** Author: Eric Veach, July 1994.
 */
 
-#ifndef MESH_H
-#define MESH_H
+#pragma once
 
 #include "tess.h"
 #include "bucketalloc.h"
@@ -103,14 +102,19 @@ namespace Tess
 	 * a region which is not part of the output polygon.
 	 */
 	
-	struct Vertex {
+    template <typename Options, typename Allocators>
+	struct VertexT {
+        using Tesselator = Tess::Tesselator<Options, Allocators>;
+        using Vertex = VertexT<Options, Allocators>;
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        
 		/* makeVertex( newVertex, eOrig, vNext ) attaches a new vertex and makes it the
 		 * origin of all edges in the vertex loop to which eOrig belongs. "vNext" gives
 		 * a place to insert the new vertex in the global vertex list.	We insert
 		 * the new vertex *before* vNext so that algorithms which walk the vertex
 		 * list will not see the newly created vertices.
 		 */
-		static Vertex* makeVertex( HalfEdge *eOrig, Vertex *vNext );
+		static Vertex* makeVertex( Tesselator* t, HalfEdge *eOrig, Vertex *vNext );
 
 		Vertex *next;	   /* next vertex (never nullptr) */
 		Vertex *prev;	   /* previous vertex (never nullptr) */
@@ -121,12 +125,13 @@ namespace Tess
 		int pqHandle;	/* to allow deletion from priority queue */
 		int n;			/* to allow identify unique vertices */
 		int idx;			/* to allow map result to original verts */
-		
-		static void* operator new( std::size_t count ) { return BucketAlloc<Vertex>::get(count).alloc(); }
-		static void operator delete( void* ptr ) { BucketAlloc<Vertex>::get().free(ptr); }
-	};
+    };
 	
-	struct Face {
+    template <typename Options, typename Allocators>
+	struct FaceT {
+        using Face = FaceT<Options, Allocators>;
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        
 		Face *next;		 /* next face (never nullptr) */
 		Face *prev;		 /* previous face (never nullptr) */
 		HalfEdge *anEdge;	 /* a half edge with this left face */
@@ -136,13 +141,18 @@ namespace Tess
 		int n;		/* to allow identiy unique faces */
 		char marked;	 /* flag for conversion to strips */
 		char inside;	 /* this face is in the polygon interior */
-
-		static void* operator new( std::size_t count ) { return BucketAlloc<Face>::get(count).alloc(); }
-		static void operator delete( void* ptr ) { BucketAlloc<Face>::get().free(ptr); }
-};
+    };
 	
-	struct HalfEdge {
-		HalfEdge() :
+    template <typename Options, typename Allocators>
+	struct HalfEdgeT {
+        using Mesh = MeshT<Options, Allocators>;
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        using EdgePair = EdgePairT<Options, Allocators>;
+        using Vertex = VertexT<Options, Allocators>;
+        using Face = FaceT<Options, Allocators>;
+        using ActiveRegion = ActiveRegionT<Options, Allocators>;
+        
+		HalfEdgeT() :
 			next_(nullptr),
 			Sym_(nullptr),
 			Onext_(nullptr),
@@ -239,23 +249,34 @@ namespace Tess
 						 from the right face to the left face */
 		int mark_; /* Used by the Edge Flip algorithm */
 	};
-	struct EdgePair : public HalfEdge
+    
+    template <typename Options, typename Allocators>
+	struct EdgePairT : public HalfEdgeT<Options, Allocators>
 	{
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        
 		HalfEdge eSym;
-		
-		static void* operator new( std::size_t count ) { return BucketAlloc<EdgePair>::get(count).alloc(); }
-		static void operator delete( void* ptr ) { BucketAlloc<EdgePair>::get().free(ptr); }
 	};
 	
-	class Mesh {
+    template<typename Options, typename Allocators>
+	class MeshT {
+        using Tesselator = Tess::Tesselator<Options, Allocators>;
+        using Mesh = MeshT<Options, Allocators>;
+        using Vertex = VertexT<Options, Allocators>;
+        using Face = FaceT<Options, Allocators>;
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        using EdgePair = EdgePairT<Options, Allocators>;
+        
 		Vertex vHead;	   /* dummy header for vertex list */
 		Face fHead;		 /* dummy header for face list */
 		HalfEdge eHead;		 /* dummy header for edge list */
 		HalfEdge eHeadSym;	 /* and its symmetric counterpart */
 		
 	public:
-		Mesh();
-		~Mesh();
+        Tesselator* t;
+
+        MeshT(Tesselator* t);
+		~MeshT();
 
 		HalfEdge *makeEdge( );
 		void splice( HalfEdge *eOrg, HalfEdge *eDst );
@@ -363,4 +384,4 @@ namespace Tess
 	 */
 }
 
-#endif
+#include "mesh.inl"

@@ -29,22 +29,12 @@
 ** Author: Eric Veach, July 1994.
 */
 
-#ifndef TESS_H
-#define TESS_H
+#pragma once
+
+#include "options.h"
 
 namespace Tess
 {
-	// See OpenGL Red Book for description of the winding rules
-	// http://www.glprogramming.com/red/chapter11.html
-	enum WindingRule
-	{
-		TESS_WINDING_ODD,
-		TESS_WINDING_NONZERO,
-		TESS_WINDING_POSITIVE,
-		TESS_WINDING_NEGATIVE,
-		TESS_WINDING_ABS_GEQ_TWO,
-	};
-	
 	enum ElementType
 	{
 		TESS_POLYGONS,
@@ -61,16 +51,47 @@ namespace Tess
 	
 	static const int sTessUndef = (~(int)0);
 
-	class Mesh;
-	struct Dict;
-	struct PriorityQ;
-	struct Vertex;
-	struct HalfEdge;
-	struct Face;
-	struct ActiveRegion;
+    template <typename Options, typename Allocators>
+	class MeshT;
+
+    struct Dict;
+
+    template <typename Options, typename Allocators>
+    struct PriorityQT;
 	
+    template <typename Options, typename Allocators>
+    struct VertexT;
+	
+    template <typename Options, typename Allocators>
+    struct HalfEdgeT;
+    
+    template <typename Options, typename Allocators>
+    struct EdgePairT;
+    
+    template <typename Options, typename Allocators>
+    struct FaceT;
+    
+    template <typename Options, typename Allocators>
+    struct ActiveRegionT;
+    
+    template <typename Options>
+    struct BaseAllocators;
+    
+    template <typename Options = BaseOptions, typename Allocators = BaseAllocators<Options> >
 	class Tesselator
 	{
+        using Mesh = MeshT<Options, Allocators>;
+        using Vertex = VertexT<Options, Allocators>;
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        using Face = FaceT<Options, Allocators>;
+        using ActiveRegion = ActiveRegionT<Options, Allocators>;
+        using PriorityQ = PriorityQT<Options, Allocators>;
+        
+    public:
+        Options options;          // Options, as set up in constructor.
+        Allocators allocators;    // Allocators, as used in the different tesselators.
+        
+    private:
 		/*** state needed for collecting the input data ***/
 		Mesh	*mesh;		/* stores the input contours, and eventually
 								 the tessellation itself */
@@ -78,11 +99,7 @@ namespace Tess
 		float bmin[2];
 		float bmax[2];
 		
-		int processCDT;	/* option to run Constrained Delayney pass. */
-		int reverseContours; /* tessAddContour() will treat CCW contours as CW and vice versa */
-	
 		/*** state needed for the line sweep ***/
-		WindingRule	windingRule;	/* rule for determining polygon interior */
 		Dict *dict;		/* edge dictionary for sweep line */
 		PriorityQ *pq;		/* priority queue of vertex events */
 		Vertex *event;		/* current sweep event being processed */
@@ -97,10 +114,8 @@ namespace Tess
 		int elementCount;
 		
 	public:
-		Tesselator();
+		Tesselator(Options& options);
 		~Tesselator();
-
-		void setOption( int option, int value );
 
 		void beginContour();
 		
@@ -116,13 +131,12 @@ namespace Tess
 		
 		// tesselate() - tesselate contours.
 		// Parameters:
-		//	 windingRule - winding rules used for tesselation, must be one of WindingRule.
 		//	 elementType - defines the tesselation result element type, must be one of ElementType.
-		//	 polySize - defines maximum vertices per polygons if output is polygons. If elementType is TESS_CONSTRAINED_DELAUNAY_TRIANGLES, this parameter is ignored.
+		//	 polySize - defines maximum vertices per polygons if output is polygons.
 		//	 normal - defines the normal of the input contours, of nullptr the normal is calculated automatically.
 		// Returns:
 		//	 1 if succeed, 0 if failed.
-		void tesselate(WindingRule windingRule, ElementType elementType, int polySize, const float* normal);
+		void tesselate(ElementType elementType, int polySize, const float* normal);
 		
 		// getVertexCount() - Returns number of vertices in the tesselated output.
 		int getVertexCount() const
@@ -168,7 +182,7 @@ namespace Tess
 		void outputContours();
 		
 		// sweep.cpp
-		static bool edgeLeq( const Tesselator* tess, ActiveRegion *reg1, ActiveRegion *reg2 )
+		static bool edgeLeq( const Tesselator<Options, Allocators>* tess, ActiveRegion *reg1, ActiveRegion *reg2 )
 		{
 			return tess->_edgeLeq(reg1, reg2);
 		}
@@ -210,4 +224,4 @@ namespace Tess
 	};
 }
 
-#endif
+#include "tess.inl"

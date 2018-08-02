@@ -29,8 +29,7 @@
 ** Author: Michel Donais, November 2016.
 */
 
-#ifndef MEMALLOC_H
-#define MEMALLOC_H
+#pragma once
 
 #include <vector>
 #include <deque>
@@ -38,6 +37,7 @@
 
 namespace Tess
 {
+    // This system is a compatible subset of Boost's object_pool.
 	class BucketAllocImpl
 	{
 		typedef std::vector<void*> Bucket;
@@ -46,11 +46,11 @@ namespace Tess
 		void** firstFree;
 		std::deque<Bucket> buckets;
 		
-		std::size_t allocated, freed;	// For now nothing is freed. If needed, will be garbage collected.
+		std::size_t allocated, freed;
 
 	public:
 		~BucketAllocImpl();
-		void* alloc();
+		void* malloc();
 		void free(void*);
 	protected:
 		BucketAllocImpl(std::size_t objectSize, unsigned int bucketSize);
@@ -63,22 +63,24 @@ namespace Tess
 	{
 	public:
 		BucketAllocSizeImpl() : BucketAllocImpl(objectSizeTmpl, bucketSizeTmpl) {}
-
-		static BucketAllocImpl& get(std::size_t count = 0)
-		{
-			if (count)
-			{
-				assert((count + sizeof(void*) - 1) / sizeof(void*) <= objectSizeTmpl);
-			}
-			static BucketAllocSizeImpl bucket;
-			return bucket;
-		}
 	};
 
 	template<typename T, unsigned int bucketSizeTmpl = 512>
 	class BucketAlloc : public BucketAllocSizeImpl< (sizeof(T) + sizeof(void*) - 1) / sizeof(void*), bucketSizeTmpl>
 	{
+    public:
+        template <typename... Args>
+        T* construct(Args&&... args)
+        {
+            void* ptr = this->malloc();
+            return new (ptr) T(std::forward<Args>(args)...);
+        }
+        void destroy(T* t)
+        {
+            t->~T();
+            free( (void*)t );
+        }
 	};
 }
 
-#endif
+#include "bucketalloc.inl"

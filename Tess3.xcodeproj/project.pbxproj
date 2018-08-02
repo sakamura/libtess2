@@ -14,13 +14,17 @@
 		96042D7D1DD963AD007EB86E /* priorityq.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B81D65E59200404BDA /* priorityq.h */; };
 		96042D7E1DD963AD007EB86E /* sweep.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98BA1D65E59200404BDA /* sweep.h */; };
 		96042D7F1DD963AD007EB86E /* tess.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98BC1D65E59200404BDA /* tess.h */; };
-		96FF98C01D65E59200404BDA /* bucketalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98AF1D65E59200404BDA /* bucketalloc.cpp */; };
-		96FF98C11D65E59200404BDA /* dict.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B11D65E59200404BDA /* dict.cpp */; };
-		96FF98C21D65E59200404BDA /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B31D65E59200404BDA /* geom.cpp */; };
-		96FF98C31D65E59200404BDA /* mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B51D65E59200404BDA /* mesh.cpp */; };
-		96FF98C41D65E59200404BDA /* priorityq.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B71D65E59200404BDA /* priorityq.cpp */; };
-		96FF98C51D65E59200404BDA /* sweep.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98B91D65E59200404BDA /* sweep.cpp */; };
-		96FF98C61D65E59200404BDA /* tess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96FF98BB1D65E59200404BDA /* tess.cpp */; };
+		96D119E5210E7B16000ED4E1 /* libtess3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96D119E4210E7B16000ED4E1 /* libtess3.cpp */; };
+		96D119EF21127D50000ED4E1 /* bucketalloc.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98AF1D65E59200404BDA /* bucketalloc.inl */; };
+		96D119F021127D53000ED4E1 /* dict.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B11D65E59200404BDA /* dict.inl */; };
+		96D119F121127D56000ED4E1 /* geom.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B31D65E59200404BDA /* geom.inl */; };
+		96D119F221127D58000ED4E1 /* mesh.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B51D65E59200404BDA /* mesh.inl */; };
+		96D119F321127D5B000ED4E1 /* priorityq.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B71D65E59200404BDA /* priorityq.inl */; };
+		96D119F421127D5F000ED4E1 /* sweep.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B91D65E59200404BDA /* sweep.inl */; };
+		96D119F521127D62000ED4E1 /* tess.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98BB1D65E59200404BDA /* tess.inl */; };
+		96D119F621127D68000ED4E1 /* options.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96D119E6210E90CE000ED4E1 /* options.h */; };
+		96D119F721127D6B000ED4E1 /* allocators.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96D119E8210FE35B000ED4E1 /* allocators.h */; };
+		96D119F821127D6E000ED4E1 /* edgestack.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96D119E9210FE380000ED4E1 /* edgestack.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,12 +34,22 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
+				96D119F721127D6B000ED4E1 /* allocators.h in CopyFiles */,
+				96D119EF21127D50000ED4E1 /* bucketalloc.inl in CopyFiles */,
 				96042D791DD963AD007EB86E /* bucketalloc.h in CopyFiles */,
+				96D119F021127D53000ED4E1 /* dict.inl in CopyFiles */,
 				96042D7A1DD963AD007EB86E /* dict.h in CopyFiles */,
+				96D119F821127D6E000ED4E1 /* edgestack.h in CopyFiles */,
+				96D119F121127D56000ED4E1 /* geom.inl in CopyFiles */,
 				96042D7B1DD963AD007EB86E /* geom.h in CopyFiles */,
+				96D119F221127D58000ED4E1 /* mesh.inl in CopyFiles */,
 				96042D7C1DD963AD007EB86E /* mesh.h in CopyFiles */,
+				96D119F621127D68000ED4E1 /* options.h in CopyFiles */,
+				96D119F321127D5B000ED4E1 /* priorityq.inl in CopyFiles */,
 				96042D7D1DD963AD007EB86E /* priorityq.h in CopyFiles */,
+				96D119F421127D5F000ED4E1 /* sweep.inl in CopyFiles */,
 				96042D7E1DD963AD007EB86E /* sweep.h in CopyFiles */,
+				96D119F521127D62000ED4E1 /* tess.inl in CopyFiles */,
 				96042D7F1DD963AD007EB86E /* tess.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -43,23 +57,27 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		96D119E4210E7B16000ED4E1 /* libtess3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = libtess3.cpp; sourceTree = "<group>"; };
+		96D119E6210E90CE000ED4E1 /* options.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = options.h; sourceTree = "<group>"; };
+		96D119E8210FE35B000ED4E1 /* allocators.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = allocators.h; sourceTree = "<group>"; };
+		96D119E9210FE380000ED4E1 /* edgestack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = edgestack.h; sourceTree = "<group>"; };
 		96FF989A1D65E54800404BDA /* libtess2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libtess2.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		96FF98A71D65E59200404BDA /* alg_outline.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = alg_outline.md; sourceTree = "<group>"; };
 		96FF98AC1D65E59200404BDA /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		96FF98AD1D65E59200404BDA /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		96FF98AF1D65E59200404BDA /* bucketalloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bucketalloc.cpp; sourceTree = "<group>"; };
+		96FF98AF1D65E59200404BDA /* bucketalloc.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = bucketalloc.inl; sourceTree = "<group>"; };
 		96FF98B01D65E59200404BDA /* bucketalloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bucketalloc.h; sourceTree = "<group>"; };
-		96FF98B11D65E59200404BDA /* dict.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dict.cpp; sourceTree = "<group>"; };
+		96FF98B11D65E59200404BDA /* dict.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dict.inl; sourceTree = "<group>"; };
 		96FF98B21D65E59200404BDA /* dict.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dict.h; sourceTree = "<group>"; };
-		96FF98B31D65E59200404BDA /* geom.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom.cpp; sourceTree = "<group>"; };
+		96FF98B31D65E59200404BDA /* geom.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = geom.inl; sourceTree = "<group>"; };
 		96FF98B41D65E59200404BDA /* geom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom.h; sourceTree = "<group>"; };
-		96FF98B51D65E59200404BDA /* mesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mesh.cpp; sourceTree = "<group>"; };
+		96FF98B51D65E59200404BDA /* mesh.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = mesh.inl; sourceTree = "<group>"; };
 		96FF98B61D65E59200404BDA /* mesh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mesh.h; sourceTree = "<group>"; };
-		96FF98B71D65E59200404BDA /* priorityq.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = priorityq.cpp; sourceTree = "<group>"; };
+		96FF98B71D65E59200404BDA /* priorityq.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = priorityq.inl; sourceTree = "<group>"; };
 		96FF98B81D65E59200404BDA /* priorityq.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = priorityq.h; sourceTree = "<group>"; };
-		96FF98B91D65E59200404BDA /* sweep.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sweep.cpp; sourceTree = "<group>"; };
+		96FF98B91D65E59200404BDA /* sweep.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sweep.inl; sourceTree = "<group>"; };
 		96FF98BA1D65E59200404BDA /* sweep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sweep.h; sourceTree = "<group>"; };
-		96FF98BB1D65E59200404BDA /* tess.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tess.cpp; sourceTree = "<group>"; };
+		96FF98BB1D65E59200404BDA /* tess.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = tess.inl; sourceTree = "<group>"; };
 		96FF98BC1D65E59200404BDA /* tess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tess.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -74,7 +92,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		96E5959A1D7136820022B80A /* libtess2 */ = {
+		96E5959A1D7136820022B80A /* libtess3 */ = {
 			isa = PBXGroup;
 			children = (
 				96FF98A71D65E59200404BDA /* alg_outline.md */,
@@ -82,13 +100,13 @@
 				96FF98AD1D65E59200404BDA /* README.md */,
 				96FF98AE1D65E59200404BDA /* Source */,
 			);
-			name = libtess2;
+			name = libtess3;
 			sourceTree = "<group>";
 		};
 		96FF98911D65E54800404BDA = {
 			isa = PBXGroup;
 			children = (
-				96E5959A1D7136820022B80A /* libtess2 */,
+				96E5959A1D7136820022B80A /* libtess3 */,
 				96FF989B1D65E54800404BDA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -104,20 +122,24 @@
 		96FF98AE1D65E59200404BDA /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				96FF98AF1D65E59200404BDA /* bucketalloc.cpp */,
+				96D119E8210FE35B000ED4E1 /* allocators.h */,
+				96FF98AF1D65E59200404BDA /* bucketalloc.inl */,
 				96FF98B01D65E59200404BDA /* bucketalloc.h */,
-				96FF98B11D65E59200404BDA /* dict.cpp */,
+				96FF98B11D65E59200404BDA /* dict.inl */,
 				96FF98B21D65E59200404BDA /* dict.h */,
-				96FF98B31D65E59200404BDA /* geom.cpp */,
+				96D119E9210FE380000ED4E1 /* edgestack.h */,
+				96FF98B31D65E59200404BDA /* geom.inl */,
 				96FF98B41D65E59200404BDA /* geom.h */,
-				96FF98B51D65E59200404BDA /* mesh.cpp */,
+				96FF98B51D65E59200404BDA /* mesh.inl */,
 				96FF98B61D65E59200404BDA /* mesh.h */,
-				96FF98B71D65E59200404BDA /* priorityq.cpp */,
+				96D119E6210E90CE000ED4E1 /* options.h */,
+				96FF98B71D65E59200404BDA /* priorityq.inl */,
 				96FF98B81D65E59200404BDA /* priorityq.h */,
-				96FF98B91D65E59200404BDA /* sweep.cpp */,
+				96FF98B91D65E59200404BDA /* sweep.inl */,
 				96FF98BA1D65E59200404BDA /* sweep.h */,
-				96FF98BB1D65E59200404BDA /* tess.cpp */,
+				96FF98BB1D65E59200404BDA /* tess.inl */,
 				96FF98BC1D65E59200404BDA /* tess.h */,
+				96D119E4210E7B16000ED4E1 /* libtess3.cpp */,
 			);
 			path = Source;
 			sourceTree = "<group>";
@@ -125,9 +147,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		96FF98991D65E54800404BDA /* Tess2 */ = {
+		96FF98991D65E54800404BDA /* Tess3 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 96FF98A31D65E54900404BDA /* Build configuration list for PBXNativeTarget "Tess2" */;
+			buildConfigurationList = 96FF98A31D65E54900404BDA /* Build configuration list for PBXNativeTarget "Tess3" */;
 			buildPhases = (
 				96FF98961D65E54800404BDA /* Sources */,
 				96FF98971D65E54800404BDA /* Frameworks */,
@@ -137,7 +159,7 @@
 			);
 			dependencies = (
 			);
-			name = Tess2;
+			name = Tess3;
 			productName = Tess2;
 			productReference = 96FF989A1D65E54800404BDA /* libtess2.a */;
 			productType = "com.apple.product-type.library.static";
@@ -159,7 +181,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 96FF98951D65E54800404BDA /* Build configuration list for PBXProject "Tess2" */;
+			buildConfigurationList = 96FF98951D65E54800404BDA /* Build configuration list for PBXProject "Tess3" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -171,7 +193,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				96FF98991D65E54800404BDA /* Tess2 */,
+				96FF98991D65E54800404BDA /* Tess3 */,
 			);
 		};
 /* End PBXProject section */
@@ -181,13 +203,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				96FF98C21D65E59200404BDA /* geom.cpp in Sources */,
-				96FF98C01D65E59200404BDA /* bucketalloc.cpp in Sources */,
-				96FF98C51D65E59200404BDA /* sweep.cpp in Sources */,
-				96FF98C31D65E59200404BDA /* mesh.cpp in Sources */,
-				96FF98C61D65E59200404BDA /* tess.cpp in Sources */,
-				96FF98C11D65E59200404BDA /* dict.cpp in Sources */,
-				96FF98C41D65E59200404BDA /* priorityq.cpp in Sources */,
+				96D119E5210E7B16000ED4E1 /* libtess3.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -225,10 +241,7 @@
 				CLANG_WARN__EXIT_TIME_DESTRUCTORS = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -236,7 +249,6 @@
 				);
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
-				GCC_UNROLL_LOOPS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
@@ -253,12 +265,13 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MTL_ENABLE_DEBUG_INFO = YES;
+				LIBRARY_SEARCH_PATHS = /opt/boost/lib;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_NAME = tess2;
-				RUN_CLANG_STATIC_ANALYZER = YES;
+				PRODUCT_NAME = tess3;
 				SKIP_INSTALL = YES;
+				SYSTEM_HEADER_SEARCH_PATHS = /opt/boost/include;
 			};
 			name = Debug;
 		};
@@ -293,13 +306,9 @@
 				CLANG_WARN__EXIT_TIME_DESTRUCTORS = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
-				GCC_UNROLL_LOOPS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
@@ -316,11 +325,12 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				PRODUCT_NAME = tess2;
-				RUN_CLANG_STATIC_ANALYZER = YES;
+				LIBRARY_SEARCH_PATHS = /opt/boost/lib;
+				PRODUCT_NAME = tess3;
 				SKIP_INSTALL = YES;
+				SYSTEM_HEADER_SEARCH_PATHS = /opt/boost/include;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -344,7 +354,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		96FF98951D65E54800404BDA /* Build configuration list for PBXProject "Tess2" */ = {
+		96FF98951D65E54800404BDA /* Build configuration list for PBXProject "Tess3" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				96FF98A11D65E54900404BDA /* Debug */,
@@ -353,7 +363,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		96FF98A31D65E54900404BDA /* Build configuration list for PBXNativeTarget "Tess2" */ = {
+		96FF98A31D65E54900404BDA /* Build configuration list for PBXNativeTarget "Tess3" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				96FF98A41D65E54900404BDA /* Debug */,

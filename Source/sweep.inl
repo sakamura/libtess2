@@ -75,7 +75,8 @@ namespace Tess
 #define MAX(x,y)	((x) >= (y) ? (x) : (y))
 #define MIN(x,y)	((x) <= (y) ? (x) : (y))
 		
-	bool Tesselator::_edgeLeq( ActiveRegion *reg1, ActiveRegion *reg2 ) const
+    template <typename Options, typename Allocators>
+	bool Tesselator<Options, Allocators>::_edgeLeq( ActiveRegion *reg1, ActiveRegion *reg2 ) const
 	/*
 	 * Both edges must be directed from right to left (this is the canonical
 	 * direction for the upper edge of each region).
@@ -116,7 +117,8 @@ namespace Tess
 		return (t1 >= t2);
 	}
 	
-	void Tesselator::deleteRegion( ActiveRegion *reg )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::deleteRegion( ActiveRegion *reg )
 	{
 		if( reg->fixUpperEdge ) {
 			/* It was created with zero winding number, so it better be
@@ -127,11 +129,11 @@ namespace Tess
 		}
 		reg->eUp->resetActiveRegion();
 		dict->deleteNode( reg->nodeUp );
-		delete reg;
+		allocators.activeRegionAlloc.destroy(reg);
 	}
 	
-	
-	void Tesselator::fixUpperEdge( ActiveRegion *reg, HalfEdge *newEdge )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::fixUpperEdge( ActiveRegion *reg, HalfEdge *newEdge )
 	/*
 	 * Replace an upper edge which needs fixing (see ConnectRightVertex).
 	 */
@@ -143,7 +145,8 @@ namespace Tess
 		newEdge->setActiveRegion(reg);
 	}
 	
-	ActiveRegion* Tesselator::topLeftRegion( ActiveRegion *reg )
+    template <typename Options, typename Allocators>
+	ActiveRegionT<Options, Allocators>* Tesselator<Options, Allocators>::topLeftRegion( ActiveRegion *reg )
 	{
 		const Vertex *org = reg->eUp->Org();
 		HalfEdge *edge;
@@ -164,7 +167,8 @@ namespace Tess
 		return reg;
 	}
 	
-	ActiveRegion* Tesselator::topRightRegion( ActiveRegion *reg )
+    template <typename Options, typename Allocators>
+	ActiveRegionT<Options, Allocators>* Tesselator<Options, Allocators>::topRightRegion( ActiveRegion *reg )
 	{
 		const Vertex *dst = reg->eUp->Dst();
 		
@@ -175,7 +179,8 @@ namespace Tess
 		return reg;
 	}
 	
-	ActiveRegion* Tesselator::addRegionBelow( ActiveRegion *regAbove, HalfEdge *eNewUp )
+    template <typename Options, typename Allocators>
+	ActiveRegionT<Options, Allocators>* Tesselator<Options, Allocators>::addRegionBelow( ActiveRegion *regAbove, HalfEdge *eNewUp )
 	/*
 	 * Add a new active region to the sweep line, *somewhere* below "regAbove"
 	 * (according to where the new edge belongs in the sweep-line dictionary).
@@ -183,7 +188,7 @@ namespace Tess
 	 * Winding number and "inside" flag are not updated.
 	 */
 	{
-		ActiveRegion *regNew = new ActiveRegion;
+		ActiveRegion *regNew = allocators.activeRegionAlloc.construct();
 		regNew->eUp = eNewUp;
 		regNew->nodeUp = dict->insertBefore( regAbove->nodeUp, regNew );
 		regNew->fixUpperEdge = false;
@@ -194,9 +199,10 @@ namespace Tess
 		return regNew;
 	}
 	
-	bool Tesselator::isWindingInside( int n ) const
+    template <typename Options, typename Allocators>
+	bool Tesselator<Options, Allocators>::isWindingInside( int n ) const
 	{
-		switch( windingRule ) {
+		switch( options.windingRule() ) {
 			case TESS_WINDING_ODD:
 				return (n & 1);
 			case TESS_WINDING_NONZERO:
@@ -214,14 +220,16 @@ namespace Tess
 	}
 	
 	
-	void Tesselator::computeWinding( ActiveRegion *reg )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::computeWinding( ActiveRegion *reg )
 	{
 		reg->windingNumber = reg->regionAbove()->windingNumber + reg->eUp->winding();
 		reg->inside = isWindingInside( reg->windingNumber );
 	}
 	
 	
-	void Tesselator::finishRegion( ActiveRegion *reg )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::finishRegion( ActiveRegion *reg )
 	/*
 	 * Delete a region from the sweep line.	 This happens when the upper
 	 * and lower chains of a region meet (at a vertex on the sweep line).
@@ -239,7 +247,8 @@ namespace Tess
 	}
 	
 	
-	HalfEdge* Tesselator::finishLeftRegions( ActiveRegion *regFirst, ActiveRegion *regLast )
+    template <typename Options, typename Allocators>
+	HalfEdgeT<Options, Allocators>* Tesselator<Options, Allocators>::finishLeftRegions( ActiveRegion *regFirst, ActiveRegion *regLast )
 	/*
 	 * We are given a vertex with one or more left-going edges.	 All affected
 	 * edges should be in the edge dictionary.	Starting at regFirst->eUp,
@@ -293,7 +302,8 @@ namespace Tess
 	}
 	
 	
-	void Tesselator::addRightEdges( ActiveRegion *regUp, HalfEdge *eFirst, HalfEdge *eLast, HalfEdge *eTopLeft, bool cleanUp )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::addRightEdges( ActiveRegion *regUp, HalfEdge *eFirst, HalfEdge *eLast, HalfEdge *eTopLeft, bool cleanUp )
 	/*
 	 * Purpose: insert right-going edges into the edge dictionary, and update
 	 * winding numbers and mesh connectivity appropriately.	 All right-going
@@ -363,7 +373,8 @@ namespace Tess
 	}
 	
 	
-	void Tesselator::spliceMergeVertices( HalfEdge *e1, HalfEdge *e2 )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::spliceMergeVertices( HalfEdge *e1, HalfEdge *e2 )
 	/*
 	 * Two vertices with idential coordinates are combined into one.
 	 * e1->Org is kept, while e2->Org is discarded.
@@ -372,7 +383,8 @@ namespace Tess
 		mesh->splice( e1, e2 );
 	}
 	
-	bool Tesselator::checkForRightSplice( ActiveRegion *regUp )
+    template <typename Options, typename Allocators>
+	bool Tesselator<Options, Allocators>::checkForRightSplice( ActiveRegion *regUp )
 	/*
 	 * Check the upper and lower edge of "regUp", to make sure that the
 	 * eUp->Org is above eLo, or eLo->Org is below eUp (depending on which
@@ -429,7 +441,8 @@ namespace Tess
 		return true;
 	}
 	
-	bool Tesselator::checkForLeftSplice( ActiveRegion *regUp )
+    template <typename Options, typename Allocators>
+	bool Tesselator<Options, Allocators>::checkForLeftSplice( ActiveRegion *regUp )
 	/*
 	 * Check the upper and lower edge of "regUp", to make sure that the
 	 * eUp->Dst is above eLo, or eLo->Dst is below eUp (depending on which
@@ -477,7 +490,8 @@ namespace Tess
 	}
 	
 	
-	bool Tesselator::checkForIntersect( ActiveRegion *regUp )
+    template <typename Options, typename Allocators>
+	bool Tesselator<Options, Allocators>::checkForIntersect( ActiveRegion *regUp )
 	/*
 	 * Check the upper and lower edges of the given region to see if
 	 * they intersect.	If so, create the intersection and add it
@@ -618,13 +632,14 @@ namespace Tess
 		eUp->Org()->s = isect.s;
 		eUp->Org()->t = isect.t;
 		eUp->Org()->pqHandle = pqInsert( pq, eUp->Org() );
-		assert(eUp->Org()->pqHandle != INV_HANDLE);
+        assert(eUp->Org()->pqHandle != PriorityQ::INV_HANDLE);
 		eUp->Org()->idx = sTessUndef;
 		regUp->regionAbove()->dirty = regUp->dirty = regLo->dirty = true;
 		return false;
 	}
 	
-	void Tesselator::walkDirtyRegions( ActiveRegion *regUp )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::walkDirtyRegions( ActiveRegion *regUp )
 	/*
 	 * When the upper or lower edge of any region changes, the region is
 	 * marked "dirty".	This routine walks through all the dirty regions
@@ -711,7 +726,8 @@ namespace Tess
 	}
 	
 	
-	void Tesselator::connectRightVertex( ActiveRegion *regUp, HalfEdge *eBottomLeft )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::connectRightVertex( ActiveRegion *regUp, HalfEdge *eBottomLeft )
 	/*
 	 * Purpose: connect a "right" vertex vEvent (one where all edges go left)
 	 * to the unprocessed portion of the mesh.	Since there are no right-going
@@ -802,7 +818,8 @@ namespace Tess
 	 */
 #define TOLERANCE_NONZERO	false
 	
-	void Tesselator::connectLeftDegenerate( ActiveRegion *regUp, Vertex *vEvent )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::connectLeftDegenerate( ActiveRegion *regUp, Vertex *vEvent )
 	/*
 	 * The event vertex lies exacty on an already-processed edge or vertex.
 	 * Adding the new vertex involves splicing it into the already-processed
@@ -861,7 +878,8 @@ namespace Tess
 	}
 	
 	
-	void Tesselator::connectLeftVertex( Vertex *vEvent )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::connectLeftVertex( Vertex *vEvent )
 	/*
 	 * Purpose: connect a "left" vertex (one where both edges go right)
 	 * to the processed portion of the mesh.  Let R be the active region
@@ -930,7 +948,8 @@ namespace Tess
 	}
 	
 	
-	void Tesselator::sweepEvent( Vertex *vEvent )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::sweepEvent( Vertex *vEvent )
 	/*
 	 * Does everything necessary when the sweep line crosses a vertex.
 	 * Updates the mesh and the edge dictionary.
@@ -985,14 +1004,15 @@ namespace Tess
 	 * merged with real input features.
 	 */
 	
-	void Tesselator::addSentinel( float smin, float smax, float t )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::addSentinel( float smin, float smax, float t )
 	/*
 	 * We add two sentinel edges above and below all other edges,
 	 * to avoid special cases at the top and bottom.
 	 */
 	{
 		HalfEdge *edge;
-		ActiveRegion *reg = new ActiveRegion;
+		ActiveRegion *reg = allocators.activeRegionAlloc.construct();
 		
 		edge = mesh->makeEdge();
 		
@@ -1012,7 +1032,8 @@ namespace Tess
 	}
 	
 	
-	void Tesselator::initEdgeDict( )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::initEdgeDict( )
 	/*
 	 * We maintain an ordering of edge intersections with the sweep line.
 	 * This order is maintained in a dynamic dictionary.
@@ -1037,7 +1058,8 @@ namespace Tess
 	}
 	
 	
-	void Tesselator::doneEdgeDict( )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::doneEdgeDict( )
 	{
 		ActiveRegion *reg;
 		int fixedEdges = 0;
@@ -1060,7 +1082,8 @@ namespace Tess
 	}
 	
 	
-	void Tesselator::removeDegenerateEdges()
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::removeDegenerateEdges()
 	/*
 	 * Remove zero-length edges, and contours with fewer than 3 vertices.
 	 */
@@ -1094,7 +1117,8 @@ namespace Tess
 		}
 	}
 	
-	void Tesselator::initPriorityQ( )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::initPriorityQ( )
 	/*
 	 * Insert all vertices into the priority queue which determines the
 	 * order in which vertices cross the sweep line.
@@ -1110,23 +1134,25 @@ namespace Tess
 		/* Make sure there is enough space for sentinels. */
 		vertexCountQ += 8;
 		
-		pq = pqNewPriorityQ( vertexCountQ, (int (*)(PQkey, PQkey)) vertAreLessOrEqual );
+        pq = new PriorityQ( vertexCountQ, (typename PriorityQ::LeqFunc *)vertAreLessOrEqual );
 		
 		vHead = mesh->vEnd();
 		for( v = vHead->next; v != vHead; v = v->next ) {
-			v->pqHandle = pqInsert( pq, v );
+			v->pqHandle = pq->insert( v );
 		}
-		pqInit( pq );
+		pq->init( );
 	}
 	
 	
-	void Tesselator::donePriorityQ( )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::donePriorityQ( )
 	{
-		pqDeletePriorityQ( pq );
+        delete pq; pq = nullptr;
 	}
 	
 	
-	void Tesselator::removeDegenerateFaces( )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::removeDegenerateFaces( )
 	/*
 	 * Delete any degenerate faces with only two edges.	 WalkDirtyRegions()
 	 * will catch almost all of these, but it won't catch degenerate faces
@@ -1159,7 +1185,8 @@ namespace Tess
 		}
 	}
 	
-	void Tesselator::computeInterior( )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::computeInterior( )
 	/*
 	 * tessComputeInterior( tess ) computes the planar arrangement specified
 	 * by the given contours, and further subdivides this arrangement

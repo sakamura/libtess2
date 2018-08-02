@@ -29,28 +29,52 @@
 ** Author: Eric Veach, July 1994.
 */
 
-#ifndef GEOM_H
-#define GEOM_H
+#pragma once
 
 #include "mesh.h"
 #include <cmath>
 
 namespace Tess
 {
-	inline bool vertAreEqual(const Vertex* u, const Vertex* v) { return ((u)->s == (v)->s && (u)->t == (v)->t); }
-	inline bool vertAreLessOrEqual(const Vertex* u, const Vertex* v) { return (((u)->s < (v)->s) || ((u)->s == (v)->s && (u)->t <= (v)->t)); }
-	inline bool transVertAreLessOrEqual(const Vertex* u, const Vertex* v) { return (((u)->t < (v)->t) || ((u)->t == (v)->t && (u)->s <= (v)->s)); }
-	inline bool edgeGoesLeft(const HalfEdge* e) { return vertAreLessOrEqual( e->Dst(), e->Org() ); }
-	inline bool edgeGoesRight(const HalfEdge* e) { return vertAreLessOrEqual( e->Org(), e->Dst() ); }
-	inline bool edgeIsInternal(const HalfEdge* e) { return e->Rface() && e->Rface()->inside; }
-	inline bool vertAreCCW( const Vertex *u, const Vertex *v, const Vertex *w ) { return (u->s*(v->t - w->t) + v->s*(w->t - u->t) + w->s*(u->t - v->t)) >= 0; }
+    template <typename Options, typename Allocators>
+	inline bool vertAreEqual(const VertexT<Options, Allocators>* u, const VertexT<Options, Allocators>* v) { return ((u)->s == (v)->s && (u)->t == (v)->t); }
+
+    template <typename Options, typename Allocators>
+    inline bool vertAreLessOrEqual(const VertexT<Options, Allocators>* u, const VertexT<Options, Allocators>* v) { return (((u)->s < (v)->s) || ((u)->s == (v)->s && (u)->t <= (v)->t)); }
 	
-	float edgeEval( const Vertex *u, const Vertex *v, const Vertex *w ); // Returns the signed distance from uw to v.
-	float edgeSign( const Vertex *u, const Vertex *v, const Vertex *w ); // Returns a number whose sign matches edgeEval(u,v,w) but which is cheaper to evaluate.
-	float transEdgeEval( const Vertex *u, const Vertex *v, const Vertex *w ); // Transposed version of edgeEval
-	float transEdgeSign( const Vertex *u, const Vertex *v, const Vertex *w ); // Transposed version of edgeSign
-	void edgeIntersect( const Vertex *o1, const Vertex *d1, const Vertex *o2, const Vertex *d2, Vertex *v ); // Given edges (o1,d1) and (o2,d2), compute their point of intersection.
-	bool edgeIsLocallyDelaunay( const HalfEdge *e );
+    template <typename Options, typename Allocators>
+    inline bool transVertAreLessOrEqual(const VertexT<Options, Allocators>* u, const VertexT<Options, Allocators>* v) { return (((u)->t < (v)->t) || ((u)->t == (v)->t && (u)->s <= (v)->s)); }
+
+    template <typename Options, typename Allocators>
+    inline bool edgeGoesLeft(const HalfEdgeT<Options, Allocators>* e) { return vertAreLessOrEqual( e->Dst(), e->Org() ); }
+	
+    template <typename Options, typename Allocators>
+    inline bool edgeGoesRight(const HalfEdgeT<Options, Allocators>* e) { return vertAreLessOrEqual( e->Org(), e->Dst() ); }
+	
+    template <typename Options, typename Allocators>
+    inline bool edgeIsInternal(const HalfEdgeT<Options, Allocators>* e) { return e->Rface() && e->Rface()->inside; }
+	
+    template <typename Options, typename Allocators>
+    inline bool vertAreCCW( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ) { return (u->s*(v->t - w->t) + v->s*(w->t - u->t) + w->s*(u->t - v->t)) >= 0; }
+	
+	
+    template <typename Options, typename Allocators>
+    float edgeEval( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Returns the signed distance from uw to v.
+	
+    template <typename Options, typename Allocators>
+    float edgeSign( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Returns a number whose sign matches edgeEval(u,v,w) but which is cheaper to evaluate.
+	
+    template <typename Options, typename Allocators>
+    float transEdgeEval( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Transposed version of edgeEval
+    
+    template <typename Options, typename Allocators>
+    float transEdgeSign( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Transposed version of edgeSign
+	
+    template <typename Options, typename Allocators>
+    void edgeIntersect( const VertexT<Options, Allocators> *o1, const VertexT<Options, Allocators> *d1, const VertexT<Options, Allocators> *o2, const VertexT<Options, Allocators> *d2, VertexT<Options, Allocators> *v ); // Given edges (o1,d1) and (o2,d2), compute their point of intersection.
+	
+    template <typename Options, typename Allocators>
+    bool edgeIsLocallyDelaunay( const HalfEdgeT<Options, Allocators> *e );
 }
 
-#endif
+#include "geom.inl"

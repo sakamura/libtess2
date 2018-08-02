@@ -50,7 +50,7 @@ namespace Tess
 	BucketAllocImpl::~BucketAllocImpl()
 	{
 	}
-	void* BucketAllocImpl::alloc()
+	void* BucketAllocImpl::malloc()
 	{
 		if (!firstFree)
 		{

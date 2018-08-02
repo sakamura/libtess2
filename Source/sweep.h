@@ -29,8 +29,7 @@
 ** Author: Eric Veach, July 1994.
 */
 
-#ifndef SWEEP_H
-#define SWEEP_H
+#pragma once
 
 #include "mesh.h"
 #include "dict.h"
@@ -44,7 +43,11 @@ namespace Tess
 	 * sweep line crosses each vertex, we update the affected regions.
 	 */
 	
-	struct ActiveRegion {
+    template <typename Options, typename Allocators>
+	struct ActiveRegionT {
+        using ActiveRegion = ActiveRegionT<Options, Allocators>;
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        
 		HalfEdge *eUp;		/* upper edge, directed right to left */
 		DictNode *nodeUp;	/* dictionary node corresponding to eUp */
 		int windingNumber;	/* used to determine which regions are
@@ -58,12 +61,9 @@ namespace Tess
 							 * we process a "right vertex" (one without
 							 * any edges leaving to the right) */
 		
-		static void* operator new( std::size_t count ) { return BucketAlloc<ActiveRegion>::get(count).alloc(); }
-		static void operator delete( void* ptr ) { BucketAlloc<ActiveRegion>::get().free(ptr); }
-		
 		inline ActiveRegion* regionBelow() { return (ActiveRegion*)nodeUp->prev->key; }
 		inline ActiveRegion* regionAbove() { return (ActiveRegion*)nodeUp->next->key; }
 	};
 }
 
-#endif
+#include "sweep.inl"

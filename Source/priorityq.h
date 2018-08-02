@@ -29,8 +29,7 @@
 ** Author: Eric Veach, July 1994.
 */
 
-#ifndef PRIORITYQ_H
-#define PRIORITYQ_H
+#pragma once
 
 namespace Tess
 {
@@ -59,56 +58,60 @@ namespace Tess
 	 * represents that key (ie. nodes[handles[i].node].handle == i).
 	 */
 	
-	typedef void *PQkey;
-	typedef int PQhandle;
-	typedef struct PriorityQHeap PriorityQHeap;
-	
-#define INV_HANDLE 0x0fffffff
-	
-	typedef struct { PQhandle handle; } PQnode;
-	typedef struct { PQkey key; PQhandle node; } PQhandleElem;
-	
-	struct PriorityQHeap {
+	template <typename Options, typename Allocators>
+	struct PriorityQT {
+        using PriorityQ = PriorityQT<Options, Allocators>;
+        using Tesselator = Tess::Tesselator<Options, Allocators>;
+        using Vertex = VertexT<Options, Allocators>;
+        
+        enum { INV_HANDLE = 0x0fffffff };
+        
+        typedef Vertex *Key;
+        typedef int Handle;
+        struct Node { Handle handle; };
+        struct HandleElem { Key key; Handle node; };
+        using LeqFunc = int (*)(Key key1, Key key2);
+
+        struct Heap {
+            Tesselator* t;
+            
+            Node *nodes;
+            HandleElem *handles;
+            int size, max;
+            Handle freeList;
+            int initialized;
+            
+            LeqFunc leq;
+
+            Heap( Tesselator* t, int size, LeqFunc leq );
+            ~Heap( );
+
+            void init( );
+            Handle insert( Key keyNew );
+            Key extractMin( );
+            void remove( Handle hCurr );
+        };
+
+        Heap heap;
 		
-		PQnode *nodes;
-		PQhandleElem *handles;
-		int size, max;
-		PQhandle freeList;
+		Key *keys;
+		Key **order;
+		Handle size, max;
 		int initialized;
 		
-		int (*leq)(PQkey key1, PQkey key2);
-	};
-	
-	typedef struct PriorityQ PriorityQ;
-	
-	struct PriorityQ {
-		PriorityQHeap *heap;
-		
-		PQkey *keys;
-		PQkey **order;
-		PQhandle size, max;
-		int initialized;
-		
-		int (*leq)(PQkey key1, PQkey key2);
-	};
-	
-	PriorityQ *pqNewPriorityQ( int size, int (*leq)(PQkey key1, PQkey key2) );
-	void pqDeletePriorityQ( PriorityQ *pq );
-	
-	void pqInit( PriorityQ *pq );
-	PQhandle pqInsert( PriorityQ *pq, PQkey key );
-	PQkey pqExtractMin( PriorityQ *pq );
-	void pqDelete( PriorityQ *pq, PQhandle handle );
-	
-	PQkey pqMinimum( PriorityQ *pq );
-	int pqIsEmpty( PriorityQ *pq );
-	
-	PriorityQHeap *pqHeapNewPriorityQ( int size, int (*leq)(PQkey key1, PQkey key2) );
-	void pqHeapDeletePriorityQ( PriorityQHeap *pq );
-	void pqHeapInit( PriorityQHeap *pq );
-	PQhandle pqHeapInsert( PriorityQHeap *pq, PQkey keyNew );
-	PQkey pqHeapExtractMin( PriorityQHeap *pq );
-	void pqHeapDelete( PriorityQHeap *pq, PQhandle hCurr );
+		LeqFunc leq;
+        
+        PriorityQT( Tesselator* t, int size, LeqFunc leq );
+        ~PriorityQT( );
+        
+        void init( );
+        Handle insert( Key key );
+        Key extractMin( );
+        void remove( Handle handle );
+        
+        Key minimum( );
+        int isEmpty( );
+    };
 }
 
-#endif
+#include "priorityq.inl"

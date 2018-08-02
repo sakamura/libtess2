@@ -37,6 +37,8 @@
 #include "mesh.h"
 #include "sweep.h"
 #include "geom.h"
+#include "edgestack.h"
+#include "allocators.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,7 +72,8 @@ namespace Tess
 	 * to the fan is a simple orientation test.	 By making the fan as large
 	 * as possible, we restore the invariant (check it yourself).
 	 */
-	void Tesselator::meshTessellateMonoRegion( Face *face )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::meshTessellateMonoRegion( Face *face )
 	{
 		HalfEdge *up, *lo;
 		
@@ -125,7 +128,8 @@ namespace Tess
 	 * the mesh which is marked "inside" the polygon.  Each such region
 	 * must be monotone.
 	 */
-	void Tesselator::meshTessellateInterior( )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::meshTessellateInterior( )
 	{
 		Face *f, *next;
 		
@@ -138,63 +142,15 @@ namespace Tess
 			}
 		}
 	}
-	
-	
-	struct EdgeStackNode
-	{
-		HalfEdge *edge;
-		EdgeStackNode *next;
-		
-		static void* operator new( std::size_t count ) { return BucketAlloc<EdgeStackNode, 2048>::get(count).alloc(); }
-		static void operator delete( void* ptr ) { BucketAlloc<EdgeStackNode, 2048>::get().free(ptr); }
-	};
-	
-	struct EdgeStack
-	{
-		EdgeStackNode *top;
 
-		EdgeStack() :
-			top(nullptr)
-		{
-		}
-		
-		int empty()
-		{
-			return top == nullptr;
-		}
-		
-		void push( HalfEdge *edge )
-		{
-			EdgeStackNode *node = new EdgeStackNode;
-			if ( ! node ) return;
-			node->edge = edge;
-			node->next = top;
-			top = node;
-		}
-		
-		HalfEdge *pop( )
-		{
-			HalfEdge *edge = nullptr;
-			EdgeStackNode *node = top;
-			if (node) {
-				top = node->next;
-				edge = node->edge;
-				delete node;
-			}
-			return edge;
-		}
-		
-		~EdgeStack(	 )
-		{
-			do {} while (pop() != nullptr);
-		}
-	};
-	
-
-	//	Starting with a valid triangulation, uses the Edge Flip algorithm to
+    
+    //	Starting with a valid triangulation, uses the Edge Flip algorithm to
 	//	refine the triangulation into a Constrained Delaunay Triangulation.
-	void Tesselator::meshRefineDelaunay( )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::meshRefineDelaunay( )
 	{
+        using EdgeStack = EdgeStackT<Options, Allocators>;
+        
 		// At this point, we have a valid, but not optimal, triangulation.
 		// We refine the triangulation using the Edge Flip algorithm
 		//
@@ -257,7 +213,8 @@ namespace Tess
 	 * on nullptr faces are not allowed, the main purpose is to clean up the
 	 * mesh so that exterior loops are not represented in the data structure.
 	 */
-	void Tesselator::meshDiscardExterior()
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::meshDiscardExterior()
 	{
 		Face *f, *next;
 		
@@ -279,7 +236,8 @@ namespace Tess
 	 * If keepOnlyBoundary is true, it also deletes all edges which do not
 	 * separate an interior region from an exterior one.
 	 */
-	void Tesselator::meshSetWindingNumber( int value, bool keepOnlyBoundary )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::meshSetWindingNumber( int value, bool keepOnlyBoundary )
 	{
 		HalfEdge *edge, *eNext;
 		
@@ -301,18 +259,15 @@ namespace Tess
 		}
 	}
 	
-	Tesselator::Tesselator()
+    template <typename Options, typename Allocators>
+    Tesselator<Options, Allocators>::Tesselator(Options& _options) :
+        options(_options)
 	{
 		bmin[0] = std::numeric_limits<float>::max();
 	
 		bmin[1] = std::numeric_limits<float>::max();
 		bmax[0] = -std::numeric_limits<float>::max();
 		bmax[1] = -std::numeric_limits<float>::max();
-		
-		reverseContours = 0;
-	
-		windingRule = TESS_WINDING_ODD;
-		processCDT = 0;
 		
 		// Initialize to begin polygon.
 		mesh = nullptr;
@@ -326,7 +281,8 @@ namespace Tess
 		elementCount = 0;
 	}
 
-	Tesselator::~Tesselator()
+    template <typename Options, typename Allocators>
+	Tesselator<Options, Allocators>::~Tesselator()
 	{
 		if( mesh != nullptr ) {
 			delete mesh;
@@ -347,7 +303,8 @@ namespace Tess
 	}
 	
 	
-	static int GetNeighbourFace(HalfEdge* edge)
+    template <typename Options, typename Allocators>
+	static int GetNeighbourFace(HalfEdgeT<Options, Allocators>* edge)
 	{
 		if (!edge->Rface())
 			return sTessUndef;
@@ -356,7 +313,8 @@ namespace Tess
 		return edge->Rface()->n;
 	}
 	
-	void Tesselator::outputPolymesh( ElementType elementType, int polySize )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::outputPolymesh( ElementType elementType, int polySize )
 	{
 		Vertex* v = 0;
 		Face* f = 0;
@@ -465,7 +423,8 @@ namespace Tess
 		}
 	}
 	
-	void Tesselator::outputContours()
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::outputContours()
 	{
 		Face *f = 0;
 		HalfEdge *edge = 0;
@@ -522,7 +481,8 @@ namespace Tess
 		}
 	}
 	
-	void Tesselator::beginContour()
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::beginContour()
 	{
 		if ( mesh == nullptr )
 			mesh = new Mesh;
@@ -530,7 +490,8 @@ namespace Tess
 		e = nullptr;
 	}
 	
-	void Tesselator::addVertex( float x, float y )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::addVertex( float x, float y )
 	{
 		if( e == nullptr ) {
 			/* Make a self-loop (one vertex, one edge). */
@@ -560,11 +521,12 @@ namespace Tess
 		 * vertices in such an order that a CCW contour will add +1 to
 		 * the winding number of the region inside the contour.
 		 */
-		e->setWinding(reverseContours ? -1 : 1);
-		e->Sym()->setWinding(reverseContours ? 1 : -1);
+		e->setWinding(options.reverseContours() ? -1 : 1);
+		e->Sym()->setWinding(options.reverseContours() ? 1 : -1);
 	}
 	
-	void Tesselator::addContour( const void* verticesToAdd, int stride, int numVertices )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::addContour( const void* verticesToAdd, int stride, int numVertices )
 	{
 		const unsigned char *src = (const unsigned char*)verticesToAdd;
 		int i;
@@ -579,20 +541,8 @@ namespace Tess
 		}
 	}
 
-	void Tesselator::setOption( int option, int value )
-	{
-		switch(option)
-		{
-			case TESS_CONSTRAINED_DELAUNAY_TRIANGULATION:
-				processCDT = value > 0 ? 1 : 0;
-				break;
-			case TESS_REVERSE_CONTOURS:
-				reverseContours = value > 0 ? 1 : 0;
-				break;
-		}
-	}
-	
-	void Tesselator::tesselate( WindingRule _windingRule, ElementType elementType, int polySize, const float* normal )
+    template <typename Options, typename Allocators>
+	void Tesselator<Options, Allocators>::tesselate( ElementType elementType, int polySize, const float* normal )
 	{
 		if (vertices != nullptr) {
 			delete[] vertices;
@@ -609,8 +559,6 @@ namespace Tess
 		
 		vertexIndexCounter = 0;
 	
-		windingRule = _windingRule;
-		
 		/* tessComputeInterior( tess ) computes the planar arrangement specified
 		 * by the given contours, and further subdivides this arrangement
 		 * into regions.  Each region is marked "inside" if it belongs
@@ -627,7 +575,7 @@ namespace Tess
 			meshSetWindingNumber( 1, true );
 		} else {
 			meshTessellateInterior( );
-			if (processCDT != 0)
+			if (options.constrainedDelaunayTriangulation())
 				meshRefineDelaunay( );
 		}
 		

@@ -40,7 +40,7 @@
 
 /* Violates modularity, but a little faster */
 #include "geom.h"
-#define LEQ(x,y)	vertAreLessOrEqual((Vertex *)x, (Vertex *)y)
+#define LEQ(x,y)	vertAreLessOrEqual(x, y)
 
 /* Include all the code for the regular heap-based queue here. */
 
@@ -79,39 +79,43 @@ namespace Tess
 	
 	
 	/* really pqHeapNewPriorityQHeap */
-	PriorityQHeap *pqHeapNewPriorityQ( int size, int (*leq)(PQkey key1, PQkey key2) )
+    template <typename Options, typename Allocators>
+    PriorityQT<Options, Allocators>::Heap::Heap( Tesselator* _t, int _size, LeqFunc _leq ) :
+        t(_t)
 	{
-		PriorityQHeap *pq = new PriorityQHeap;
+		size = 0;
+		max = _size;
+		assert(_size > 0);
+		nodes = new Node[(unsigned long)size+1];
+		handles = new HandleElem[(unsigned long)size+1];
 		
-		pq->size = 0;
-		pq->max = size;
-		assert(size > 0);
-		pq->nodes = new PQnode[(unsigned long)size+1];
-		pq->handles = new PQhandleElem[(unsigned long)size+1];
+		initialized = false;
+		freeList = 0;
+		leq = _leq;
 		
-		pq->initialized = false;
-		pq->freeList = 0;
-		pq->leq = leq;
-		
-		pq->nodes[1].handle = 1;	/* so that Minimum() returns nullptr */
-		pq->handles[1].key = nullptr;
-		return pq;
+		nodes[1].handle = 1;	/* so that Minimum() returns nullptr */
+		handles[1].key = nullptr;
 	}
 	
 	/* really pqHeapDeletePriorityQHeap */
-	void pqHeapDeletePriorityQ( PriorityQHeap *pq )
+    template <typename Options, typename Allocators>
+    PriorityQT<Options, Allocators>::Heap::~Heap( )
 	{
-		delete[] pq->handles;
-		delete[] pq->nodes;
-		delete pq;
+		delete[] handles;
+		delete[] nodes;
 	}
 	
 	
-	static void FloatDown( PriorityQHeap *pq, int curr )
+    template <typename Options, typename Allocators>
+	static void FloatDown( typename PriorityQT<Options, Allocators>::Heap *pq, int curr )
 	{
-		PQnode *n = pq->nodes;
-		PQhandleElem *h = pq->handles;
-		PQhandle hCurr, hChild;
+        using Node = typename PriorityQT<Options, Allocators>::Node;
+        using HandleElem = typename PriorityQT<Options, Allocators>::HandleElem;
+        using Handle = typename PriorityQT<Options, Allocators>::Handle;
+        
+		Node *n = pq->nodes;
+		HandleElem *h = pq->handles;
+		Handle hCurr, hChild;
 		int child;
 		
 		hCurr = n[curr].handle;
@@ -137,11 +141,16 @@ namespace Tess
 	}
 	
 	
-	static void FloatUp( PriorityQHeap *pq, int curr )
+    template <typename Options, typename Allocators>
+	static void FloatUp( typename PriorityQT<Options, Allocators>::Heap *pq, int curr )
 	{
-		PQnode *n = pq->nodes;
-		PQhandleElem *h = pq->handles;
-		PQhandle hCurr, hParent;
+        using Node = typename PriorityQT<Options, Allocators>::Node;
+        using HandleElem = typename PriorityQT<Options, Allocators>::HandleElem;
+        using Handle = typename PriorityQT<Options, Allocators>::Handle;
+        
+		Node *n = pq->nodes;
+		HandleElem *h = pq->handles;
+		Handle hCurr, hParent;
 		int parent;
 		
 		hCurr = n[curr].handle;
@@ -160,91 +169,95 @@ namespace Tess
 	}
 	
 	/* really pqHeapInit */
-	void pqHeapInit( PriorityQHeap *pq )
+    template <typename Options, typename Allocators>
+    void PriorityQT<Options, Allocators>::Heap::init( )
 	{
 		int i;
 		
 		/* This method of building a heap is O(n), rather than O(n lg n). */
 		
-		for( i = pq->size; i >= 1; --i ) {
-			FloatDown( pq, i );
+		for( i = size; i >= 1; --i ) {
+			FloatDown( this, i );
 		}
-		pq->initialized = true;
+		initialized = true;
 	}
 	
 	/* really pqHeapInsert */
-	PQhandle pqHeapInsert( PriorityQHeap *pq, PQkey keyNew )
+    template <typename Options, typename Allocators>
+    typename PriorityQT<Options, Allocators>::Handle PriorityQT<Options, Allocators>::Heap::insert( Key keyNew )
 	{
 		int curr;
-		PQhandle free;
+		Handle free;
 		
-		curr = ++ pq->size;
-		assert((curr*2) <= pq->max );
+		curr = ++ size;
+		assert((curr*2) <= max );
 		
-		if( pq->freeList == 0 ) {
+		if( freeList == 0 ) {
 			free = curr;
 		} else {
-			free = pq->freeList;
-			pq->freeList = pq->handles[free].node;
+			free = freeList;
+			freeList = handles[free].node;
 		}
 		
-		pq->nodes[curr].handle = free;
-		pq->handles[free].node = curr;
-		pq->handles[free].key = keyNew;
+		nodes[curr].handle = free;
+		handles[free].node = curr;
+		handles[free].key = keyNew;
 		
-		if( pq->initialized ) {
-			FloatUp( pq, curr );
+		if( initialized ) {
+			FloatUp( this, curr );
 		}
 		assert(free != INV_HANDLE);
 		return free;
 	}
 	
 	/* really pqHeapExtractMin */
-	PQkey pqHeapExtractMin( PriorityQHeap *pq )
+    template <typename Options, typename Allocators>
+    typename PriorityQT<Options, Allocators>::Key PriorityQT<Options, Allocators>::Heap::extractMin( )
 	{
-		PQnode *n = pq->nodes;
-		PQhandleElem *h = pq->handles;
-		PQhandle hMin = n[1].handle;
-		PQkey min = h[hMin].key;
+		Node *n = nodes;
+		HandleElem *h = handles;
+		Handle hMin = n[1].handle;
+		Key min = h[hMin].key;
 		
-		if( pq->size > 0 ) {
-			n[1].handle = n[pq->size].handle;
+		if( size > 0 ) {
+			n[1].handle = n[size].handle;
 			h[n[1].handle].node = 1;
 			
 			h[hMin].key = nullptr;
-			h[hMin].node = pq->freeList;
-			pq->freeList = hMin;
+			h[hMin].node = freeList;
+			freeList = hMin;
 			
-			if( -- pq->size > 0 ) {
-				FloatDown( pq, 1 );
+			if( -- size > 0 ) {
+				FloatDown( this, 1 );
 			}
 		}
 		return min;
 	}
 	
 	/* really pqHeapDelete */
-	void pqHeapDelete( PriorityQHeap *pq, PQhandle hCurr )
+    template <typename Options, typename Allocators>
+    void PriorityQT<Options, Allocators>::Heap::remove( Handle hCurr )
 	{
-		PQnode *n = pq->nodes;
-		PQhandleElem *h = pq->handles;
+		Node *n = nodes;
+		HandleElem *h = handles;
 		int curr;
 		
-		assert( hCurr >= 1 && hCurr <= pq->max && h[hCurr].key != nullptr );
+		assert( hCurr >= 1 && hCurr <= max && h[hCurr].key != nullptr );
 		
 		curr = h[hCurr].node;
-		n[curr].handle = n[pq->size].handle;
+		n[curr].handle = n[size].handle;
 		h[n[curr].handle].node = curr;
 		
-		if( curr <= -- pq->size ) {
+		if( curr <= -- size ) {
 			if( curr <= 1 || LEQ( h[n[curr>>1].handle].key, h[n[curr].handle].key )) {
-				FloatDown( pq, curr );
+				FloatDown( this, curr );
 			} else {
-				FloatUp( pq, curr );
+				FloatUp( this, curr );
 			}
 		}
 		h[hCurr].key = nullptr;
-		h[hCurr].node = pq->freeList;
-		pq->freeList = hCurr;
+		h[hCurr].node = freeList;
+		freeList = hCurr;
 	}
 	
 	
@@ -252,52 +265,47 @@ namespace Tess
 	/* Now redefine all the function names to map to their "Sort" versions. */
 	
 	/* really tessPqSortNewPriorityQ */
-	PriorityQ *pqNewPriorityQ( int size, int (*leq)(PQkey key1, PQkey key2) )
+    template <typename Options, typename Allocators>
+    PriorityQT<Options, Allocators>::PriorityQT( Tesselator* _t, int _size, LeqFunc _leq ) :
+        heap(_t, size, leq)
 	{
-		PriorityQ *pq = new PriorityQ;
+		keys = new Key[(unsigned long)size];
 		
-		pq->heap = pqHeapNewPriorityQ( size, leq );
-		
-		pq->keys = new PQkey[(unsigned long)size];
-		
-		pq->size = 0;
-		pq->max = size; //INIT_SIZE;
-		pq->initialized = false;
-		pq->leq = leq;
-		
-		return pq;
+		size = 0;
+		max = _size; //INIT_SIZE;
+		initialized = false;
+		leq = _leq;
 	}
 	
 	/* really tessPqSortDeletePriorityQ */
-	void pqDeletePriorityQ( PriorityQ *pq )
+    template <typename Options, typename Allocators>
+    PriorityQT<Options, Allocators>::~PriorityQT( )
 	{
-		assert(pq != nullptr);
-		if (pq->heap != nullptr) pqHeapDeletePriorityQ( pq->heap );
-		if (pq->order != nullptr) delete[] pq->order;
-		if (pq->keys != nullptr) delete[] pq->keys;
-		delete pq;
+		if (order != nullptr) delete[] order;
+		if (keys != nullptr) delete[] keys;
 	}
 	
 	
 #define LT(x,y)		(! LEQ(y,x))
 #define GT(x,y)		(! LEQ(x,y))
-#define Swap(a,b)	if(1){PQkey *tmp = *a; *a = *b; *b = tmp;}else
+#define Swap(a,b)	if(1){Key *tmp = *a; *a = *b; *b = tmp;}else
 	
 	/* really tessPqSortInit */
-	void pqInit( PriorityQ *pq )
+    template <typename Options, typename Allocators>
+	void PriorityQT<Options, Allocators>::init( )
 	{
-		PQkey **p, **r, **i, **j, *piv;
-		struct { PQkey **p, **r; } Stack[50], *top = Stack;
+		Key **p, **r, **i, **j, *piv;
+		struct { Key **p, **r; } Stack[50], *top = Stack;
 		unsigned int seed = 2016473283;
 		
 		/* Create an array of indirect pointers to the keys, so that we
 		 * the handles we have returned are still valid.
 		 */
-		pq->order = new PQkey*[(unsigned long)pq->size+1];
+		order = new Key*[(unsigned long)size+1];
 		
-		p = pq->order;
-		r = p + pq->size - 1;
-		for( piv = pq->keys, i = p; i <= r; ++piv, ++i ) {
+		p = order;
+		r = p + size - 1;
+		for( piv = keys, i = p; i <= r; ++piv, ++i ) {
 			*i = piv;
 		}
 		
@@ -339,13 +347,13 @@ namespace Tess
 				*j = piv;
 			}
 		}
-		pq->max = pq->size;
-		pq->initialized = true;
-		pqHeapInit( pq->heap );	 /* always succeeds */
+		max = size;
+		initialized = true;
+		heap.init( );	 /* always succeeds */
 		
 #ifndef NDEBUG
-		p = pq->order;
-		r = p + pq->size - 1;
+		p = order;
+		r = p + size - 1;
 		for( i = p; i < r; ++i ) {
 			assert( LEQ( **(i+1), **i ));
 		}
@@ -354,54 +362,57 @@ namespace Tess
 	
 	/* really tessPqSortInsert */
 	/* returns INV_HANDLE iff out of memory */ 
-	PQhandle pqInsert( PriorityQ *pq, PQkey keyNew )
+    template <typename Options, typename Allocators>
+	typename PriorityQT<Options, Allocators>::Handle PriorityQT<Options, Allocators>::insert( Key keyNew )
 	{
 		int curr;
 		
-		if( pq->initialized ) {
-			return pqHeapInsert( pq->heap, keyNew );
+		if( initialized ) {
+			return heap.insert( keyNew );
 		}
-		curr = pq->size;
-		++pq->size;
-		assert(pq->size < pq->max);
-		pq->keys[curr] = keyNew;
+		curr = size;
+		++size;
+		assert(size < max);
+		keys[curr] = keyNew;
 		
 		/* Negative handles index the sorted array. */
 		return -(curr+1);
 	}
 	
 	/* really tessPqSortExtractMin */
-	PQkey pqExtractMin( PriorityQ *pq )
+    template <typename Options, typename Allocators>
+	typename PriorityQT<Options, Allocators>::Key PriorityQT<Options, Allocators>::extractMin( )
 	{
-		PQkey sortMin, heapMin;
+		Key sortMin, heapMin;
 		
-		if( pq->size == 0 ) {
-			return pqHeapExtractMin( pq->heap );
+		if( size == 0 ) {
+			return heap.extractMin( );
 		}
-		sortMin = *(pq->order[pq->size-1]);
-		if( ! pqHeapIsEmpty( pq->heap )) {
-			heapMin = pqHeapMinimum( pq->heap );
+		sortMin = *(order[size-1]);
+		if( ! heap.isEmpty( )) {
+			heapMin = heap.minimum( );
 			if( LEQ( heapMin, sortMin )) {
-				return pqHeapExtractMin( pq->heap );
+				return heap.extractMin( );
 			}
 		}
 		do {
-			-- pq->size;
-		} while( pq->size > 0 && *(pq->order[pq->size-1]) == nullptr );
+			-- size;
+		} while( size > 0 && *(order[size-1]) == nullptr );
 		return sortMin;
 	}
 	
 	/* really tessPqSortMinimum */
-	PQkey pqMinimum( PriorityQ *pq )
+    template <typename Options, typename Allocators>
+	typename PriorityQT<Options, Allocators>::Key PriorityQT<Options, Allocators>::minimum( )
 	{
-		PQkey sortMin, heapMin;
+		Key sortMin, heapMin;
 		
-		if( pq->size == 0 ) {
-			return pqHeapMinimum( pq->heap );
+		if( size == 0 ) {
+			return heap.minimum( );
 		}
-		sortMin = *(pq->order[pq->size-1]);
-		if( ! pqHeapIsEmpty( pq->heap )) {
-			heapMin = pqHeapMinimum( pq->heap );
+		sortMin = *(order[size-1]);
+		if( ! heap.isEmpty( )) {
+			heapMin = heap.minimum( );
 			if( LEQ( heapMin, sortMin )) {
 				return heapMin;
 			}
@@ -410,24 +421,26 @@ namespace Tess
 	}
 	
 	/* really tessPqSortIsEmpty */
-	int pqIsEmpty( PriorityQ *pq )
+    template <typename Options, typename Allocators>
+	int PriorityQT<Options, Allocators>::isEmpty( )
 	{
-		return (pq->size == 0) && pqHeapIsEmpty( pq->heap );
+		return (size == 0) && heap.isEmpty( );
 	}
 	
 	/* really tessPqSortDelete */
-	void pqDelete( PriorityQ *pq, PQhandle curr )
+    template <typename Options, typename Allocators>
+	void PriorityQT<Options, Allocators>::remove( Handle curr )
 	{
 		if( curr >= 0 ) {
-			pqHeapDelete( pq->heap, curr );
+			heap.remove( curr );
 			return;
 		}
 		curr = -(curr+1);
-		assert( curr < pq->max && pq->keys[curr] != nullptr );
+		assert( curr < max && keys[curr] != nullptr );
 		
-		pq->keys[curr] = nullptr;
-		while( pq->size > 0 && *(pq->order[pq->size-1]) == nullptr ) {
-			-- pq->size;
+		keys[curr] = nullptr;
+		while( size > 0 && *(order[size-1]) == nullptr ) {
+			-- size;
 		}
 	}
 }

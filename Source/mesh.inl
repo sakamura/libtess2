@@ -43,12 +43,13 @@ namespace Tess
 	 * No vertex or face structures are allocated, but these must be assigned
 	 * before the current edge operation is completed.
 	 */
-	HalfEdge *HalfEdge::makeEdge( Mesh* mesh, HalfEdge *eNext )
+    template <typename Options, typename Allocators>
+	HalfEdgeT<Options, Allocators> *HalfEdgeT<Options, Allocators>::makeEdge( Mesh* mesh, HalfEdge *eNext )
 	{
 		HalfEdge *e;
 		HalfEdge *eSym;
 		HalfEdge *ePrev;
-		EdgePair *pair = new EdgePair;
+		EdgePair *pair = mesh->t->allocators.edgePairAlloc.construct();
 		
 		e = pair;
 		eSym = &pair->eSym;
@@ -92,7 +93,8 @@ namespace Tess
 	 * depending on whether a and b belong to different face or vertex rings.
 	 * For more explanation see tessMeshSplice() below.
 	 */
-	void HalfEdge::splice( HalfEdge *a, HalfEdge *b )
+    template <typename Options, typename Allocators>
+	void HalfEdgeT<Options, Allocators>::splice( HalfEdge *a, HalfEdge *b )
 	{
 		HalfEdge *aOnext = a->Onext();
 		HalfEdge *bOnext = b->Onext();
@@ -109,11 +111,12 @@ namespace Tess
 	 * the new vertex *before* vNext so that algorithms which walk the vertex
 	 * list will not see the newly created vertices.
 	 */
-	Vertex* Vertex::makeVertex( HalfEdge *eOrig, Vertex *vNext )
+    template<typename Options, typename Allocators>
+	VertexT<Options, Allocators>* VertexT<Options, Allocators>::makeVertex( Tesselator* t, HalfEdge *eOrig, Vertex *vNext )
 	{
 		HalfEdge *e;
 		Vertex *vPrev;
-		Vertex *vNew = new Vertex;
+		Vertex *vNew = t->allocators.vertexAlloc.construct();
 		
 		assert(vNew != nullptr);
 		
@@ -143,8 +146,12 @@ namespace Tess
 	 * the new face *before* fNext so that algorithms which walk the face
 	 * list will not see the newly created faces.
 	 */
-	static void MakeFace( Face *newFace, HalfEdge *eOrig, Face *fNext )
+    template <typename Options, typename Allocators>
+	static void MakeFace( FaceT<Options, Allocators> *newFace, HalfEdgeT<Options, Allocators> *eOrig, FaceT<Options, Allocators> *fNext )
 	{
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        using Face = FaceT<Options, Allocators>;
+        
 		HalfEdge *e;
 		Face *fPrev;
 		Face *fNew = newFace;
@@ -178,8 +185,12 @@ namespace Tess
 	/* KillEdge( eDel ) destroys an edge (the half-edges eDel and eDel->Sym),
 	 * and removes from the global edge list.
 	 */
-	static void KillEdge( Mesh *mesh, HalfEdge *eDel )
+    template <typename Options, typename Allocators>
+	static void KillEdge( MeshT<Options, Allocators> *mesh, HalfEdgeT<Options, Allocators> *eDel )
 	{
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        using EdgePair = EdgePairT<Options, Allocators>;
+        
 		HalfEdge *ePrev, *eNext;
 		
 		/* Half-edges are allocated in pairs, see EdgePair above */
@@ -197,8 +208,12 @@ namespace Tess
 	/* KillVertex( vDel ) destroys a vertex and removes it from the global
 	 * vertex list.	 It updates the vertex loop to point to a given new vertex.
 	 */
-	static void KillVertex( Mesh *mesh, Vertex *vDel, Vertex *newOrg )
+    template <typename Options, typename Allocators>
+	static void KillVertex( MeshT<Options, Allocators> *mesh, VertexT<Options, Allocators> *vDel, VertexT<Options, Allocators> *newOrg )
 	{
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        using Vertex = VertexT<Options, Allocators>;
+        
 		HalfEdge *e, *eStart = vDel->anEdge;
 		Vertex *vPrev, *vNext;
 		
@@ -220,8 +235,12 @@ namespace Tess
 	/* KillFace( fDel ) destroys a face and removes it from the global face
 	 * list.  It updates the face loop to point to a given new face.
 	 */
-	static void KillFace( Mesh *mesh, Face *fDel, Face *newLface )
+    template <typename Options, typename Allocators>
+	static void KillFace( MeshT<Options, Allocators> *mesh, FaceT<Options, Allocators> *fDel, FaceT<Options, Allocators> *newLface )
 	{
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        using Face = FaceT<Options, Allocators>;
+        
 		HalfEdge *e, *eStart = fDel->anEdge;
 		Face *fPrev, *fNext;
 		
@@ -246,7 +265,8 @@ namespace Tess
 	/* tessMeshMakeEdge creates one edge, two vertices, and a loop (face).
 	 * The loop consists of the two new half-edges.
 	 */
-	HalfEdge *Mesh::makeEdge( )
+    template <typename Options, typename Allocators>
+	HalfEdgeT<Options, Allocators> *MeshT<Options, Allocators>::makeEdge( )
 	{
 		Face *newFace = new Face;
 		HalfEdge *e = EdgePair::makeEdge( this, &eHead );
@@ -282,7 +302,8 @@ namespace Tess
 	 * If eDst == eOrg->Onext, the new vertex will have a single edge.
 	 * If eDst == eOrg->Oprev, the old vertex will have a single edge.
 	 */
-	void Mesh::splice( HalfEdge *eOrg, HalfEdge *eDst )
+    template <typename Options, typename Allocators>
+	void MeshT<Options, Allocators>::splice( HalfEdge *eOrg, HalfEdge *eDst )
 	{
 		int joiningLoops = false;
 		int joiningVertices = false;
@@ -332,7 +353,8 @@ namespace Tess
 	 * plus a few calls to memFree, but this would allocate and delete
 	 * unnecessary vertices and faces.
 	 */
-	void Mesh::remove( HalfEdge *eDel )
+    template <typename Options, typename Allocators>
+	void MeshT<Options, Allocators>::remove( HalfEdge *eDel )
 	{
 		HalfEdge *eDelSym = eDel->Sym();
 		int joiningLoops = false;
@@ -391,7 +413,8 @@ namespace Tess
 	 * eNew == eOrg->Lnext, and eNew->Dst is a newly created vertex.
 	 * eOrg and eNew will have the same left face.
 	 */
-	HalfEdge *Mesh::addEdgeVertex( HalfEdge *eOrg )
+    template <typename Options, typename Allocators>
+	HalfEdgeT<Options, Allocators> *MeshT<Options, Allocators>::addEdgeVertex( HalfEdge *eOrg )
 	{
 		HalfEdge *eNewSym;
 		HalfEdge *eNew = EdgePair::makeEdge( this, eOrg );
@@ -417,7 +440,8 @@ namespace Tess
 	 * such that eNew == eOrg->Lnext.  The new vertex is eOrg->Dst == eNew->Org.
 	 * eOrg and eNew will have the same left face.
 	 */
-	HalfEdge *Mesh::splitEdge( HalfEdge *eOrg )
+    template <typename Options, typename Allocators>
+	HalfEdgeT<Options, Allocators> *MeshT<Options, Allocators>::splitEdge( HalfEdge *eOrg )
 	{
 		HalfEdge *eNew;
 		HalfEdge *tempHalfEdge= addEdgeVertex( eOrg );
@@ -449,7 +473,8 @@ namespace Tess
 	 * If (eOrg->Lnext == eDst), the old face is reduced to a single edge.
 	 * If (eOrg->Lnext->Lnext == eDst), the old face is reduced to two edges.
 	 */
-	HalfEdge *Mesh::connect( HalfEdge *eOrg, HalfEdge *eDst )
+    template <typename Options, typename Allocators>
+	HalfEdgeT<Options, Allocators> *MeshT<Options, Allocators>::connect( HalfEdge *eOrg, HalfEdge *eDst )
 	{
 		HalfEdge *eNewSym;
 		int joiningLoops = false;
@@ -495,7 +520,8 @@ namespace Tess
 	 * An entire mesh can be deleted by zapping its faces, one at a time,
 	 * in any order.  Zapped faces cannot be used in further mesh operations!
 	 */
-	void Mesh::zapFace( Face *fZap )
+    template <typename Options, typename Allocators>
+	void MeshT<Options, Allocators>::zapFace( Face *fZap )
 	{
 		HalfEdge *eStart = fZap->anEdge;
 		HalfEdge *e, *eNext, *eSym;
@@ -542,7 +568,9 @@ namespace Tess
 	/* tessMeshNewMesh() creates a new mesh with no edges, no vertices,
 	 * and no loops (what we usually call a "face").
 	 */
-	Mesh::Mesh( )
+    template <typename Options, typename Allocators>
+    MeshT<Options, Allocators>::MeshT(Tesselator* _t) :
+        t(_t)
 	{
 		Vertex *v;
 		Face *f;
@@ -569,7 +597,8 @@ namespace Tess
 		eSym->setNext(eSym);
 		eSym->setSym(e);
 	}
-	Mesh::~Mesh( )
+    template <typename Options, typename Allocators>
+	MeshT<Options, Allocators>::~MeshT( )
 	{
 		for (auto v = vBegin(); v != vEnd(); )
 		{
@@ -602,7 +631,8 @@ namespace Tess
 	/* tessMeshUnion( mesh1, mesh2 ) forms the union of all structures in
 	 * both meshes, and returns the new mesh (the old meshes are destroyed).
 	 */
-	void Mesh::meshUnion( Mesh *meshToMerge )
+    template <typename Options, typename Allocators>
+	void MeshT<Options, Allocators>::meshUnion( Mesh *meshToMerge )
 	{
 		Face *f1 = fEnd();
 		Vertex *v1 = vEnd();
@@ -644,8 +674,11 @@ namespace Tess
 	}
 	
 	
-	static int CountFaceVerts( Face *f )
+    template <typename Options, typename Allocators>
+	static int CountFaceVerts( FaceT<Options, Allocators> *f )
 	{
+        using HalfEdge = HalfEdgeT<Options, Allocators>;
+        
 		HalfEdge *eCur = f->anEdge;
 		int n = 0;
 		do
@@ -657,7 +690,8 @@ namespace Tess
 		return n;
 	}
 	
-	void Mesh::mergeConvexFaces( int maxVertsPerFace )
+    template <typename Options, typename Allocators>
+	void MeshT<Options, Allocators>::mergeConvexFaces( int maxVertsPerFace )
 	{
 		HalfEdge *e, *eNext, *eSym;
 		Vertex *va, *vb, *vc, *vd, *ve, *vf;
@@ -705,7 +739,8 @@ namespace Tess
 		}
 	}
 	
-	void Mesh::flipEdge( HalfEdge *edge )
+    template <typename Options, typename Allocators>
+	void MeshT<Options, Allocators>::flipEdge( HalfEdge *edge )
 	{
 		HalfEdge *a0 = edge;
 		HalfEdge *a1 = a0->Lnext();
@@ -785,7 +820,8 @@ namespace Tess
 	
 	/* tessMeshCheckMesh( mesh ) checks a mesh for self-consistency.
 	 */
-	void Mesh::checkMesh( )
+    template <typename Options, typename Allocators>
+	void MeshT<Options, Allocators>::checkMesh( )
 	{
 #ifndef NDEBUG
 		Face *faceHead = fEnd();
