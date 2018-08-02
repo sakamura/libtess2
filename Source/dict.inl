@@ -37,7 +37,9 @@
 namespace Tess
 {
 	/* really tessDictListNewDict */
-	Dict::Dict( void *frame, bool (*leq)(void *frame, DictKey key1, DictKey key2) )
+    template <typename Options, typename Allocators>
+    DictT<Options, Allocators>::DictT( Tesselator* _t, bool (*leq)(void *frame, DictKey key1, DictKey key2) ) :
+        t(_t)
 	{
 		DictNode *head;
 		
@@ -47,25 +49,26 @@ namespace Tess
 		head->next = head;
 		head->prev = head;
 		
-		_frame = frame;
 		_leq = leq;
 	}
 	
 	/* really tessDictListDeleteDict */
-	Dict::~Dict( )
+    template <typename Options, typename Allocators>
+	DictT<Options, Allocators>::~DictT( )
 	{
 	}
 	
 	/* really tessDictListInsertBefore */
-	DictNode *Dict::insertBefore( DictNode *node, DictKey key )
+    template <typename Options, typename Allocators>
+	DictNode *DictT<Options, Allocators>::insertBefore( DictNode *node, DictKey key )
 	{
 		DictNode *newNode;
 		
 		do {
 			node = node->prev;
-		} while( node->key != nullptr && ! (*_leq)(_frame, node->key, key));
+		} while( node->key != nullptr && ! (*_leq)(t, node->key, key));
 		
-		newNode = new DictNode;
+        newNode = t->allocators.dictNodeAlloc.construct();
 		
 		newNode->key = key;
 		newNode->next = node->next;
@@ -77,21 +80,23 @@ namespace Tess
 	}
 	
 	/* really tessDictListDelete */
-	void Dict::deleteNode( DictNode *node ) /*ARGSUSED*/
+    template <typename Options, typename Allocators>
+	void DictT<Options, Allocators>::deleteNode( DictNode *node ) /*ARGSUSED*/
 	{
 		node->next->prev = node->prev;
 		node->prev->next = node->next;
-		delete node;
+		t->allocators.dictNodeAlloc.destroy(node);
 	}
 	
 	/* really tessDictListSearch */
-	DictNode *Dict::search( DictKey key )
+    template <typename Options, typename Allocators>
+	DictNode *DictT<Options, Allocators>::search( DictKey key )
 	{
 		DictNode *node = &_head;
 		
 		do {
 			node = node->next;
-		} while( node->key != nullptr && ! (*_leq)(_frame, key, node->key));
+		} while( node->key != nullptr && ! (*_leq)(t, key, node->key));
 		
 		return node;
 	}

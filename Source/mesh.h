@@ -121,7 +121,7 @@ namespace Tess
 		HalfEdge *anEdge;	 /* a half-edge with this origin */
 		
 		/* Internal data (keep hidden) */
-		float s, t;		  /* projection onto the sweep plane */
+		typename Options::Coord s, t;		  /* projection onto the sweep plane */
 		int pqHandle;	/* to allow deletion from priority queue */
 		int n;			/* to allow identify unique vertices */
 		int idx;			/* to allow map result to original verts */

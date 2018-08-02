@@ -46,13 +46,17 @@ namespace Tess
 		DictNode *prev;
 	};
 	
-	struct Dict {
+    template <typename Options, typename Allocators>
+	struct DictT {
+        using Tesselator = Tess::Tesselator<Options, Allocators>;
+        using Dict = DictT<Options, Allocators>;
+        
+        Tesselator* t;
 		DictNode _head;
-		void *_frame;
 		LeqFunc _leq;
 
-		Dict(void *frame, LeqFunc leq);
-		~Dict();
+		DictT(Tesselator* t, LeqFunc leq);
+		~DictT();
 
 		/* Search returns the node with the smallest key greater than or equal
 		 * to the given key.  If there is no such key, returns a node whose
@@ -64,7 +68,6 @@ namespace Tess
 		DictNode *insert( DictKey key ) { return insertBefore(&_head, key); }
 		DictNode *min() { return _head.next; }
 		DictNode *max() { return _head.prev; }
-
 	};
 }
 

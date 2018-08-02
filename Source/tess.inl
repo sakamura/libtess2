@@ -159,7 +159,7 @@ namespace Tess
 		//	3) insert all dual edges into a queue
 
 		Face *f;
-		EdgeStack stack;
+		EdgeStack stack(this);
 		HalfEdge *edge;
 		int maxFaces = 0, maxIter = 0, iter = 0;
 
@@ -263,11 +263,11 @@ namespace Tess
     Tesselator<Options, Allocators>::Tesselator(Options& _options) :
         options(_options)
 	{
-		bmin[0] = std::numeric_limits<float>::max();
+		bmin[0] = std::numeric_limits<typename Options::Coord>::max();
 	
-		bmin[1] = std::numeric_limits<float>::max();
-		bmax[0] = -std::numeric_limits<float>::max();
-		bmax[1] = -std::numeric_limits<float>::max();
+		bmin[1] = std::numeric_limits<typename Options::Coord>::max();
+		bmax[0] = -std::numeric_limits<typename Options::Coord>::max();
+		bmax[1] = -std::numeric_limits<typename Options::Coord>::max();
 		
 		// Initialize to begin polygon.
 		mesh = nullptr;
@@ -322,7 +322,7 @@ namespace Tess
 		int maxFaceCount = 0;
 		int maxVertexCount = 0;
 		int faceVerts, i;
-		float *vert;
+		typename Options::Coord *vert;
 		
 		// Assume that the input data is triangles now.
 		// Try to merge as many polygons as possible
@@ -368,7 +368,7 @@ namespace Tess
 		int* elems = elements = new int[(unsigned long)(maxFaceCount * polySize)];
 	
 		vertexCount = maxVertexCount;
-		vertices = new float[(unsigned long)vertexCount * 2];
+		vertices = new typename Options::Coord[(unsigned long)vertexCount * 2];
 		vertexIndices = new int[(unsigned long)vertexCount];
 		
 	
@@ -451,7 +451,7 @@ namespace Tess
 		}
 		
 		int* elems = elements = new int[(unsigned long)elementCount * 2];
-		float* verts = vertices = new float[(unsigned long)vertexCount * 2];
+		typename Options::Coord* verts = vertices = new typename Options::Coord[(unsigned long)vertexCount * 2];
 		int* vertInds = vertexIndices = new int[(unsigned long)vertexCount];
 	
 		
@@ -485,13 +485,13 @@ namespace Tess
 	void Tesselator<Options, Allocators>::beginContour()
 	{
 		if ( mesh == nullptr )
-			mesh = new Mesh;
+			mesh = new Mesh(this);
 		
 		e = nullptr;
 	}
 	
     template <typename Options, typename Allocators>
-	void Tesselator<Options, Allocators>::addVertex( float x, float y )
+	void Tesselator<Options, Allocators>::addVertex( typename Options::Coord x, typename Options::Coord y )
 	{
 		if( e == nullptr ) {
 			/* Make a self-loop (one vertex, one edge). */
@@ -535,14 +535,14 @@ namespace Tess
 		
 		for( i = 0; i < numVertices; ++i )
 		{
-			const float* coords = (const float*)src;
+			const typename Options::Coord* coords = (const typename Options::Coord*)src;
 			src += stride;
 			addVertex(coords[0], coords[1]);
 		}
 	}
 
     template <typename Options, typename Allocators>
-	void Tesselator<Options, Allocators>::tesselate( ElementType elementType, int polySize, const float* normal )
+	void Tesselator<Options, Allocators>::tesselate( ElementType elementType, int polySize, const typename Options::Coord* normal )
 	{
 		if (vertices != nullptr) {
 			delete[] vertices;

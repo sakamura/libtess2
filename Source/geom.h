@@ -59,16 +59,16 @@ namespace Tess
 	
 	
     template <typename Options, typename Allocators>
-    float edgeEval( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Returns the signed distance from uw to v.
+    typename Options::Coord edgeEval( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Returns the signed distance from uw to v.
 	
     template <typename Options, typename Allocators>
-    float edgeSign( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Returns a number whose sign matches edgeEval(u,v,w) but which is cheaper to evaluate.
+    typename Options::Coord edgeSign( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Returns a number whose sign matches edgeEval(u,v,w) but which is cheaper to evaluate.
 	
     template <typename Options, typename Allocators>
-    float transEdgeEval( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Transposed version of edgeEval
+    typename Options::Coord transEdgeEval( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Transposed version of edgeEval
     
     template <typename Options, typename Allocators>
-    float transEdgeSign( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Transposed version of edgeSign
+    typename Options::Coord transEdgeSign( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Transposed version of edgeSign
 	
     template <typename Options, typename Allocators>
     void edgeIntersect( const VertexT<Options, Allocators> *o1, const VertexT<Options, Allocators> *d1, const VertexT<Options, Allocators> *o2, const VertexT<Options, Allocators> *d2, VertexT<Options, Allocators> *v ); // Given edges (o1,d1) and (o2,d2), compute their point of intersection.

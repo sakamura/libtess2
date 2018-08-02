@@ -90,7 +90,7 @@ namespace Tess
 	 */
 	{
 		HalfEdge *e1, *e2;
-		float t1, t2;
+		typename Options::Coord t1, t2;
 		
 		e1 = reg1->eUp;
 		e2 = reg2->eUp;
@@ -427,7 +427,7 @@ namespace Tess
 				
 			} else if( eUp->Org() != eLo->Org() ) {
 				/* merge the two vertices, discarding eUp->Org */
-				pqDelete( pq, eUp->Org()->pqHandle );
+				pq->remove( eUp->Org()->pqHandle );
 				spliceMergeVertices( eLo->Oprev(), eUp );
 			}
 		} else {
@@ -509,7 +509,7 @@ namespace Tess
 		Vertex *orgLo = eLo->Org();
 		Vertex *dstUp = eUp->Dst();
 		Vertex *dstLo = eLo->Dst();
-		float tMinUp, tMaxLo;
+		typename Options::Coord tMinUp, tMaxLo;
 		Vertex isect, *orgMin;
 		HalfEdge *edge;
 		
@@ -631,7 +631,7 @@ namespace Tess
 		mesh->splice( eLo->Oprev(), eUp );
 		eUp->Org()->s = isect.s;
 		eUp->Org()->t = isect.t;
-		eUp->Org()->pqHandle = pqInsert( pq, eUp->Org() );
+		eUp->Org()->pqHandle = pq->insert( eUp->Org() );
         assert(eUp->Org()->pqHandle != PriorityQ::INV_HANDLE);
 		eUp->Org()->idx = sTessUndef;
 		regUp->regionAbove()->dirty = regUp->dirty = regLo->dirty = true;
@@ -1005,7 +1005,7 @@ namespace Tess
 	 */
 	
     template <typename Options, typename Allocators>
-	void Tesselator<Options, Allocators>::addSentinel( float smin, float smax, float t )
+	void Tesselator<Options, Allocators>::addSentinel( typename Options::Coord smin, typename Options::Coord smax, typename Options::Coord t )
 	/*
 	 * We add two sentinel edges above and below all other edges,
 	 * to avoid special cases at the top and bottom.
@@ -1039,8 +1039,8 @@ namespace Tess
 	 * This order is maintained in a dynamic dictionary.
 	 */
 	{
-		float w, h;
-		float smin, smax, tmin, tmax;
+		typename Options::Coord w, h;
+		typename Options::Coord smin, smax, tmin, tmax;
 		
 		dict = new Dict( this, (LeqFunc)edgeLeq );
 		
@@ -1134,7 +1134,7 @@ namespace Tess
 		/* Make sure there is enough space for sentinels. */
 		vertexCountQ += 8;
 		
-        pq = new PriorityQ( vertexCountQ, (typename PriorityQ::LeqFunc *)vertAreLessOrEqual );
+        pq = new PriorityQ( this, vertexCountQ, (typename PriorityQ::LeqFunc)vertAreLessOrEqual<Options, Allocators> );
 		
 		vHead = mesh->vEnd();
 		for( v = vHead->next; v != vHead; v = v->next ) {
@@ -1207,9 +1207,9 @@ namespace Tess
 		initPriorityQ( );
 		initEdgeDict( );
 		
-		while( (v = (Vertex *)pqExtractMin( pq )) != nullptr ) {
+		while( (v = pq->extractMin( )) != nullptr ) {
 			for( ;; ) {
-				vNext = (Vertex *)pqMinimum( pq );
+				vNext = pq->minimum( );
 				if( vNext == nullptr || ! vertAreEqual( vNext, v )) break;
 				
 				/* Merge together all vertices at exactly the same location.
@@ -1226,7 +1226,7 @@ namespace Tess
 				 * gap between them.  This kind of error is especially obvious
 				 * when using boundary extraction (TESS_BOUNDARY_ONLY).
 				 */
-				vNext = (Vertex *)pqExtractMin( pq );
+				vNext = pq->extractMin( );
 				spliceMergeVertices( v->anEdge, vNext->anEdge );
 			}
 			sweepEvent( v );

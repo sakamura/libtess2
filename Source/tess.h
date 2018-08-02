@@ -54,7 +54,8 @@ namespace Tess
     template <typename Options, typename Allocators>
 	class MeshT;
 
-    struct Dict;
+    template <typename Options, typename Allocators>
+    struct DictT;
 
     template <typename Options, typename Allocators>
     struct PriorityQT;
@@ -86,7 +87,8 @@ namespace Tess
         using Face = FaceT<Options, Allocators>;
         using ActiveRegion = ActiveRegionT<Options, Allocators>;
         using PriorityQ = PriorityQT<Options, Allocators>;
-        
+        using Dict = DictT<Options, Allocators>;
+
     public:
         Options options;          // Options, as set up in constructor.
         Allocators allocators;    // Allocators, as used in the different tesselators.
@@ -96,8 +98,8 @@ namespace Tess
 		Mesh	*mesh;		/* stores the input contours, and eventually
 								 the tessellation itself */
 		
-		float bmin[2];
-		float bmax[2];
+		typename Options::Coord bmin[2];
+		typename Options::Coord bmax[2];
 		
 		/*** state needed for the line sweep ***/
 		Dict *dict;		/* edge dictionary for sweep line */
@@ -107,7 +109,7 @@ namespace Tess
 		HalfEdge *e;
 		
 		/*** outputs ***/
-		float *vertices;
+		typename Options::Coord *vertices;
 		int *vertexIndices;
 		int vertexCount;
 		int *elements;
@@ -119,7 +121,7 @@ namespace Tess
 
 		void beginContour();
 		
-		void addVertex(float x, float y);
+		void addVertex(typename Options::Coord x, typename Options::Coord y);
 		
 		// addContour() - Adds a contour to be tesselated.
 		// The type of the vertex coordinates is assumed to be float.
@@ -136,7 +138,7 @@ namespace Tess
 		//	 normal - defines the normal of the input contours, of nullptr the normal is calculated automatically.
 		// Returns:
 		//	 1 if succeed, 0 if failed.
-		void tesselate(ElementType elementType, int polySize, const float* normal);
+		void tesselate(ElementType elementType, int polySize, const typename Options::Coord* normal);
 		
 		// getVertexCount() - Returns number of vertices in the tesselated output.
 		int getVertexCount() const
@@ -145,7 +147,7 @@ namespace Tess
 		}
 		
 		// getVertices() - Returns pointer to first coordinate of first vertex.
-		const float* getVertices() const
+		const typename Options::Coord* getVertices() const
 		{
 			return vertices;
 		}
@@ -206,7 +208,7 @@ namespace Tess
 		void connectLeftDegenerate( ActiveRegion *regUp, Vertex *vEvent );
 		void connectLeftVertex( Vertex *vEvent );
 		void sweepEvent( Vertex *vEvent );
-		void addSentinel( float smin, float smax, float t );
+		void addSentinel( typename Options::Coord smin, typename Options::Coord smax, typename Options::Coord t );
 		void initEdgeDict( );
 		void doneEdgeDict( );
 		void removeDegenerateEdges();

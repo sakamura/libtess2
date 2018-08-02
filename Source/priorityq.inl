@@ -73,11 +73,6 @@ namespace Tess
 	 */
 	
 	
-#define pqHeapMinimum(pq)	((pq)->handles[(pq)->nodes[1].handle].key)
-#define pqHeapIsEmpty(pq)	((pq)->size == 0)
-	
-	
-	
 	/* really pqHeapNewPriorityQHeap */
     template <typename Options, typename Allocators>
     PriorityQT<Options, Allocators>::Heap::Heap( Tesselator* _t, int _size, LeqFunc _leq ) :
@@ -177,7 +172,7 @@ namespace Tess
 		/* This method of building a heap is O(n), rather than O(n lg n). */
 		
 		for( i = size; i >= 1; --i ) {
-			FloatDown( this, i );
+			FloatDown<Options, Allocators>( this, i );
 		}
 		initialized = true;
 	}
@@ -204,7 +199,7 @@ namespace Tess
 		handles[free].key = keyNew;
 		
 		if( initialized ) {
-			FloatUp( this, curr );
+			FloatUp<Options, Allocators>( this, curr );
 		}
 		assert(free != INV_HANDLE);
 		return free;
@@ -228,7 +223,7 @@ namespace Tess
 			freeList = hMin;
 			
 			if( -- size > 0 ) {
-				FloatDown( this, 1 );
+				FloatDown<Options, Allocators>( this, 1 );
 			}
 		}
 		return min;
@@ -250,9 +245,9 @@ namespace Tess
 		
 		if( curr <= -- size ) {
 			if( curr <= 1 || LEQ( h[n[curr>>1].handle].key, h[n[curr].handle].key )) {
-				FloatDown( this, curr );
+				FloatDown<Options, Allocators>( this, curr );
 			} else {
-				FloatUp( this, curr );
+				FloatUp<Options, Allocators>( this, curr );
 			}
 		}
 		h[hCurr].key = nullptr;
@@ -267,7 +262,7 @@ namespace Tess
 	/* really tessPqSortNewPriorityQ */
     template <typename Options, typename Allocators>
     PriorityQT<Options, Allocators>::PriorityQT( Tesselator* _t, int _size, LeqFunc _leq ) :
-        heap(_t, size, leq)
+        heap(_t, _size, _leq)
 	{
 		keys = new Key[(unsigned long)size];
 		

@@ -201,7 +201,7 @@ namespace Tess
 		ePrev = eDel->Sym()->next();
 		eNext->Sym()->setNext(ePrev);
 		ePrev->Sym()->setNext(eNext);
-		delete reinterpret_cast<EdgePair*>(eDel);
+		mesh->t->allocators.edgePairAlloc.destroy(reinterpret_cast<EdgePair*>(eDel));
 	}
 	
 	
@@ -229,7 +229,7 @@ namespace Tess
 		vNext = vDel->next;
 		vNext->prev = vPrev;
 		vPrev->next = vNext;
-		delete vDel;
+		mesh->t->allocators.vertexAlloc.destroy(vDel);
 	}
 	
 	/* KillFace( fDel ) destroys a face and removes it from the global face
@@ -256,7 +256,7 @@ namespace Tess
 		fNext = fDel->next;
 		fNext->prev = fPrev;
 		fPrev->next = fNext;
-		delete fDel;
+		mesh->t->allocators.faceAlloc.destroy( fDel );
 	}
 	
 	
@@ -268,11 +268,11 @@ namespace Tess
     template <typename Options, typename Allocators>
 	HalfEdgeT<Options, Allocators> *MeshT<Options, Allocators>::makeEdge( )
 	{
-		Face *newFace = new Face;
+		Face *newFace = t->allocators.faceAlloc.construct();
 		HalfEdge *e = EdgePair::makeEdge( this, &eHead );
 
-		Vertex::makeVertex( e, &vHead );
-		Vertex::makeVertex( e->Sym(), &vHead );
+		Vertex::makeVertex( t, e, &vHead );
+		Vertex::makeVertex( t, e->Sym(), &vHead );
 
 		MakeFace( newFace, e, &fHead );
 		return e;
@@ -328,11 +328,11 @@ namespace Tess
 			/* We split one vertex into two -- the new vertex is eDst->Org.
 			 * Make sure the old vertex points to a valid half-edge.
 			 */
-			Vertex::makeVertex( eDst, eOrg->Org() );
+			Vertex::makeVertex( t, eDst, eOrg->Org() );
 			eOrg->Org()->anEdge = eOrg;
 		}
 		if( ! joiningLoops ) {
-			Face *newFace = new Face;
+			Face *newFace = t->allocators.faceAlloc.construct();
 			
 			/* We split one loop into two -- the new loop is eDst->Lface.
 			 * Make sure the old face points to a valid half-edge.
@@ -369,7 +369,7 @@ namespace Tess
 		}
 		
 		if( eDel->Onext() == eDel ) {
-			KillVertex( this, eDel->Org(), nullptr );
+			KillVertex( this, eDel->Org(), (Vertex*)nullptr );
 		} else {
 			/* Make sure that eDel->Org and eDel->Rface point to valid half-edges */
 			eDel->Rface()->anEdge = eDel->Oprev();
@@ -377,7 +377,7 @@ namespace Tess
 			
 			HalfEdge::splice( eDel, eDel->Oprev() );
 			if( ! joiningLoops ) {
-				Face *newFace= new Face;
+				Face *newFace= t->allocators.faceAlloc.construct();
 				
 				/* We are splitting one loop into two -- create a new loop for eDel. */
 				MakeFace( newFace, eDel, eDel->Lface() );
@@ -388,8 +388,8 @@ namespace Tess
 		 * may have been deleted.  Now we disconnect eDel->Dst.
 		 */
 		if( eDelSym->Onext() == eDelSym ) {
-			KillVertex( this, eDelSym->Org(), nullptr );
-			KillFace( this, eDelSym->Lface(), nullptr );
+			KillVertex( this, eDelSym->Org(), (Vertex*)nullptr );
+			KillFace( this, eDelSym->Lface(), (Face*)nullptr );
 		} else {
 			/* Make sure that eDel->Dst and eDel->Lface point to valid half-edges */
 			eDel->Lface()->anEdge = eDelSym->Oprev();
@@ -427,7 +427,7 @@ namespace Tess
 		/* Set the vertex and face information */
 		eNew->setOrg(eOrg->Dst());
 		{
-			Vertex::makeVertex( eNewSym, eNew->Org() );
+			Vertex::makeVertex( t, eNewSym, eNew->Org() );
 		}
 		eNewSym->setLface(eOrg->Lface());
 		eNew->setLface(eOrg->Lface());
@@ -502,7 +502,7 @@ namespace Tess
 		eOrg->Lface()->anEdge = eNewSym;
 		
 		if( ! joiningLoops ) {
-			Face *newFace= new Face;
+			Face *newFace= t->allocators.faceAlloc.construct();
 			
 			/* We split one loop into two -- the new loop is eNew->Lface */
 			MakeFace( newFace, eNew, eOrg->Lface() );
@@ -561,7 +561,7 @@ namespace Tess
 		fNext = fZap->next;
 		fNext->prev = fPrev;
 		fPrev->next = fNext;
-		delete fZap;
+		t->allocators.faceAlloc.destroy( fZap );
 	}
 	
 	
@@ -604,13 +604,13 @@ namespace Tess
 		{
 			auto toDelete = v;
 			v = v->next;
-			delete toDelete;
+			t->allocators.vertexAlloc.destroy( toDelete );
 		}
 		for (auto f = fBegin(); f != fEnd(); )
 		{
 			auto toDelete = f;
 			f = f->next;
-			delete toDelete;
+            t->allocators.faceAlloc.destroy( toDelete );
 		}
 		for (auto e = eBegin(); e != eEnd(); )
 		{
@@ -618,11 +618,11 @@ namespace Tess
 			e = e->next();
 			if (toDelete->Sym() < toDelete)
 			{
-				delete (EdgePair*)toDelete->Sym();
+                t->allocators.edgePairAlloc.destroy( (EdgePair*)toDelete->Sym() );
 			}
 			else
 			{
-				delete (EdgePair*)toDelete;
+				t->allocators.edgePairAlloc.destroy( (EdgePair*)toDelete );
 			}
 		}
 	}

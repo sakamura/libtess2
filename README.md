@@ -40,7 +40,6 @@ To do
 - Bug fixing, edge cases, optimizations
 - Dusting off current code, which has a lot of inconsistencies and evil parts
 - Rewriting code to support C++14 by default, C++11 backward compatibility (if possible) with optional features up to C++17 when there's a speed gain and legibility to be had. Examples are new for loops; accessor functions; removing remaining defines; reducing short variable names and A()->B().C().d.E() paradigms with (or without) parenthesis that clutter the code uselessly; making code more legible; removing remaining static functions; usage of _ptrs and algorithms; ...
-- 
 - Currently, work is compiled for iOS, nothing else. General compatibility with MSVC and other compilers, and putting back a Linux implementation and standardized code package format would be really nice
 - STL containers to initially add up vertices automatically without having to copy the data internally
 - Adding vectors while tesselation is occurring to remove final coordinates copy

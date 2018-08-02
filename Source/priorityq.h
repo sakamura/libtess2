@@ -70,7 +70,7 @@ namespace Tess
         typedef int Handle;
         struct Node { Handle handle; };
         struct HandleElem { Key key; Handle node; };
-        using LeqFunc = int (*)(Key key1, Key key2);
+        using LeqFunc = bool (*)(const Key key1, const Key key2);
 
         struct Heap {
             Tesselator* t;
@@ -90,6 +90,9 @@ namespace Tess
             Handle insert( Key keyNew );
             Key extractMin( );
             void remove( Handle hCurr );
+            
+            Key minimum() { return handles[nodes[1].handle].key; }
+            bool isEmpty() { return size == 0; }
         };
 
         Heap heap;
