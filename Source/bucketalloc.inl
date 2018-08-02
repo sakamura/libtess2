@@ -26,7 +26,7 @@
 ** this Software without prior written authorization from Silicon Graphics, Inc.
 */
 /*
-** Author: Michel Donais, November 2016.
+** Original Author: Mikko Mononen, July 2009.
 */
 
 #include <cassert>

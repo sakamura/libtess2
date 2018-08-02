@@ -26,7 +26,7 @@
 ** this Software without prior written authorization from Silicon Graphics, Inc.
 */
 /*
-** Author: Eric Veach, July 1994.
+** Original Author: Eric Veach, July 1994.
 */
 
 //#include "tesos.h"
@@ -81,8 +81,8 @@ namespace Tess
 		size = 0;
 		max = _size;
 		assert(_size > 0);
-		nodes = new Node[(unsigned long)size+1];
-		handles = new HandleElem[(unsigned long)size+1];
+		nodes = new Node[(unsigned long)max+1];
+		handles = new HandleElem[(unsigned long)max+1];
 		
 		initialized = false;
 		freeList = 0;
@@ -264,12 +264,12 @@ namespace Tess
     PriorityQT<Options, Allocators>::PriorityQT( Tesselator* _t, int _size, LeqFunc _leq ) :
         heap(_t, _size, _leq)
 	{
-		keys = new Key[(unsigned long)size];
-		
 		size = 0;
 		max = _size; //INIT_SIZE;
 		initialized = false;
 		leq = _leq;
+
+        keys = new Key[(unsigned long)max];
 	}
 	
 	/* really tessPqSortDeletePriorityQ */

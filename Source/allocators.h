@@ -26,7 +26,7 @@
  ** this Software without prior written authorization from Silicon Graphics, Inc.
  */
 /*
- ** Author: Michel Donais, July 2018.
+ ** Original Author: Michel Donais, July 2018.
  */
 
 #pragma once

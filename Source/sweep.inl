@@ -26,7 +26,7 @@
 ** this Software without prior written authorization from Silicon Graphics, Inc.
 */
 /*
-** Author: Eric Veach, July 1994.
+** Original Author: Eric Veach, July 1994.
 */
 
 #include <cstddef>

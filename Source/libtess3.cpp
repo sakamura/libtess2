@@ -33,37 +33,3 @@
 #include "tess.h"
 
 extern const char* const LIBTESS_VERSION = "libTess3 1.0.0";
-
-/*
-extern Tess::Tesselator<> Test(Tess::BaseOptions());
-
-#include <boost/pool/object_pool.hpp>
-
-template <typename Options>
-struct BoostAllocators
-{
-    using Vertex = Tess::VertexT<Options, BoostAllocators>;
-    using Face = Tess::FaceT<Options, BoostAllocators>;
-    using EdgePair = Tess::EdgePairT<Options, BoostAllocators>;
-    using ActiveRegion = Tess::ActiveRegionT<Options, BoostAllocators>;
-    using EdgeStackNode = typename Tess::EdgeStackT<Options, BoostAllocators>::Node;
-    
-    boost::object_pool<Tess::DictNode> dictNodeAlloc;
-    boost::object_pool<Vertex> vertexAlloc;
-    boost::object_pool<Face> faceAlloc;
-    boost::object_pool<EdgePair> edgePairAlloc;
-    boost::object_pool<ActiveRegion> activeRegionAlloc;
-    boost::object_pool<EdgeStackNode> edgeStackNodeAlloc;
-    
-    BoostAllocators() :
-        dictNodeAlloc(512),
-        vertexAlloc(512),
-        faceAlloc(512),
-        edgePairAlloc(512),
-        activeRegionAlloc(512),
-        edgeStackNodeAlloc(2048)
-    {
-    }
-};
-extern Tess::Tesselator<Tess::BaseOptions, BoostAllocators<Tess::BaseOptions> > Test2(Tess::BaseOptions());
-*/
