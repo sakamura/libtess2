@@ -78,7 +78,7 @@ namespace Tess
         void destroy(T* t)
         {
             t->~T();
-            free( (void*)t );
+            this->free( (void*)t );
         }
 	};
 }
