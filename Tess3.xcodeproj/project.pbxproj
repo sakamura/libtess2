@@ -61,7 +61,7 @@
 		96D119E6210E90CE000ED4E1 /* options.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = options.h; sourceTree = "<group>"; };
 		96D119E8210FE35B000ED4E1 /* allocators.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = allocators.h; sourceTree = "<group>"; };
 		96D119E9210FE380000ED4E1 /* edgestack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = edgestack.h; sourceTree = "<group>"; };
-		96FF989A1D65E54800404BDA /* libtess2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libtess2.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		96FF989A1D65E54800404BDA /* libtess2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; name = libtess2.a; path = libtess3.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		96FF98A71D65E59200404BDA /* alg_outline.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = alg_outline.md; sourceTree = "<group>"; };
 		96FF98AC1D65E59200404BDA /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		96FF98AD1D65E59200404BDA /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -267,6 +267,7 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LIBRARY_SEARCH_PATHS = /opt/boost/lib;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = tess3;
@@ -327,6 +328,7 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LIBRARY_SEARCH_PATHS = /opt/boost/lib;
 				PRODUCT_NAME = tess3;
 				SKIP_INSTALL = YES;
