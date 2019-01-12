@@ -1,6 +1,6 @@
 libtess3 C++
 ============
-**Version 1.0.0** [WIP]
+**Version 0.1.0**
 
 **libtess3** is a good quality polygon tesselator and triangulator.
 
@@ -33,16 +33,18 @@ This code is undergoing a LOT of changes, breaking and incompatible, potentially
 
 To do
 -----
-- Allow STL allocators
-- STL containers for dictionaries, edge stack, priority queues (all while making sure we aren't losing performance)
-- External geometry whenever possible, such as having templated hooks to GLM
-- Allowing multiple algorithms
-- Bug fixing, edge cases, optimizations
-- Dusting off current code, which has a lot of inconsistencies and evil parts
-- Rewriting code to support C++14 by default, C++11 backward compatibility (if possible) with optional features up to C++17 when there's a speed gain and legibility to be had. Examples are new for loops; accessor functions; removing remaining defines; reducing short variable names and A()->B().C().d.E() paradigms with (or without) parenthesis that clutter the code uselessly; making code more legible; removing remaining static functions; usage of _ptrs and algorithms; ...
-- Currently, work is compiled for iOS, nothing else. General compatibility with MSVC and other compilers, and putting back a Linux implementation and standardized code package format would be really nice
-- STL containers to initially add up vertices automatically without having to copy the data internally
-- Adding vectors while tesselation is occurring to remove final coordinates copy
+- All parametrizable (through Options) STL containers for dictionaries, edge stack, priority queues (all while making sure we aren't losing performance)
+- The evil EdgePair has to be fixed. There must be a better way to do this!
+- More external geometry whenever possible. (Random probably unsuitable examples: having templated hooks to GLM and high speed libraries such as Eigen)
+- Allowing multiple tesselation algorithms
+- Compatibility with something else than iOS: make platforms ubiquitous
 - Remove part of the requirement to output the results, doing it dynamically while tesselation occurs instead
 - Add back 3D
 - Add new examples
+- Add unit tests
+
+To do that will never be satisfied
+----------------------------------
+- Bug fixing, edge cases, optimizations
+- Dusting off current code, which has a lot of inconsistencies and evil parts
+- Rewriting code to support C++17 by default and new C++20 features when there's a speed gain and legibility to be had. Examples are new for loops; accessor functions; removing remaining defines; reducing short variable names and A()->B().C().d.E() paradigms with (or without) parenthesis that clutter the code uselessly; making code more legible; removing remaining static functions; usage of _ptrs and algorithms; coroutines; ...
