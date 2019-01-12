@@ -509,10 +509,11 @@ namespace Tess
 		Vertex *orgLo = eLo->Org();
 		Vertex *dstUp = eUp->Dst();
 		Vertex *dstLo = eLo->Dst();
-		typename Options::Coord tMinUp, tMaxLo;
-		Vertex isect, *orgMin;
+		Coord tMinUp, tMaxLo;
+		Vertex *orgMin;
 		HalfEdge *edge;
-		
+        InternalVec isect;
+        
 		assert( ! vertAreEqual( dstLo, dstUp ));
 		assert( edgeSign( dstUp, event, orgUp ) <= 0 );
 		assert( edgeSign( dstLo, event, orgLo ) >= 0 );
@@ -521,8 +522,8 @@ namespace Tess
 		
 		if( orgUp == orgLo ) return false;	/* right endpoints are the same */
 		
-		tMinUp = MIN( orgUp->t, dstUp->t );
-		tMaxLo = MAX( orgLo->t, dstLo->t );
+		tMinUp = MIN( orgUp->getT(), dstUp->getT() );
+		tMaxLo = MAX( orgLo->getT(), dstLo->getT() );
 		if( tMinUp > tMaxLo ) return false;	/* t ranges do not overlap */
 		
 		if( vertAreLessOrEqual( orgUp, orgLo )) {
@@ -534,10 +535,10 @@ namespace Tess
 		/* At this point the edges intersect, at least marginally */
 		edgeIntersect( dstUp, orgUp, dstLo, orgLo, &isect );
 		/* The following properties are guaranteed: */
-		assert( MIN( orgUp->t, dstUp->t ) <= isect.t );
-		assert( isect.t <= MAX( orgLo->t, dstLo->t ));
-		assert( MIN( dstLo->s, dstUp->s ) <= isect.s );
-		assert( isect.s <= MAX( orgLo->s, orgUp->s ));
+		assert( MIN( orgUp->getT(), dstUp->getT() ) <= isect.getT() );
+		assert( isect.getT() <= MAX( orgLo->getT(), dstLo->getT() ));
+		assert( MIN( dstLo->getS(), dstUp->getS() ) <= isect.getS() );
+		assert( isect.getS() <= MAX( orgLo->getS(), orgUp->getS() ));
 		
 		if( vertAreLessOrEqual( &isect, event )) {
 			/* The intersection point lies slightly to the left of the sweep line,
@@ -546,8 +547,8 @@ namespace Tess
 			 * in the first place).	 The easiest and safest thing to do is
 			 * replace the intersection by tess->event.
 			 */
-			isect.s = event->s;
-			isect.t = event->t;
+			isect.s = event->getS();
+			isect.t = event->getT();
 		}
 		/* Similarly, if the computed intersection lies to the right of the
 		 * rightmost origin (which should rarely happen), it can cause
@@ -557,8 +558,8 @@ namespace Tess
 		 */
 		orgMin = vertAreLessOrEqual( orgUp, orgLo ) ? orgUp : orgLo;
 		if( vertAreLessOrEqual( orgMin, &isect )) {
-			isect.s = orgMin->s;
-			isect.t = orgMin->t;
+			isect.s = orgMin->getS();
+			isect.t = orgMin->getT();
 		}
 		
 		if( vertAreEqual( &isect, orgUp ) || vertAreEqual( &isect, orgLo )) {
@@ -605,14 +606,12 @@ namespace Tess
 			if( edgeSign( dstUp, event, &isect ) >= 0 ) {
 				regUp->regionAbove()->dirty = regUp->dirty = true;
 				mesh->splitEdge( eUp->Sym() );
-				eUp->Org()->s = event->s;
-				eUp->Org()->t = event->t;
+                eUp->Org()->sVec = event->sVec;
 			}
 			if( edgeSign( dstLo, event, &isect ) <= 0 ) {
 				regUp->dirty = regLo->dirty = true;
 				mesh->splitEdge( eLo->Sym() );
-				eLo->Org()->s = event->s;
-				eLo->Org()->t = event->t;
+				eLo->Org()->sVec = event->sVec;
 			}
 			/* leave the rest for ConnectRightVertex */
 			return false;
@@ -629,11 +628,11 @@ namespace Tess
 		mesh->splitEdge( eUp->Sym() );
 		mesh->splitEdge( eLo->Sym() );
 		mesh->splice( eLo->Oprev(), eUp );
-		eUp->Org()->s = isect.s;
-		eUp->Org()->t = isect.t;
+        auto result = options.addPoint(isect);
+        eUp->Org()->sVec = result.first;
+        eUp->Org()->idx = result.second;
 		eUp->Org()->pqHandle = pq->insert( eUp->Org() );
         assert(eUp->Org()->pqHandle != PriorityQ::INV_HANDLE);
-		eUp->Org()->idx = sTessUndef;
 		regUp->regionAbove()->dirty = regUp->dirty = regLo->dirty = true;
 		return false;
 	}
@@ -1016,10 +1015,8 @@ namespace Tess
 		
 		edge = mesh->makeEdge();
 		
-		edge->Org()->s = smax;
-		edge->Org()->t = t;
-		edge->Dst()->s = smin;
-		edge->Dst()->t = t;
+        edge->Org()->sVec = options.addSentinelPoint(smax, t);
+        edge->Dst()->sVec = options.addSentinelPoint(smin, t);
 		event = edge->Dst();		/* initialize it */
 		
 		reg->eUp = edge;
@@ -1062,7 +1059,7 @@ namespace Tess
 	void Tesselator<Options, Allocators>::doneEdgeDict( )
 	{
 		ActiveRegion *reg;
-		int fixedEdges = 0;
+        int fixedEdges = 0;
 		
 		while( (reg = (ActiveRegion *)dict->min()->key) != nullptr ) {
 			/*
@@ -1072,7 +1069,8 @@ namespace Tess
 			 */
 			if( ! reg->sentinel ) {
 				assert( reg->fixUpperEdge );
-				assert( ++fixedEdges == 1 );
+                ++fixedEdges;
+				assert( fixedEdges == 1 );
 			}
 			assert( reg->windingNumber == 0 );
 			deleteRegion( reg );
@@ -1134,7 +1132,7 @@ namespace Tess
 		/* Make sure there is enough space for sentinels. */
 		vertexCountQ += 8;
 		
-        pq = new PriorityQ( this, vertexCountQ, (typename PriorityQ::LeqFunc)vertAreLessOrEqual<Options, Allocators> );
+        pq = new PriorityQ( this, vertexCountQ, (typename PriorityQ::LeqFunc)vertAreLessOrEqual<Vertex, Vertex> );
 		
 		vHead = mesh->vEnd();
 		for( v = vHead->next; v != vHead; v = v->next ) {

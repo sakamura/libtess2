@@ -36,14 +36,14 @@
 
 namespace Tess
 {
-    template <typename Options, typename Allocators>
-	inline bool vertAreEqual(const VertexT<Options, Allocators>* u, const VertexT<Options, Allocators>* v) { return ((u)->s == (v)->s && (u)->t == (v)->t); }
+    template <typename U, typename V>
+	inline bool vertAreEqual(const U* u, const V* v) { return (u->getS() == v->getS() && u->getT() == v->getT()); }
 
-    template <typename Options, typename Allocators>
-    inline bool vertAreLessOrEqual(const VertexT<Options, Allocators>* u, const VertexT<Options, Allocators>* v) { return (((u)->s < (v)->s) || ((u)->s == (v)->s && (u)->t <= (v)->t)); }
+    template <typename U, typename V>
+    inline bool vertAreLessOrEqual(const U* u, const V* v) { return ((u->getS() < v->getS()) || (u->getS() == v->getS() && u->getT() <= v->getT())); }
 	
-    template <typename Options, typename Allocators>
-    inline bool transVertAreLessOrEqual(const VertexT<Options, Allocators>* u, const VertexT<Options, Allocators>* v) { return (((u)->t < (v)->t) || ((u)->t == (v)->t && (u)->s <= (v)->s)); }
+    template <typename U, typename V>
+    inline bool transVertAreLessOrEqual(const U* u, const V* v) { return ((u->getT() < v->getT()) || (u->getT() == v->getT() && u->getS() <= v->getS())); }
 
     template <typename Options, typename Allocators>
     inline bool edgeGoesLeft(const HalfEdgeT<Options, Allocators>* e) { return vertAreLessOrEqual( e->Dst(), e->Org() ); }
@@ -54,24 +54,24 @@ namespace Tess
     template <typename Options, typename Allocators>
     inline bool edgeIsInternal(const HalfEdgeT<Options, Allocators>* e) { return e->Rface() && e->Rface()->inside; }
 	
-    template <typename Options, typename Allocators>
-    inline bool vertAreCCW( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ) { return (u->s*(v->t - w->t) + v->s*(w->t - u->t) + w->s*(u->t - v->t)) >= 0; }
+    template <typename U, typename V, typename W>
+    inline bool vertAreCCW( const U *u, const V *v, const W *w ) { return (u->getS()*(v->getT() - w->getT()) + v->getS()*(w->getT() - u->getT()) + w->getS()*(u->getT() - v->getT())) >= 0; }
 	
 	
-    template <typename Options, typename Allocators>
-    typename Options::Coord edgeEval( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Returns the signed distance from uw to v.
+    template <typename U, typename V, typename W>
+    typename U::value_type edgeEval( const U *u, const V *v, const W *w ); // Returns the signed distance from uw to v.
 	
-    template <typename Options, typename Allocators>
-    typename Options::Coord edgeSign( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Returns a number whose sign matches edgeEval(u,v,w) but which is cheaper to evaluate.
+    template <typename U, typename V, typename W>
+    typename U::value_type edgeSign( const U *u, const V *v, const W *w ); // Returns a number whose sign matches edgeEval(u,v,w) but which is cheaper to evaluate.
 	
-    template <typename Options, typename Allocators>
-    typename Options::Coord transEdgeEval( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Transposed version of edgeEval
+    template <typename U, typename V, typename W>
+    typename U::value_type transEdgeEval( const U *u, const V *v, const W *w ); // Transposed version of edgeEval
     
-    template <typename Options, typename Allocators>
-    typename Options::Coord transEdgeSign( const VertexT<Options, Allocators> *u, const VertexT<Options, Allocators> *v, const VertexT<Options, Allocators> *w ); // Transposed version of edgeSign
+    template <typename U, typename V, typename W>
+    typename U::value_type transEdgeSign( const U *u, const V *v, const W *w ); // Transposed version of edgeSign
 	
-    template <typename Options, typename Allocators>
-    void edgeIntersect( const VertexT<Options, Allocators> *o1, const VertexT<Options, Allocators> *d1, const VertexT<Options, Allocators> *o2, const VertexT<Options, Allocators> *d2, VertexT<Options, Allocators> *v ); // Given edges (o1,d1) and (o2,d2), compute their point of intersection.
+    template <typename O1, typename D1, typename O2, typename D2, typename V>
+    void edgeIntersect( const O1 *o1, const D1 *d1, const O2 *o2, const D2 *d2, V *v ); // Given edges (o1,d1) and (o2,d2), compute their point of intersection.
 	
     template <typename Options, typename Allocators>
     bool edgeIsLocallyDelaunay( const HalfEdgeT<Options, Allocators> *e );

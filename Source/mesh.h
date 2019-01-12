@@ -107,7 +107,11 @@ namespace Tess
         using Tesselator = Tess::Tesselator<Options, Allocators>;
         using Vertex = VertexT<Options, Allocators>;
         using HalfEdge = HalfEdgeT<Options, Allocators>;
-        
+        using Coord = typename Options::Coord;
+        using value_type = Coord;
+        using SweepPlaneVec = typename Options::SweepPlaneVec;
+        using Id = typename Options::Id;
+
 		/* makeVertex( newVertex, eOrig, vNext ) attaches a new vertex and makes it the
 		 * origin of all edges in the vertex loop to which eOrig belongs. "vNext" gives
 		 * a place to insert the new vertex in the global vertex list.	We insert
@@ -115,16 +119,17 @@ namespace Tess
 		 * list will not see the newly created vertices.
 		 */
 		static Vertex* makeVertex( Tesselator* t, HalfEdge *eOrig, Vertex *vNext );
+        inline Coord getS() const { return Options::getS(sVec); }
+        inline Coord getT() const { return Options::getT(sVec); }
 
 		Vertex *next;	   /* next vertex (never nullptr) */
 		Vertex *prev;	   /* previous vertex (never nullptr) */
 		HalfEdge *anEdge;	 /* a half-edge with this origin */
 		
 		/* Internal data (keep hidden) */
-		typename Options::Coord s, t;		  /* projection onto the sweep plane */
+        SweepPlaneVec sVec;
 		int pqHandle;	/* to allow deletion from priority queue */
-		int n;			/* to allow identify unique vertices */
-		int idx;			/* to allow map result to original verts */
+		Id idx;			/* to allow map result to original verts */
     };
 	
     template <typename Options, typename Allocators>
@@ -138,7 +143,6 @@ namespace Tess
 		
 		/* Internal data (keep hidden) */
 		Face *trail;	 /* "stack" for conversion to strips */
-		int n;		/* to allow identiy unique faces */
 		char marked;	 /* flag for conversion to strips */
 		char inside;	 /* this face is in the polygon interior */
     };
@@ -152,11 +156,11 @@ namespace Tess
         using Face = FaceT<Options, Allocators>;
         using ActiveRegion = ActiveRegionT<Options, Allocators>;
         
-		HalfEdgeT() :
-			next_(nullptr),
-			Sym_(nullptr),
-			Onext_(nullptr),
-			Lnext_(nullptr),
+		HalfEdgeT(HalfEdge* next, HalfEdge* sym, HalfEdge* onext, HalfEdge* lnext) :
+			next_(next),
+			Sym_(sym),
+			Onext_(onext),
+			Lnext_(lnext),
 			Org_(nullptr),
 			Lface_(nullptr),
 			activeRegion_(nullptr),
@@ -188,53 +192,53 @@ namespace Tess
 			Sym()->winding_ += src->Sym()->winding_;
 		}
 
-		HalfEdge *next() { return next_; }
-		const HalfEdge *next() const { return next_; }
-		void setNext(HalfEdge* next) { next_ = next; }
-		HalfEdge *Sym() { return Sym_; }
-		const HalfEdge *Sym() const { return Sym_; }
-		void setSym(HalfEdge* sym) { Sym_ = sym; }
-		HalfEdge *Onext() { return Onext_; }
-		const HalfEdge *Onext() const { return Onext_; }
-		void setOnext(HalfEdge *Onext) { Onext_ = Onext; }
-		HalfEdge *Lnext() { return Lnext_; }
-		const HalfEdge *Lnext() const { return Lnext_; }
-		void setLnext(HalfEdge *Lnext) { Lnext_ = Lnext; }
-		Vertex *Org() { return Org_; }
-		const Vertex *Org() const { return Org_; }
-		void setOrg(Vertex* org) { Org_ = org; }
-		Face *Lface() { return Lface_; }
-		const Face *Lface() const { return Lface_; }
-		void setLface(Face *lface) { Lface_ = lface; }
+		inline HalfEdge *next() { return next_; }
+		inline const HalfEdge *next() const { return next_; }
+		inline void setNext(HalfEdge* next) { next_ = next; }
+		inline HalfEdge *Sym() { return Sym_; }
+		inline const HalfEdge *Sym() const { return Sym_; }
+		inline void setSym(HalfEdge* sym) { Sym_ = sym; }
+		inline HalfEdge *Onext() { return Onext_; }
+		inline const HalfEdge *Onext() const { return Onext_; }
+		inline void setOnext(HalfEdge *Onext) { Onext_ = Onext; }
+		inline HalfEdge *Lnext() { return Lnext_; }
+		inline const HalfEdge *Lnext() const { return Lnext_; }
+		inline void setLnext(HalfEdge *Lnext) { Lnext_ = Lnext; }
+		inline Vertex *Org() { return Org_; }
+		inline const Vertex *Org() const { return Org_; }
+		inline void setOrg(Vertex* org) { Org_ = org; }
+		inline Face *Lface() { return Lface_; }
+		inline const Face *Lface() const { return Lface_; }
+		inline void setLface(Face *lface) { Lface_ = lface; }
 		
-		Face *Rface() { return Sym()->Lface(); }
-		const Face *Rface() const { return Sym()->Lface(); }
-		void setRface(Face *rface) { Sym()->setLface(rface); }
-		Vertex *Dst() { return Sym()->Org(); }
-		const Vertex *Dst() const { return Sym()->Org(); }
-		void setDst(Vertex* Dst) { Sym()->setOrg(Dst); }
+		inline Face *Rface() { return Sym()->Lface(); }
+		inline const Face *Rface() const { return Sym()->Lface(); }
+		inline void setRface(Face *rface) { Sym()->setLface(rface); }
+		inline Vertex *Dst() { return Sym()->Org(); }
+		inline const Vertex *Dst() const { return Sym()->Org(); }
+		inline void setDst(Vertex* Dst) { Sym()->setOrg(Dst); }
 		
-		HalfEdge *Oprev() { return Sym()->Lnext(); }
-		const HalfEdge *Oprev() const { return Sym()->Lnext(); }
-		HalfEdge *Lprev() { return Onext()->Sym(); }
-		const HalfEdge *Lprev() const { return Onext()->Sym(); }
-		HalfEdge *Dprev() { return Lnext()->Sym(); }
-		const HalfEdge *Dprev() const { return Lnext()->Sym(); }
-		HalfEdge *Rprev() { return Sym()->Onext(); }
-		const HalfEdge *Rprev() const { return Sym()->Onext(); }
-		HalfEdge *Dnext() { return Rprev()->Sym(); }  /* 3 pointers */
-		const HalfEdge *Dnext() const { return Rprev()->Sym(); }  /* 3 pointers */
-		HalfEdge *Rnext() { return Oprev()->Sym(); }  /* 3 pointers */
-		const HalfEdge *Rnext() const { return Oprev()->Sym(); }  /* 3 pointers */
+		inline HalfEdge *Oprev() { return Sym()->Lnext(); }
+		inline const HalfEdge *Oprev() const { return Sym()->Lnext(); }
+		inline HalfEdge *Lprev() { return Onext()->Sym(); }
+		inline const HalfEdge *Lprev() const { return Onext()->Sym(); }
+		inline HalfEdge *Dprev() { return Lnext()->Sym(); }
+		inline const HalfEdge *Dprev() const { return Lnext()->Sym(); }
+		inline HalfEdge *Rprev() { return Sym()->Onext(); }
+		inline const HalfEdge *Rprev() const { return Sym()->Onext(); }
+		inline HalfEdge *Dnext() { return Rprev()->Sym(); }  /* 3 pointers */
+		inline const HalfEdge *Dnext() const { return Rprev()->Sym(); }  /* 3 pointers */
+		inline HalfEdge *Rnext() { return Oprev()->Sym(); }  /* 3 pointers */
+		inline const HalfEdge *Rnext() const { return Oprev()->Sym(); }  /* 3 pointers */
 		
-		ActiveRegion *activeRegion() { return activeRegion_; }
-		const ActiveRegion *activeRegion() const { return activeRegion_; }
-		void resetActiveRegion() { activeRegion_ = nullptr; }
-		void setActiveRegion(ActiveRegion * newActiveRegion) { activeRegion_ = newActiveRegion; }
-		const int winding() const { return winding_; }
-		void setWinding(int winding) { winding_ = winding; }
-		const int mark() const { return mark_; }
-		void setMark(int mark) { mark_ = mark; }
+		inline ActiveRegion *activeRegion() { return activeRegion_; }
+		inline const ActiveRegion *activeRegion() const { return activeRegion_; }
+		inline void resetActiveRegion() { activeRegion_ = nullptr; }
+		inline void setActiveRegion(ActiveRegion * newActiveRegion) { activeRegion_ = newActiveRegion; }
+		inline const int winding() const { return winding_; }
+		inline void setWinding(int winding) { winding_ = winding; }
+		inline const int mark() const { return mark_; }
+		inline void setMark(int mark) { mark_ = mark; }
 
 		HalfEdge *next_;	  /* doubly-linked list (prev==Sym->next) */
 		HalfEdge *Sym_;		  /* same edge, opposite direction */
@@ -256,6 +260,11 @@ namespace Tess
         using HalfEdge = HalfEdgeT<Options, Allocators>;
         
 		HalfEdge eSym;
+        
+        EdgePairT(HalfEdge* ePrev, HalfEdge* eNext) :
+            HalfEdge(eNext, &eSym, this, &eSym),
+            eSym(ePrev, this, &eSym, this)
+        {}
 	};
 	
     template<typename Options, typename Allocators>
@@ -269,8 +278,8 @@ namespace Tess
         
 		Vertex vHead;	   /* dummy header for vertex list */
 		Face fHead;		 /* dummy header for face list */
-		HalfEdge eHead;		 /* dummy header for edge list */
-		HalfEdge eHeadSym;	 /* and its symmetric counterpart */
+        
+		EdgePair eHead;		 /* dummy header for edge list */
 		
 	public:
         Tesselator* t;
@@ -300,8 +309,8 @@ namespace Tess
 		Face* fEnd() { return &fHead; }
 		HalfEdge* eBegin() { return eHead.next(); }
 		HalfEdge* eEnd() { return &eHead; }
-		HalfEdge* eSymBegin() { return eHeadSym.next(); }
-		HalfEdge* eSymEnd() { return &eHeadSym; }
+		HalfEdge* eSymBegin() { return eHead.eSym.next(); }
+		HalfEdge* eSymEnd() { return &eHead.eSym; }
 		
 		void meshUnion( Mesh *meshToMerge );
 	};

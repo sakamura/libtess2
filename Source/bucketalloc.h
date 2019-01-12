@@ -32,43 +32,76 @@
 #pragma once
 
 #include <vector>
-#include <deque>
-#include <cassert>
+#include <mutex>
 
 namespace Tess
 {
     // This system is a compatible subset of Boost's object_pool.
+    template<std::size_t objectSize, unsigned int bucketSize>
 	class BucketAllocImpl
 	{
-		typedef std::vector<void*> Bucket;
-		std::size_t objectSize;
-		unsigned int bucketSize;
+		struct Bucket
+        {
+            std::size_t max_size;
+            std::unique_ptr<void*[]> data;
+
+            std::size_t size = 0;
+
+            // The default constructor keeps a null data, as used in swapping deque objects.
+            // This constructor actually creates the object. At first, we were using std::array
+            // but that version initializes the array to 0s everywhere, costing a lot of time.
+            // Hence the usage of the good old new/delete.
+            Bucket(std::size_t id, bool) :
+                max_size( (objectSize * bucketSize) << id ),
+            data(new void*[max_size]) {}
+        };
+        
 		void** firstFree;
-		std::deque<Bucket> buckets;
+		std::vector<Bucket> buckets;
 		
 		std::size_t allocated, freed;
 
+    public:
+        struct BucketPool
+        {
+            std::mutex mutex;
+            std::vector<Bucket> unusedBuckets;
+            
+            BucketPool()
+            {
+                unusedBuckets.reserve(16);
+            }
+            
+            void free()
+            {
+                std::lock_guard<decltype(mutex)> guard;
+                unusedBuckets.clear();
+            }
+        };
+        using BucketPoolSharedPtr = std::shared_ptr<BucketPool>;
+        
+    private:
+        BucketPoolSharedPtr bucketPool;
+        
 	public:
-		~BucketAllocImpl();
+        ~BucketAllocImpl();
 		void* malloc();
 		void free(void*);
 	protected:
-		BucketAllocImpl(std::size_t objectSize, unsigned int bucketSize);
+		BucketAllocImpl(const BucketPoolSharedPtr& bucketPool);
 	private:
 		void newBucket();
 	};
 	
-	template<std::size_t objectSizeTmpl, unsigned int bucketSizeTmpl = 512>
-	class BucketAllocSizeImpl : public BucketAllocImpl
-	{
-	public:
-		BucketAllocSizeImpl() : BucketAllocImpl(objectSizeTmpl, bucketSizeTmpl) {}
-	};
-
 	template<typename T, unsigned int bucketSizeTmpl = 512>
-	class BucketAlloc : public BucketAllocSizeImpl< (sizeof(T) + sizeof(void*) - 1) / sizeof(void*), bucketSizeTmpl>
+	class BucketAlloc : public BucketAllocImpl< (sizeof(T) + sizeof(void*) - 1) / sizeof(void*), bucketSizeTmpl>
 	{
     public:
+        using Impl = BucketAllocImpl< (sizeof(T) + sizeof(void*) - 1) / sizeof(void*), bucketSizeTmpl>;
+        using BucketPoolSharedPtr = typename Impl::BucketPoolSharedPtr;
+        
+        BucketAlloc(BucketPoolSharedPtr bucketPool = {}) : Impl(bucketPool) {}
+        
         template <typename... Args>
         T* construct(Args&&... args)
         {

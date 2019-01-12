@@ -42,13 +42,6 @@ namespace Tess
 		TESS_BOUNDARY_CONTOURS,
 	};
 	
-	enum Option
-	{
-		TESS_CONSTRAINED_DELAUNAY_TRIANGULATION,
-		TESS_REVERSE_CONTOURS
-	};
-
-	
 	static const int sTessUndef = (~(int)0);
 
     template <typename Options, typename Allocators>
@@ -88,6 +81,10 @@ namespace Tess
         using ActiveRegion = ActiveRegionT<Options, Allocators>;
         using PriorityQ = PriorityQT<Options, Allocators>;
         using Dict = DictT<Options, Allocators>;
+        using Coord = typename Options::Coord;
+        using Vec = typename Options::Vec;
+        using SweepPlaneVec = typename Options::SweepPlaneVec;
+        using InternalVec = typename Options::InternalVec;
 
     public:
         Options options;          // Options, as set up in constructor.
@@ -98,22 +95,14 @@ namespace Tess
 		Mesh	*mesh;		/* stores the input contours, and eventually
 								 the tessellation itself */
 		
-		typename Options::Coord bmin[2];
-		typename Options::Coord bmax[2];
+		Coord bmin[2];
+		Coord bmax[2];
 		
 		/*** state needed for the line sweep ***/
 		Dict *dict;		/* edge dictionary for sweep line */
 		PriorityQ *pq;		/* priority queue of vertex events */
 		Vertex *event;		/* current sweep event being processed */
-		int vertexIndexCounter;
 		HalfEdge *e;
-		
-		/*** outputs ***/
-		typename Options::Coord *vertices;
-		int *vertexIndices;
-		int vertexCount;
-		int *elements;
-		int elementCount;
 		
 	public:
 		Tesselator(Options& options);
@@ -121,7 +110,7 @@ namespace Tess
 
 		void beginContour();
 		
-		void addVertex(typename Options::Coord x, typename Options::Coord y);
+		void addVertex(const Vec& vec);
 		
 		// addContour() - Adds a contour to be tesselated.
 		// The type of the vertex coordinates is assumed to be float.
@@ -138,40 +127,7 @@ namespace Tess
 		//	 normal - defines the normal of the input contours, of nullptr the normal is calculated automatically.
 		// Returns:
 		//	 1 if succeed, 0 if failed.
-		void tesselate(ElementType elementType, int polySize, const typename Options::Coord* normal);
-		
-		// getVertexCount() - Returns number of vertices in the tesselated output.
-		int getVertexCount() const
-		{
-			return vertexCount;
-		}
-		
-		// getVertices() - Returns pointer to first coordinate of first vertex.
-		const typename Options::Coord* getVertices() const
-		{
-			return vertices;
-		}
-		
-		// getVertexIndices() - Returns pointer to first vertex index.
-		// Vertex indices can be used to map the generated vertices to the original vertices.
-		// Every point added using addContour() will get a new index starting at 0.
-		// New vertices generated at the intersections of segments are assigned value sTessUndef.
-		const int* getVertexIndices() const
-		{
-			return vertexIndices;
-		}
-		
-		// getElementCount() - Returns number of elements in the the tesselated output.
-		int getElementCount() const
-		{
-			return elementCount;
-		}
-		
-		// getElements() - Returns pointer to the first element.
-		const int* getElements() const
-		{
-			return elements;
-		}
+		void tesselate(ElementType elementType, int polySize);
 		
 	private:
 		// tess.cpp
@@ -180,7 +136,7 @@ namespace Tess
 		void meshRefineDelaunay();
 		void meshDiscardExterior();
 		void meshSetWindingNumber(int value, bool keepOnlyBoundary);
-		void outputPolymesh(ElementType elementType, int polySize);
+		void outputPolymesh(int polySize);
 		void outputContours();
 		
 		// sweep.cpp

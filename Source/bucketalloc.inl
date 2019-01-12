@@ -34,23 +34,31 @@
 
 namespace Tess
 {
-	struct Header
-	{
-		BucketAllocImpl* bucket;
-	};
-
-	BucketAllocImpl::BucketAllocImpl(std::size_t _objectSize, unsigned int _bucketSize) :
-		objectSize(sizeof(Header) + _objectSize),
-		bucketSize(_bucketSize),
+    template<std::size_t objectSize, unsigned int bucketSize>
+	BucketAllocImpl<objectSize, bucketSize>::BucketAllocImpl(const BucketPoolSharedPtr& _bucketPool) :
 		firstFree(nullptr),
 		allocated(0),
-		freed(0)
+		freed(0),
+        bucketPool(_bucketPool)
 	{
+        buckets.reserve(16);
 	}
-	BucketAllocImpl::~BucketAllocImpl()
+    template<std::size_t objectSize, unsigned int bucketSize>
+	BucketAllocImpl<objectSize, bucketSize>::~BucketAllocImpl()
 	{
+        if (bucketPool)
+        {
+            auto& bp = *bucketPool;
+            std::lock_guard<decltype(bp.mutex)> guard(bp.mutex);
+            
+            bp.unusedBuckets.insert(bp.unusedBuckets.end(),
+                                    std::make_move_iterator(buckets.begin()),
+                                    std::make_move_iterator(buckets.end()));
+
+        }
 	}
-	void* BucketAllocImpl::malloc()
+    template<std::size_t objectSize, unsigned int bucketSize>
+	void* BucketAllocImpl<objectSize, bucketSize>::malloc()
 	{
 		if (!firstFree)
 		{
@@ -61,18 +69,17 @@ namespace Tess
 			else
 			{
 				Bucket& back(buckets.back());
-				if (back.capacity() == back.size())
+				if (back.max_size == back.size)
 				{
 					newBucket();
 				}
 			}
 			{
 				Bucket& back(buckets.back());
-				std::size_t origSize = back.size();
-				back.resize(origSize+objectSize);
-				back[origSize] = (void*)this;
+				std::size_t origSize = back.size;
+				back.size += objectSize;
 				++allocated;
-				return (void*)&back[origSize + 1];
+				return (void*)&back.data[origSize];
 			}
 		}
 		else
@@ -83,16 +90,32 @@ namespace Tess
 			return result;
 		}
 	}
-	void BucketAllocImpl::free(void* ptr)
+    template<std::size_t objectSize, unsigned int bucketSize>
+	void BucketAllocImpl<objectSize, bucketSize>::free(void* ptr)
 	{
 		*(void**)(ptr) = (void*)firstFree;
 		firstFree = (void**)ptr;
 		++freed;
 	}
-	void BucketAllocImpl::newBucket()
+    template<std::size_t objectSize, unsigned int bucketSize>
+	void BucketAllocImpl<objectSize, bucketSize>::newBucket()
 	{
-		buckets.emplace_back();
-		buckets.back().reserve(bucketSize * objectSize);
+        if (bucketPool && !bucketPool->unusedBuckets.empty())
+        {
+            auto& bp = *bucketPool;
+            std::lock_guard<decltype(bp.mutex)> guard(bp.mutex);
+            
+            if (!bp.unusedBuckets.empty())
+            {
+                buckets.insert(buckets.end(),
+                               std::make_move_iterator(bp.unusedBuckets.rbegin()),
+                               std::make_move_iterator(bp.unusedBuckets.rbegin()+1));
+                buckets.back().size = 0;
+                bp.unusedBuckets.pop_back();
+                return;
+            }
+        }
+        
+        buckets.emplace_back(buckets.size(), true);         // Create data by using the special constructor that creates it
 	}
-
 }

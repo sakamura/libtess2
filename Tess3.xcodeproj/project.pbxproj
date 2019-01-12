@@ -3,58 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		96042D791DD963AD007EB86E /* bucketalloc.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B01D65E59200404BDA /* bucketalloc.h */; };
-		96042D7A1DD963AD007EB86E /* dict.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B21D65E59200404BDA /* dict.h */; };
-		96042D7B1DD963AD007EB86E /* geom.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B41D65E59200404BDA /* geom.h */; };
-		96042D7C1DD963AD007EB86E /* mesh.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B61D65E59200404BDA /* mesh.h */; };
-		96042D7D1DD963AD007EB86E /* priorityq.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B81D65E59200404BDA /* priorityq.h */; };
-		96042D7E1DD963AD007EB86E /* sweep.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98BA1D65E59200404BDA /* sweep.h */; };
-		96042D7F1DD963AD007EB86E /* tess.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98BC1D65E59200404BDA /* tess.h */; };
 		96D119E5210E7B16000ED4E1 /* libtess3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96D119E4210E7B16000ED4E1 /* libtess3.cpp */; };
-		96D119EF21127D50000ED4E1 /* bucketalloc.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98AF1D65E59200404BDA /* bucketalloc.inl */; };
-		96D119F021127D53000ED4E1 /* dict.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B11D65E59200404BDA /* dict.inl */; };
-		96D119F121127D56000ED4E1 /* geom.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B31D65E59200404BDA /* geom.inl */; };
-		96D119F221127D58000ED4E1 /* mesh.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B51D65E59200404BDA /* mesh.inl */; };
-		96D119F321127D5B000ED4E1 /* priorityq.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B71D65E59200404BDA /* priorityq.inl */; };
-		96D119F421127D5F000ED4E1 /* sweep.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98B91D65E59200404BDA /* sweep.inl */; };
-		96D119F521127D62000ED4E1 /* tess.inl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96FF98BB1D65E59200404BDA /* tess.inl */; };
-		96D119F621127D68000ED4E1 /* options.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96D119E6210E90CE000ED4E1 /* options.h */; };
-		96D119F721127D6B000ED4E1 /* allocators.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96D119E8210FE35B000ED4E1 /* allocators.h */; };
-		96D119F821127D6E000ED4E1 /* edgestack.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 96D119E9210FE380000ED4E1 /* edgestack.h */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		96FF98981D65E54800404BDA /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "include/$(PRODUCT_NAME)";
-			dstSubfolderSpec = 16;
-			files = (
-				96D119F721127D6B000ED4E1 /* allocators.h in CopyFiles */,
-				96D119EF21127D50000ED4E1 /* bucketalloc.inl in CopyFiles */,
-				96042D791DD963AD007EB86E /* bucketalloc.h in CopyFiles */,
-				96D119F021127D53000ED4E1 /* dict.inl in CopyFiles */,
-				96042D7A1DD963AD007EB86E /* dict.h in CopyFiles */,
-				96D119F821127D6E000ED4E1 /* edgestack.h in CopyFiles */,
-				96D119F121127D56000ED4E1 /* geom.inl in CopyFiles */,
-				96042D7B1DD963AD007EB86E /* geom.h in CopyFiles */,
-				96D119F221127D58000ED4E1 /* mesh.inl in CopyFiles */,
-				96042D7C1DD963AD007EB86E /* mesh.h in CopyFiles */,
-				96D119F621127D68000ED4E1 /* options.h in CopyFiles */,
-				96D119F321127D5B000ED4E1 /* priorityq.inl in CopyFiles */,
-				96042D7D1DD963AD007EB86E /* priorityq.h in CopyFiles */,
-				96D119F421127D5F000ED4E1 /* sweep.inl in CopyFiles */,
-				96042D7E1DD963AD007EB86E /* sweep.h in CopyFiles */,
-				96D119F521127D62000ED4E1 /* tess.inl in CopyFiles */,
-				96042D7F1DD963AD007EB86E /* tess.h in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		96D119E4210E7B16000ED4E1 /* libtess3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = libtess3.cpp; sourceTree = "<group>"; };
@@ -153,7 +107,6 @@
 			buildPhases = (
 				96FF98961D65E54800404BDA /* Sources */,
 				96FF98971D65E54800404BDA /* Frameworks */,
-				96FF98981D65E54800404BDA /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -170,7 +123,7 @@
 		96FF98921D65E54800404BDA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0940;
+				LastUpgradeCheck = 1000;
 				ORGANIZATIONNAME = "Michel Donais";
 				TargetAttributes = {
 					96FF98991D65E54800404BDA = {
@@ -182,7 +135,7 @@
 				};
 			};
 			buildConfigurationList = 96FF98951D65E54800404BDA /* Build configuration list for PBXProject "Tess3" */;
-			compatibilityVersion = "Xcode 3.2";
+			compatibilityVersion = "Xcode 10.0";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -215,7 +168,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_ASSIGN_ENUM = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
@@ -241,7 +194,9 @@
 				CLANG_WARN__EXIT_TIME_DESTRUCTORS = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -281,7 +236,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_ASSIGN_ENUM = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
@@ -307,6 +262,8 @@
 				CLANG_WARN__EXIT_TIME_DESTRUCTORS = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;

@@ -261,24 +261,16 @@ namespace Tess
 	
     template <typename Options, typename Allocators>
     Tesselator<Options, Allocators>::Tesselator(Options& _options) :
-        options(_options)
+        options(_options),
+        allocators(options)
 	{
 		bmin[0] = std::numeric_limits<typename Options::Coord>::max();
-	
 		bmin[1] = std::numeric_limits<typename Options::Coord>::max();
 		bmax[0] = -std::numeric_limits<typename Options::Coord>::max();
 		bmax[1] = -std::numeric_limits<typename Options::Coord>::max();
 		
 		// Initialize to begin polygon.
 		mesh = nullptr;
-		
-		vertexIndexCounter = 0;
-	
-		vertices = 0;
-		vertexIndices = 0;
-		vertexCount = 0;
-		elements = 0;
-		elementCount = 0;
 	}
 
     template <typename Options, typename Allocators>
@@ -288,102 +280,22 @@ namespace Tess
 			delete mesh;
 			mesh = nullptr;
 		}
-		if (vertices != nullptr) {
-			delete[] vertices;
-			vertices = nullptr;
-		}
-		if (vertexIndices != nullptr) {
-			delete[] vertexIndices;
-			vertexIndices = nullptr;
-		}
-		if (elements != nullptr) {
-			delete[] elements;
-			elements = nullptr;
-		}
 	}
 	
 	
     template <typename Options, typename Allocators>
-	static int GetNeighbourFace(HalfEdgeT<Options, Allocators>* edge)
-	{
-		if (!edge->Rface())
-			return sTessUndef;
-		if (!edge->Rface()->inside)
-			return sTessUndef;
-		return edge->Rface()->n;
-	}
-	
-    template <typename Options, typename Allocators>
-	void Tesselator<Options, Allocators>::outputPolymesh( ElementType elementType, int polySize )
+	void Tesselator<Options, Allocators>::outputPolymesh( int polySize )
 	{
 		Vertex* v = 0;
 		Face* f = 0;
 		HalfEdge* edge = 0;
-		int maxFaceCount = 0;
-		int maxVertexCount = 0;
 		int faceVerts, i;
-		typename Options::Coord *vert;
 		
 		// Assume that the input data is triangles now.
 		// Try to merge as many polygons as possible
 		if (polySize > 3)
 		{
 			mesh->mergeConvexFaces( polySize );
-		}
-		
-		// Mark unused
-		for ( v = mesh->vBegin(); v != mesh->vEnd(); v = v->next )
-			v->n = sTessUndef;
-		
-		// Create unique IDs for all vertices and faces.
-		for ( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next )
-		{
-			f->n = sTessUndef;
-			if( !f->inside ) continue;
-			
-			edge = f->anEdge;
-			faceVerts = 0;
-			do
-			{
-				v = edge->Org();
-				if ( v->n == sTessUndef )
-				{
-					v->n = maxVertexCount;
-					maxVertexCount++;
-				}
-				faceVerts++;
-				edge = edge->Lnext();
-			}
-			while (edge != f->anEdge);
-		
-			assert( faceVerts <= polySize );
-			
-			f->n = maxFaceCount;
-			++maxFaceCount;
-		}
-		
-		elementCount = maxFaceCount;
-		if (elementType == TESS_CONNECTED_POLYGONS)
-			maxFaceCount *= 2;
-		int* elems = elements = new int[(unsigned long)(maxFaceCount * polySize)];
-	
-		vertexCount = maxVertexCount;
-		vertices = new typename Options::Coord[(unsigned long)vertexCount * 2];
-		vertexIndices = new int[(unsigned long)vertexCount];
-		
-	
-		// Output vertices.
-		for ( v = mesh->vBegin(); v != mesh->vEnd(); v = v->next )
-		{
-			if ( v->n != sTessUndef )
-			{
-				// Store coordinate
-				vert = &vertices[v->n*2];
-				vert[0] = v->s;
-				vert[1] = v->t;
-				// Store vertex index.
-				vertexIndices[v->n] = v->idx;
-			}
 		}
 		
 		// Output indices.
@@ -397,29 +309,14 @@ namespace Tess
 			do
 			{
 				v = edge->Org();
-				*elems++ = v->n;
+                options.addVertex(v->idx, v);
 				faceVerts++;
 				edge = edge->Lnext();
 			}
 			while (edge != f->anEdge);
 			// Fill unused.
 			for (i = faceVerts; i < polySize; ++i)
-				*elems++ = sTessUndef;
-			
-			// Store polygon connectivity
-			if ( elementType == TESS_CONNECTED_POLYGONS )
-			{
-				edge = f->anEdge;
-				do
-				{
-					*elems++ = GetNeighbourFace( edge );
-					edge = edge->Lnext();
-				}
-				while (edge != f->anEdge);
-				// Fill unused.
-				for (i = faceVerts; i < polySize; ++i)
-					*elems++ = sTessUndef;
-			}
+                options.addEmptyVertex();
 		}
 	}
 	
@@ -429,55 +326,19 @@ namespace Tess
 		Face *f = 0;
 		HalfEdge *edge = 0;
 		HalfEdge *start = 0;
-		int startVert = 0;
-		int vertCount = 0;
-		
-		vertexCount = 0;
-		elementCount = 0;
-		
-		for ( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next )
+
+        for ( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next )
 		{
 			if ( !f->inside ) continue;
 			
 			start = edge = f->anEdge;
 			do
 			{
-				++vertexCount;
+                options.addContour(edge->Org()->idx, edge->Org());
 				edge = edge->Lnext();
 			}
 			while ( edge != start );
-			
-			++elementCount;
-		}
-		
-		int* elems = elements = new int[(unsigned long)elementCount * 2];
-		typename Options::Coord* verts = vertices = new typename Options::Coord[(unsigned long)vertexCount * 2];
-		int* vertInds = vertexIndices = new int[(unsigned long)vertexCount];
-	
-		
-		startVert = 0;
-		
-		for ( f = mesh->fBegin(); f != mesh->fEnd(); f = f->next )
-		{
-			if ( !f->inside ) continue;
-			
-			vertCount = 0;
-			start = edge = f->anEdge;
-			do
-			{
-				*verts++ = edge->Org()->s;
-				*verts++ = edge->Org()->t;
-				*vertInds++ = edge->Org()->idx;
-				++vertCount;
-				edge = edge->Lnext();
-			}
-			while ( edge != start );
-			
-			elems[0] = startVert;
-			elems[1] = vertCount;
-			elems += 2;
-			
-			startVert += vertCount;
+            options.addContour(edge->Org()->idx, edge->Org());   // Repeat start index (makes a full contour loop).
 		}
 	}
 	
@@ -491,7 +352,7 @@ namespace Tess
 	}
 	
     template <typename Options, typename Allocators>
-	void Tesselator<Options, Allocators>::addVertex( typename Options::Coord x, typename Options::Coord y )
+    void Tesselator<Options, Allocators>::addVertex( const Vec& vec )
 	{
 		if( e == nullptr ) {
 			/* Make a self-loop (one vertex, one edge). */
@@ -506,15 +367,18 @@ namespace Tess
 		}
 		
 		/* The new vertex is now e->Org. */
-		e->Org()->s = x;
-		e->Org()->t = y;
-		if (bmin[0] > x) bmin[0] = x;
-		if (bmin[1] > y) bmin[1] = y;
-		if (bmax[0] < x) bmax[0] = x;
-		if (bmax[1] < y) bmax[1] = y;
+        auto result = options.addPoint(vec);
+
+        auto sVec = e->Org()->sVec = result.first;
+        Coord s = Options::getS(sVec);
+        Coord t = Options::getT(sVec);
+		if (bmin[0] > s) bmin[0] = s;
+		if (bmin[1] > t) bmin[1] = t;
+		if (bmax[0] < s) bmax[0] = s;
+		if (bmax[1] < t) bmax[1] = t;
 	
 		/* Store the insertion number so that the vertex can be later recognized. */
-		e->Org()->idx = vertexIndexCounter++;
+		e->Org()->idx = result.second;
 		
 		/* The winding of an edge says how the winding number changes as we
 		 * cross from the edge''s right face to its left face.	We add the
@@ -542,23 +406,8 @@ namespace Tess
 	}
 
     template <typename Options, typename Allocators>
-	void Tesselator<Options, Allocators>::tesselate( ElementType elementType, int polySize, const typename Options::Coord* normal )
+	void Tesselator<Options, Allocators>::tesselate( ElementType elementType, int polySize )
 	{
-		if (vertices != nullptr) {
-			delete[] vertices;
-			vertices = nullptr;
-		}
-		if (elements != nullptr) {
-			delete[] elements;
-			elements = nullptr;
-		}
-		if (vertexIndices != nullptr) {
-			delete[] vertexIndices;
-			vertexIndices = nullptr;
-		}
-		
-		vertexIndexCounter = 0;
-	
 		/* tessComputeInterior( tess ) computes the planar arrangement specified
 		 * by the given contours, and further subdivides this arrangement
 		 * into regions.  Each region is marked "inside" if it belongs
@@ -586,7 +435,7 @@ namespace Tess
 		}
 		else
 		{
-			outputPolymesh( elementType, polySize );	 /* output polygons */
+			outputPolymesh( polySize );	 /* output polygons */
 		}
 		
 		delete mesh;

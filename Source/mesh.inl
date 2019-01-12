@@ -49,40 +49,21 @@ namespace Tess
 		HalfEdge *e;
 		HalfEdge *eSym;
 		HalfEdge *ePrev;
-		EdgePair *pair = mesh->t->allocators.edgePairAlloc.construct();
+
+        /* Make sure eNext points to the first edge of the edge pair */
+        if( eNext->Sym() < eNext ) { eNext = eNext->Sym(); }
+        ePrev = eNext->Sym()->next();
+
+        EdgePair *pair = mesh->t->allocators.edgePairAlloc.construct(ePrev, eNext);
 		
 		e = pair;
 		eSym = &pair->eSym;
 		
-		/* Make sure eNext points to the first edge of the edge pair */
-		if( eNext->Sym() < eNext ) { eNext = eNext->Sym(); }
-		
 		/* Insert in circular doubly-linked list before eNext.
 		 * Note that the prev pointer is stored in Sym->next.
 		 */
-		ePrev = eNext->Sym()->next();
-		eSym->next_ = ePrev;
 		ePrev->Sym()->next_ = e;
-		e->next_ = eNext;
 		eNext->Sym()->next_ = eSym;
-		
-		e->Sym_ = eSym;
-		e->Onext_ = e;
-		e->Lnext_ = eSym;
-		e->Org_ = nullptr;
-		e->Lface_ = nullptr;
-		e->winding_ = 0;
-		e->activeRegion_ = nullptr;
-		e->mark_ = 0;
-		
-		eSym->Sym_ = e;
-		eSym->Onext_ = eSym;
-		eSym->Lnext_ = e;
-		eSym->Org_ = nullptr;
-		eSym->Lface_ = nullptr;
-		eSym->winding_ = 0;
-		eSym->activeRegion_ = nullptr;
-		eSym->mark_ = 0;
 		
 		return e;
 	}
@@ -570,7 +551,8 @@ namespace Tess
 	 */
     template <typename Options, typename Allocators>
     MeshT<Options, Allocators>::MeshT(Tesselator* _t) :
-        t(_t)
+        t(_t),
+        eHead(nullptr, nullptr)
 	{
 		Vertex *v;
 		Face *f;
@@ -580,7 +562,7 @@ namespace Tess
 		v = &vHead;
 		f = &fHead;
 		e = &eHead;
-		eSym = &eHeadSym;
+		eSym = &eHead.eSym;
 		
 		v->next = v->prev = v;
 		v->anEdge = nullptr;
@@ -592,10 +574,8 @@ namespace Tess
 		f->inside = false;
 		
 		e->setNext(e);
-		e->setSym(eSym);
 		
 		eSym->setNext(eSym);
-		eSym->setSym(e);
 	}
     template <typename Options, typename Allocators>
 	MeshT<Options, Allocators>::~MeshT( )

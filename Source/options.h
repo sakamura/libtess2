@@ -31,8 +31,13 @@
 
 #pragma once
 
+#include <utility>
+
 namespace Tess
 {
+    template <typename Options, typename Allocators>
+    struct VertexT;
+    
     // See OpenGL Red Book for description of the winding rules
     // http://www.glprogramming.com/red/chapter11.html
     enum WindingRule
@@ -51,15 +56,88 @@ namespace Tess
     struct BaseOptions
     {
         using Coord = float;            // One vector coordinate. For internal format.
-        struct Vec                      // One vector comprised of Coords.
+        struct Vec                      // One vector, as seen in the outside
         {
             Coord x;
             Coord y;
         };
+        struct SweepPlaneVec            // One vector, as used internally. Member variables are opaque.
+        {
+            Coord s;
+            Coord t;
+        };
+        static inline Coord getS(const SweepPlaneVec& sVec)
+        {
+            return sVec.s;
+        }
+        static inline Coord getT(const SweepPlaneVec& sVec)
+        {
+            return sVec.t;
+        }
+        struct InternalVec              // One vector, as used internally, in read-write. Mmebers are not opaque.
+        {
+            using value_type = Coord;
+            value_type s;
+            value_type t;
+            
+            inline value_type getS() const
+            {
+                return s;
+            }
+            inline value_type getT() const
+            {
+                return t;
+            }
+        };
+        using Id = struct {};
+        using AddResult = std::pair<SweepPlaneVec, Id>;
+
+        // Adding a point whose origin is a Vector (meaning it's being added from the addVertex outside world)
+        inline AddResult addPoint(const Vec& vec)
+        {
+            return {{ vec.x, vec.y }, {}};
+        }
+        
+        // Adding a point whose origin is a Sweep Plane Vector (meaning it's being added from the Sweep algorithm)
+        inline AddResult addPoint(Coord s, Coord t)
+        {
+            return {{ s, t }, {}};
+        }
+        inline SweepPlaneVec addPoint(const InternalVec& iVec)
+        {
+            return { iVec.s, iVec.t };
+        }
+        
+        // Adding a point that will be probably ignored by the end result
+        inline SweepPlaneVec addSentinelPoint(Coord s, Coord t)
+        {
+            return { s, t };
+        }
+        
+        // Adding a contour point. Used when outputting a contour. Returns the start two times (at beginning and at end)
+        template <typename Vertex>
+        inline void addContour(Id idx, const Vertex*)
+        {
+            addContourIdx(idx);
+        }
+        inline void addContourIdx(Id) {}
+        
+        // Adding a polygon point. Used when outputting polygons. Will fill polySize with empty idx
+        template <typename Vertex>
+        inline void addVertex(Id idx, const Vertex*)
+        {
+            addVertexIdx(idx);
+        }
+        inline void addVertexIdx(Id) {}
+        inline void addEmptyVertex() {}
         
         constexpr bool constrainedDelaunayTriangulation() const { return false; }
         constexpr bool reverseContours() const { return false; }
         constexpr WindingRule windingRule() const { return TESS_WINDING_ODD; }
+
+        // Retrieves an allocator memory pool that is shared by all the tesselators. Doesn't have any by default.
+        template <typename _AllocatorPool>
+        constexpr _AllocatorPool* getAllocatorPool() { return nullptr; }
     };
     
     // This is what you usually wish to have dynamically set up.
